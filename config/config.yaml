@@ -1,0 +1,224 @@
+agent:
+  active_profile: profiles/default.yaml
+  call_name: Q2
+  name: IMQ2
+face:
+  bar_colour_1: '#f60004'
+  bar_colour_2: '#f5f5ff'
+  bg_colour: '#0d1b4c'
+  port: 8765
+  style: 7
+hardware:
+  platform: dev_machine
+integrations:
+  forza_telemetry:
+    enabled: true
+    port: 8000
+  shinlink_os:
+    config_path: /home/shinobi/config.json
+    telemetry_timeout_s: 12
+llm:
+  backend: claude
+  claude:
+    max_tokens: 1024
+    model: claude-sonnet-4-6
+    temperature: 0.7
+  glm:
+    max_tokens: 1024
+    model: glm-5.2
+    temperature: 0.7
+  grok:
+    max_tokens: 1024
+    model: grok-3-mini
+    temperature: 0.7
+  ollama:
+    host: http://localhost:11434
+    max_tokens: 1024
+    model: llama3
+  openai:
+    max_tokens: 1024
+    model: gpt-4o
+    temperature: 0.7
+logging:
+  console: true
+  file: logs/imq2.log
+  level: INFO
+memory:
+  backend: chroma
+  chroma:
+    collection: imq2_memory
+    persist_directory: memory/db/chroma
+  episodic_cap: 5000
+  fact_extraction:
+    enabled: true
+    model: claude-haiku-4-5-20251001
+  prune_check_interval: 50
+  retrieval_top_k: 5
+  short_term_turns: 20
+  sqlite:
+    path: memory/db/imq2.db
+  stale_after_days: 180
+purchasing:
+  body_control:
+    enabled: true
+    interface: ros2
+    permission: none
+  capture_image:
+    enabled: true
+    permission: granted
+  google_calendar:
+    enabled: true
+    permission: granted
+  google_docs:
+    enabled: true
+    permission: granted
+  google_drive:
+    enabled: true
+    permission: granted
+  google_sheets:
+    enabled: true
+    permission: granted
+  payment_method: gift_card_only
+  per_purchase_cap: 50.0
+  read_email:
+    enabled: true
+    permission: granted
+  require_confirmation: true
+  send_email:
+    enabled: true
+    permission: granted
+  shipping:
+    address:
+      city: ''
+      country: ''
+      line1: ''
+      line2: ''
+      name: ''
+      phone: ''
+      postal_code: ''
+      province: ''
+    confirm_above_cad: 25.0
+    fallback: cheapest
+    preferred_services:
+    - Canada Post Xpresspost
+    - Canada Post
+  youtube_music:
+    enabled: true
+    permission: granted
+tools:
+  analyze_photo:
+    enabled: true
+    permission: granted
+  capture_image:
+    enabled: true
+    permission: granted
+  define_word:
+    enabled: true
+    permission: granted
+  execute_purchase:
+    enabled: true
+    permission: granted
+  find_product:
+    enabled: true
+    permission: granted
+  get_race_telemetry:
+    enabled: true
+    permission: granted
+  get_rc_telemetry:
+    enabled: true
+    permission: granted
+  get_token_stats:
+    enabled: true
+    permission: granted
+  get_weather:
+    enabled: true
+    permission: granted
+  git_push:
+    enabled: true
+    permission: granted
+  google_calendar:
+    enabled: true
+    permission: granted
+  google_docs:
+    enabled: true
+    permission: granted
+  google_drive:
+    enabled: true
+    permission: granted
+  google_sheets:
+    enabled: true
+    permission: granted
+  open_settings:
+    enabled: true
+    permission: granted
+  race_engineer_status:
+    enabled: true
+    permission: granted
+  read_email:
+    enabled: true
+    permission: granted
+  send_email:
+    enabled: true
+    permission: granted
+  show_on_display:
+    enabled: true
+    permission: granted
+  show_photo:
+    enabled: true
+    permission: granted
+  translate_text:
+    enabled: true
+    permission: granted
+  web_search:
+    backend: tavily
+    enabled: true
+    permission: granted
+  youtube_music:
+    enabled: true
+    permission: granted
+voice:
+  deepgram:
+    language: en-US
+    model: nova-3
+  deepgram_tts:
+    model: aura-2-draco-en
+  elevenlabs:
+    model: eleven_turbo_v2
+    similarity_boost: 0.75
+    stability: 0.5
+    voice_id: ''
+  faster_whisper:
+    device: cpu
+    model_size: small
+  input_device: HD Pro Webcam C920
+  input_device_options:
+  - label: DW20 Desk Mic
+    name: 7Ryms_iRay DW20
+    sample_rate: 48000
+  - label: C920 Webcam Mic
+    name: HD Pro Webcam C920
+    sample_rate: 16000
+  openai_tts:
+    model: tts-1
+    voice: onyx
+  output_device: pipewire
+  piper:
+    model_path: models/piper/en_US-lessac-medium.onnx
+    speaker_id: 0
+  playback_preroll_s: 0.35
+  sample_rate: 16000
+  stt_backend: deepgram
+  talk_button:
+    device_name: ''
+    enabled: true
+    key: g
+  tts_backend: deepgram_tts
+  wake_word:
+    access_key: YOUR_PICOVOICE_KEY
+    enabled: false
+    ppn_path: wake_words/Hey-Dude_en_raspberry-pi_v4_0_0.ppn
+    sensitivity: 0.5
+  whisper_cloud:
+    model: whisper-1
+webapp:
+  port: 8766

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Q2
+GenericName=IMQ2 Voice Assistant
+Comment=Launch Q2 — voice mode with visual face
+Exec=lxterminal -e "bash -c 'cd /home/shinobi/imq2 && source .venv/bin/activate && python main.py --face; exec bash'"
+Icon=utilities-terminal
+Terminal=false
+Categories=Utility;
+StartupNotify=true

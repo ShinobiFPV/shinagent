@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Q2</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    background: #000;
+    overflow: hidden;
+    cursor: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ===========================================================================
+// Q2 Face — Multi-style visualizer
+// Press H to open settings, I to cycle face styles.
+// Styles: 0=Triangle Mosaic  1=HAL 9000  2=GLaDOS  3=Matrix Rain  4=ASCII Face
+//         5=T-800 Terminator  6=Johnny 5
+// All styles share the same state/colour system from the face server.
+// ===========================================================================
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+const IW = 720, IH = 1280;
+canvas.width = IW; canvas.height = IH;
+
+function fit() {
+  const wr = window.innerWidth / window.innerHeight;
+  const cr = IW / IH;
+  if (wr > cr) { canvas.style.height = '100vh'; canvas.style.width = 'auto'; }
+  else          { canvas.style.width  = '100vw'; canvas.style.height = 'auto'; }
+}
+window.addEventListener('resize', fit);
+fit();
+
+// --- Palette ---
+let BG   = '#0d1b4c';
+let COL1 = '#ff2fb0';
+let COL2 = '#f5f5ff';
+
+function applyColours(s) {
+  if (s.bg_colour    && s.bg_colour    !== BG)   BG   = s.bg_colour;
+  if (s.bar_colour_1 && s.bar_colour_1 !== COL1) COL1 = s.bar_colour_1;
+  if (s.bar_colour_2 && s.bar_colour_2 !== COL2) COL2 = s.bar_colour_2;
+}
+
+// --- State ---
+let state = { speaking:false, envelope:[], duration_s:0, started_at:0,
+              listening:false, thinking:false,
+              bg_colour:BG, bar_colour_1:COL1, bar_colour_2:COL2 };
+
+async function poll() {
+  try {
+    const d = await (await fetch('http://127.0.0.1:8765/state',{cache:'no-store'})).json();
+    applyColours(d); state = d;
+  } catch(e) {}
+}
+setInterval(poll, 120);
+
+// --- Style cycling ---
+let currentStyle = parseInt(localStorage.getItem('q2-face-style') || '7');
+// Sync style from face server — poll every 2s so settings changes apply live
+let _lastFaceStyle = currentStyle;
+function syncFaceStyle() {
+  fetch('/state').then(r=>r.json()).then(s=>{
+    if (s && s.face_style !== undefined && s.face_style !== _lastFaceStyle) {
+      _lastFaceStyle = s.face_style;
+      currentStyle = s.face_style;
+      localStorage.setItem('q2-face-style', currentStyle);
+      initStyle(currentStyle);
+    }
+  }).catch(()=>{});
+}
+syncFaceStyle();
+setInterval(syncFaceStyle, 2000);
+const STYLE_NAMES = ['Triangle Mosaic','HAL 9000','GLaDOS','Matrix Rain','ASCII Face','T-800','Johnny 5','H9000 Terminal'];
+const NUM_STYLES  = STYLE_NAMES.length;
+
+function cycleStyle() {
+  currentStyle = (currentStyle + 1) % NUM_STYLES;
+  localStorage.setItem('q2-face-style', currentStyle);
+  // Reset per-style state
+  initStyle(currentStyle);
+  showStyleLabel();
+}
+
+function showStyleLabel() {
+  // Flash the style name briefly — use canvas text
+  styleLabel = STYLE_NAMES[currentStyle];
+  styleLabelAlpha = 1.0;
+}
+
+let styleLabel = '';
+let styleLabelAlpha = 0;
+
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'h') window.location.href = 'http://127.0.0.1:8765/settings.html';
+  if (k === 'i') cycleStyle();
+});
+
+// --- Shared helpers ---
+function hexRgb(hex) {
+  const h = hex.replace('#','');
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+}
+function rgbStr(hex, alpha) {
+  const [r,g,b] = hexRgb(hex);
+  return alpha !== undefined ? `rgba(${r},${g},${b},${alpha})` : `rgb(${r},${g},${b})`;
+}
+function currentAmp() {
+  if (!state.speaking || !state.envelope || !state.envelope.length) return null;
+  const elapsed = Date.now()/1000 - state.started_at;
+  if (elapsed < 0 || elapsed > state.duration_s) return null;
+  const idx = Math.floor((elapsed/state.duration_s)*(state.envelope.length-1));
+  return state.envelope[Math.max(0,Math.min(idx,state.envelope.length-1))];
+}
+
+// ===========================================================================
+// STYLE 0 — Triangle Mosaic (original)
+// ===========================================================================
+
+const COLS  = 20;
+const cellW = IW / (COLS/2);
+const cellH = cellW * Math.sqrt(3) / 2;
+const ROWS  = Math.ceil(IH/cellH) + 2;
+const maxD  = Math.sqrt(IW*IW + IH*IH);
+const tris  = [];
+
+(function buildTriGrid() {
+  for (let row=0; row<ROWS; row++) {
+    for (let col=0; col<COLS; col++) {
+      const hw=cellW/2, x0=col*hw, y0=row*cellH;
+      const isUp=(col+row)%2===0;
+      const verts = isUp
+        ? [[x0,y0+cellH],[x0+cellW,y0+cellH],[x0+hw,y0]]
+        : [[x0,y0],[x0+cellW,y0],[x0+hw,y0+cellH]];
+      const cx=(verts[0][0]+verts[1][0]+verts[2][0])/3;
+      const cy=(verts[0][1]+verts[1][1]+verts[2][1])/3;
+      const dx=cx-IW/2, dy=cy-IH/2;
+      const dist=Math.sqrt(dx*dx+dy*dy)/(maxD/2);
+      const seed=Math.sin(col*127.1+row*311.7)*43758.5453;
+      const phase=(seed-Math.floor(seed))*Math.PI*2;
+      tris.push({verts,cx,cy,dist,phase,bright:0});
+    }
+  }
+})();
+
+let t0 = 0;
+
+function drawTriangles() {
+  t0 += 0.022;
+  const listening=!!state.listening, thinking=!!state.thinking;
+  const amp=currentAmp(), speaking=amp!==null;
+
+  ctx.fillStyle = listening ? COL1 : thinking ? COL2 : BG;
+  ctx.fillRect(0,0,IW,IH);
+
+  for (let i=0; i<tris.length; i++) {
+    const {cx,cy,dist,phase,verts}=tris[i];
+    let target;
+    if (listening)      target=0.15+0.3*Math.abs(Math.sin((1-dist)*Math.PI*3-t0*2.2+phase*0.15));
+    else if (thinking)  target=0.05+0.45*Math.pow(Math.max(0,Math.sin(t0*2.8+phase)),4);
+    else if (speaking)  target=Math.max(0.05,Math.min(1,amp*(0.4+0.6*Math.sin(dist*Math.PI*6-t0*3.5+phase*0.1))*(1-dist*0.25)));
+    else                target=0.05+0.25*Math.abs(Math.sin((cx/IW+cy/IH)*Math.PI*1.8-t0*0.9+phase));
+
+    tris[i].bright += (target-tris[i].bright)*0.15;
+    const b=Math.max(0,Math.min(1,tris[i].bright));
+    if (b<0.02) continue;
+
+    let fill;
+    if (listening||thinking) {
+      const rgb=hexRgb(listening?BG:COL1);
+      fill=`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${(b*0.9).toFixed(3)})`;
+    } else if (speaking) {
+      const base=[BG,COL1,COL2][(i+Math.floor(t0*2))%3];
+      fill=rgbStr(base,b);
+    } else {
+      fill=rgbStr(i%2===0?COL1:COL2,b*0.85);
+    }
+    if (speaking&&b>0.5){ctx.shadowColor=fill;ctx.shadowBlur=b*14;}
+    else ctx.shadowBlur=0;
+    ctx.fillStyle=fill;
+    ctx.beginPath();
+    ctx.moveTo(verts[0][0],verts[0][1]);
+    ctx.lineTo(verts[1][0],verts[1][1]);
+    ctx.lineTo(verts[2][0],verts[2][1]);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.shadowBlur=0;
+}
+
+// ===========================================================================
+// STYLE 1 — HAL 9000
+// ===========================================================================
+
+let halAngle = 0;
+let halPulse = 0;
+let halGlow  = 0;
+
+function drawHAL() {
+  halAngle += 0.008;
+  const listening=!!state.listening, thinking=!!state.thinking;
+  const amp=currentAmp(), speaking=amp!==null;
+
+  // State-driven parameters
+  let coreSize   = 0.13; // fraction of shorter dimension
+  let glowTarget = 0.5;
+  let ringSpeed  = 1;
+  let eyeColour  = COL1;   // red/pink normally
+  let bgColour   = BG;
+
+  if (listening)     { glowTarget=0.9; ringSpeed=2.5; eyeColour=COL1; bgColour=BG; coreSize=0.17; }
+  else if (thinking) { glowTarget=0.6; ringSpeed=0.5; eyeColour=COL2; bgColour=BG; }
+  else if (speaking) { glowTarget=0.4+(amp||0)*0.5; ringSpeed=1.5+(amp||0)*2; eyeColour=COL1; }
+
+  halGlow += (glowTarget - halGlow) * 0.08;
+  halPulse = speaking ? (amp||0) : (0.5+0.5*Math.sin(Date.now()/1400));
+
+  const cx=IW/2, cy=IH/2;
+  const R = Math.min(IW,IH) * 0.38;  // outer lens radius
+
+  // Background
+  ctx.fillStyle = bgColour;
+  ctx.fillRect(0,0,IW,IH);
+
+  // Outer housing — dark metallic ring
+  const grad = ctx.createRadialGradient(cx,cy,R*0.85,cx,cy,R);
+  grad.addColorStop(0, 'rgba(40,40,50,1)');
+  grad.addColorStop(1, 'rgba(10,10,15,1)');
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.fillStyle=grad; ctx.fill();
+
+  // Concentric ring grooves — counter-rotating pairs
+  for (let r=0; r<7; r++) {
+    const radius = R * (0.75 - r*0.07);
+    const dir    = r%2===0 ? 1 : -1;
+    const alpha  = 0.15 + r*0.04;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI*2);
+    ctx.strokeStyle = rgbStr(eyeColour, alpha);
+    ctx.lineWidth   = 1.5 + r*0.3;
+    ctx.stroke();
+
+    // Rotating tick marks on each ring
+    const numTicks = 12 + r*4;
+    for (let t=0; t<numTicks; t++) {
+      const angle = (t/numTicks)*Math.PI*2 + halAngle*ringSpeed*dir*(r+1)*0.15;
+      const x1=cx+Math.cos(angle)*radius;
+      const y1=cy+Math.sin(angle)*radius;
+      const x2=cx+Math.cos(angle)*(radius-6);
+      const y2=cy+Math.sin(angle)*(radius-6);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle=rgbStr(eyeColour, 0.25+halPulse*0.15);
+      ctx.lineWidth=1; ctx.stroke();
+    }
+  }
+
+  // Iris mid-ring — brighter
+  const irisR = R * 0.38;
+  const irisGrad = ctx.createRadialGradient(cx,cy,irisR*0.6,cx,cy,irisR);
+  irisGrad.addColorStop(0, rgbStr(eyeColour, 0.15));
+  irisGrad.addColorStop(1, rgbStr(eyeColour, 0.55));
+  ctx.beginPath(); ctx.arc(cx,cy,irisR,0,Math.PI*2);
+  ctx.fillStyle=irisGrad; ctx.fill();
+
+  // Core glow — the actual "eye"
+  const coreR = Math.min(IW,IH) * (coreSize + halPulse*0.02);
+  const coreGrad = ctx.createRadialGradient(cx,cy,0,cx,cy,coreR);
+  coreGrad.addColorStop(0, 'rgba(255,255,230,1)');
+  coreGrad.addColorStop(0.2, rgbStr(eyeColour, 1));
+  coreGrad.addColorStop(0.7, rgbStr(eyeColour, halGlow));
+  coreGrad.addColorStop(1,   rgbStr(eyeColour, 0));
+  ctx.beginPath(); ctx.arc(cx,cy,coreR*2.5,0,Math.PI*2);
+  ctx.fillStyle=coreGrad; ctx.fill();
+
+  // Bright specular point
+  ctx.beginPath(); ctx.arc(cx-coreR*0.25, cy-coreR*0.25, coreR*0.18, 0, Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.fill();
+
+  // Outer glow halo
+  const haloGrad = ctx.createRadialGradient(cx,cy,R*0.9,cx,cy,R*1.4);
+  haloGrad.addColorStop(0, rgbStr(eyeColour, halGlow*0.4));
+  haloGrad.addColorStop(1, rgbStr(eyeColour, 0));
+  ctx.beginPath(); ctx.arc(cx,cy,R*1.4,0,Math.PI*2);
+  ctx.fillStyle=haloGrad; ctx.fill();
+
+  // Thinking mode: crosshair sweep
+  if (thinking) {
+    const sweep = (Date.now()/2000) % (Math.PI*2);
+    ctx.save();
+    ctx.translate(cx,cy); ctx.rotate(sweep);
+    ctx.strokeStyle=rgbStr(COL2,0.4);
+    ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-R*0.9,0); ctx.lineTo(R*0.9,0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-R*0.9); ctx.lineTo(0,R*0.9); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ===========================================================================
+// STYLE 7 — H9000 Terminal (full-screen scrolling log + HAL eye on top)
+// ===========================================================================
+const termLines = [];
+const MAX_TERM_LINES = 200;
+let termOffset = 0;       // continuous scroll offset in pixels
+let termLastSeen = '';
+
+function termPush(line) {
+  const clean = line.replace(/\[[0-9;]*m/g, '').trimEnd();
+  if (!clean) return;
+  termLines.push({ text: clean, id: Math.random() });
+}
+
+async function termFetchLog() {
+  try {
+    const r = await fetch('/log-tail?n=60');
+    if (!r.ok) return;
+    const raw = await r.text();
+    const lines = raw.split('\n');
+    // Find where we left off
+    const lastIdx = lines.lastIndexOf(termLastSeen);
+    const newLines = lastIdx >= 0 ? lines.slice(lastIdx+1) : lines.slice(-8);
+    newLines.filter(l => l.trim()).forEach(l => termPush(l));
+    const last = lines.filter(l=>l.trim()).slice(-1)[0];
+    if (last) termLastSeen = last;
+    // Keep buffer bounded
+    while (termLines.length > MAX_TERM_LINES) termLines.shift();
+  } catch(e) {}
+}
+setInterval(termFetchLog, 600);
+
+// Seed
+['Q2 SUBSYSTEM ONLINE','NEURAL STACK INITIALISED',
+ 'MEMORY MANAGER READY','CHROMADB CONNECTED',
+ 'TOOL REGISTRY LOADED','VOICE PIPELINE ACTIVE',
+ 'FORZA TELEMETRY LISTENER BOUND','AWAITING INPUT...']
+.forEach(l => termPush(l));
+
+const TERM_FONT_SIZE = 11;
+const TERM_LINE_H    = 15;
+const TERM_COLS      = 110; // chars per line — wide enough to fill 720px canvas
+const TERM_PAD_L     = 12;
+const TERM_SCROLL_SPEED = 0.4; // px per frame
+
+function drawHALTerminal() {
+  halAngle += 0.008;
+  const listening=!!state.listening, thinking=!!state.thinking;
+  const amp=currentAmp(), speaking=amp!==null;
+
+  let coreSize=0.13, glowTarget=0.5, ringSpeed=1, eyeColour=COL1;
+  if (listening)     { glowTarget=0.9; ringSpeed=2.5; coreSize=0.17; }
+  else if (thinking) { glowTarget=0.6; ringSpeed=0.5; eyeColour=COL2; }
+  else if (speaking) { glowTarget=0.4+(amp||0)*0.5; ringSpeed=1.5+(amp||0)*2; }
+  halGlow  += (glowTarget - halGlow) * 0.08;
+  halPulse  = speaking ? (amp||0) : (0.5+0.5*Math.sin(Date.now()/1400));
+
+  const cx=IW/2, cy=IH/2;
+  const R = Math.min(IW,IH)*0.38;
+
+  // === BACKGROUND ===
+  ctx.fillStyle = '#00080a';
+  ctx.fillRect(0,0,IW,IH);
+
+  // === TERMINAL TEXT — full canvas scroll ===
+  ctx.font = `${TERM_FONT_SIZE}px "Courier New",monospace`;
+  ctx.textBaseline = 'top';
+
+  // How many lines fill the screen plus buffer
+  const visCount = Math.ceil(IH / TERM_LINE_H) + 4;
+  const totalLines = termLines.length;
+
+  // Auto-scroll — advance offset each frame
+  termOffset += TERM_SCROLL_SPEED;
+  // Total height of all content
+  const contentH = totalLines * TERM_LINE_H;
+  // Once we've scrolled past all content, loop
+  if (termOffset > contentH) termOffset = 0;
+
+  // Draw lines that are currently visible
+  const firstLineIdx = Math.floor(termOffset / TERM_LINE_H);
+  const pixelOffset  = termOffset % TERM_LINE_H;
+
+  for (let i = 0; i <= visCount; i++) {
+    const lineIdx = (firstLineIdx + i) % Math.max(1, totalLines);
+    const line = termLines[lineIdx];
+    if (!line) continue;
+    const y = i * TERM_LINE_H - pixelOffset;
+    if (y > IH + TERM_LINE_H) continue;
+
+    // Colour coding
+    const t = line.text;
+    let r=0, g=200, b=100, a=0.45; // default green
+    if (t.includes('ERROR') || t.includes('error'))   { r=255;g=60; b=60;  a=0.7; }
+    else if (t.includes('WARNING') || t.includes('WARN')) { r=255;g=180;b=0;   a=0.65; }
+    else if (t.includes('[INFO]'))                     { r=0;  g=210;b=120; a=0.4;  }
+    else if (t.includes('Tool call') || t.includes('Tool result')) { r=255;g=47; b=176; a=0.6; }
+    else if (t.includes('HTTP Request'))               { r=0;  g=180;b=255; a=0.35; }
+    else if (t.startsWith('Q2') || t.startsWith('2026'))       { r=0;  g=200;b=120; a=0.38; }
+
+    ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
+    // Measure and tile to fill canvas width
+    ctx.font = `${TERM_FONT_SIZE}px "Courier New",monospace`;
+    const lineW = ctx.measureText(t).width;
+    if (lineW < 1) return;
+    let tx = TERM_PAD_L;
+    while (tx < IW + lineW) {
+      ctx.fillText(t, tx, y);
+      tx += lineW + 28;
+    }
+  }
+
+  // Scanline overlay — tight, subtle
+  for (let sy=0; sy<IH; sy+=3) {
+    ctx.fillStyle='rgba(0,0,0,0.12)';
+    ctx.fillRect(0,sy,IW,1);
+  }
+
+  // Vignette — dark edges, bright centre helps eye pop
+  const vig = ctx.createRadialGradient(cx,cy,R*0.5,cx,cy,IW*0.9);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(0,0,0,0.75)');
+  ctx.fillStyle=vig; ctx.fillRect(0,0,IW,IH);
+
+  // === HAL EYE — drawn on top ===
+  const grad = ctx.createRadialGradient(cx,cy,R*0.85,cx,cy,R);
+  grad.addColorStop(0,'rgba(20,20,28,0.97)');
+  grad.addColorStop(1,'rgba(5,5,10,0.97)');
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.fillStyle=grad; ctx.fill();
+
+  for (let r2=0; r2<7; r2++) {
+    const radius=R*(0.75-r2*0.07), dir=r2%2===0?1:-1, alpha=0.15+r2*0.04;
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,Math.PI*2);
+    ctx.strokeStyle=rgbStr(eyeColour,alpha); ctx.lineWidth=1.5+r2*0.3; ctx.stroke();
+    const numTicks=12+r2*4;
+    for (let t2=0; t2<numTicks; t2++) {
+      const angle=(t2/numTicks)*Math.PI*2+halAngle*ringSpeed*dir*(r2+1)*0.15;
+      const x1=cx+Math.cos(angle)*radius, y1=cy+Math.sin(angle)*radius;
+      const x2=cx+Math.cos(angle)*(radius-6), y2=cy+Math.sin(angle)*(radius-6);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle=rgbStr(eyeColour,0.25+halPulse*0.15); ctx.lineWidth=1; ctx.stroke();
+    }
+  }
+
+  const irisR=R*0.38;
+  const irisGrad=ctx.createRadialGradient(cx,cy,irisR*0.6,cx,cy,irisR);
+  irisGrad.addColorStop(0,rgbStr(eyeColour,0.15));
+  irisGrad.addColorStop(1,rgbStr(eyeColour,0.55));
+  ctx.beginPath(); ctx.arc(cx,cy,irisR,0,Math.PI*2);
+  ctx.fillStyle=irisGrad; ctx.fill();
+
+  const coreR=Math.min(IW,IH)*(coreSize+halPulse*0.02);
+  const coreGrad=ctx.createRadialGradient(cx,cy,0,cx,cy,coreR);
+  coreGrad.addColorStop(0,'rgba(255,255,230,1)');
+  coreGrad.addColorStop(0.2,rgbStr(eyeColour,1));
+  coreGrad.addColorStop(0.7,rgbStr(eyeColour,halGlow));
+  coreGrad.addColorStop(1,  rgbStr(eyeColour,0));
+  ctx.beginPath(); ctx.arc(cx,cy,coreR*2.5,0,Math.PI*2);
+  ctx.fillStyle=coreGrad; ctx.fill();
+
+  ctx.beginPath(); ctx.arc(cx-coreR*0.25,cy-coreR*0.25,coreR*0.18,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.fill();
+
+  const haloGrad=ctx.createRadialGradient(cx,cy,R*0.9,cx,cy,R*1.4);
+  haloGrad.addColorStop(0,rgbStr(eyeColour,halGlow*0.4));
+  haloGrad.addColorStop(1,rgbStr(eyeColour,0));
+  ctx.beginPath(); ctx.arc(cx,cy,R*1.4,0,Math.PI*2);
+  ctx.fillStyle=haloGrad; ctx.fill();
+
+  if (thinking) {
+    const sweep=(Date.now()/2000)%(Math.PI*2);
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(sweep);
+    ctx.strokeStyle=rgbStr(COL2,0.4); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-R*0.9,0); ctx.lineTo(R*0.9,0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-R*0.9); ctx.lineTo(0,R*0.9); ctx.stroke();
+    ctx.restore();
+  }
+
+  // === STATUS BARS ===
+  const now=new Date(), ts=now.toTimeString().slice(0,8);
+  const mode=thinking?'THINKING':listening?'LISTENING':speaking?'SPEAKING':'READY';
+  ctx.font='10px "Courier New",monospace'; ctx.textBaseline='bottom';
+  ctx.fillStyle='rgba(0,200,255,0.55)';
+  ctx.fillText(`Q2 // ${mode} // ${ts} // LINES:${termLines.length}`, TERM_PAD_L, IH-10);
+  ctx.textBaseline='top';
+  ctx.fillStyle='rgba(0,200,255,0.3)';
+  ctx.fillText('H9000 TERMINAL // SHINTECH ELECTRONICS', TERM_PAD_L, 10);
+}
+
+// ===========================================================================
+// STYLE 2 — GLaDOS
+// ===========================================================================
+
+let gladosAngle  = 0;
+let gladosTarget = 0.6; // aperture open amount 0=closed 1=open
+let gladosOpen   = 0.6;
+let gladosScan   = 0;
+
+function drawGLaDOS() {
+  gladosAngle += 0.012;
+  gladosScan  = (gladosScan + 0.4) % IH;
+
+  const listening=!!state.listening, thinking=!!state.thinking;
+  const amp=currentAmp(), speaking=amp!==null;
+
+  // State → aperture
+  if (listening)     gladosTarget=0.9;
+  else if (thinking) gladosTarget=0.25;
+  else if (speaking) gladosTarget=0.35+(amp||0)*0.55;
+  else               gladosTarget=0.5+0.1*Math.sin(Date.now()/2000);
+  gladosOpen += (gladosTarget-gladosOpen)*0.06;
+
+  const cx=IW/2, cy=IH/2;
+  const R  = Math.min(IW,IH)*0.35;
+
+  // Background — dark steel
+  ctx.fillStyle='#080810';
+  ctx.fillRect(0,0,IW,IH);
+
+  // Background grid
+  ctx.strokeStyle=rgbStr(COL1,0.04);
+  ctx.lineWidth=1;
+  for(let x=0;x<IW;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,IH);ctx.stroke();}
+  for(let y=0;y<IH;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(IW,y);ctx.stroke();}
+
+  // Scan line
+  ctx.fillStyle=rgbStr(COL1,0.03);
+  ctx.fillRect(0, gladosScan, IW, 3);
+
+  // Outer mechanical housing
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.strokeStyle=rgbStr(COL2,0.3); ctx.lineWidth=3; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,R*0.93,0,Math.PI*2);
+  ctx.strokeStyle=rgbStr(COL2,0.12); ctx.lineWidth=8; ctx.stroke();
+
+  // Aperture blades — 8 blades rotating
+  const numBlades=8;
+  const bladeLen=R*0.7;
+  const innerR=R*(0.08 + (1-gladosOpen)*0.42);
+
+  ctx.save(); ctx.translate(cx,cy);
+
+  // Filled background of aperture
+  ctx.beginPath(); ctx.arc(0,0,R*0.88,0,Math.PI*2);
+  ctx.fillStyle='#05050d'; ctx.fill();
+
+  // Iris ring glow
+  const irisAlpha = listening ? 0.8 : (thinking ? 0.3 : 0.5);
+  const irisGrad=ctx.createRadialGradient(0,0,innerR,0,0,R*0.7);
+  irisGrad.addColorStop(0,rgbStr(COL1,irisAlpha));
+  irisGrad.addColorStop(0.4,rgbStr(COL1,irisAlpha*0.3));
+  irisGrad.addColorStop(1,rgbStr(COL1,0));
+  ctx.beginPath(); ctx.arc(0,0,R*0.7,0,Math.PI*2);
+  ctx.fillStyle=irisGrad; ctx.fill();
+
+  // Blades
+  for(let b=0;b<numBlades;b++){
+    const baseAngle=(b/numBlades)*Math.PI*2+gladosAngle;
+    const openAngle=(1-gladosOpen)*(Math.PI/numBlades)*1.8;
+
+    ctx.save(); ctx.rotate(baseAngle);
+    ctx.beginPath();
+    ctx.moveTo(innerR, -openAngle*innerR*0.8);
+    ctx.lineTo(bladeLen, -Math.PI/numBlades*bladeLen*0.6);
+    ctx.lineTo(bladeLen*0.8, Math.PI/numBlades*bladeLen*0.5);
+    ctx.lineTo(innerR,  openAngle*innerR*0.8);
+    ctx.closePath();
+    ctx.fillStyle=`hsl(220,20%,${8+b*1.5}%)`;
+    ctx.fill();
+    ctx.strokeStyle=rgbStr(COL2,0.2); ctx.lineWidth=1; ctx.stroke();
+    ctx.restore();
+  }
+
+  // Centre core
+  const coreR=innerR*0.85;
+  const coreGrad=ctx.createRadialGradient(0,0,0,0,0,coreR);
+  const coreCol = thinking ? COL2 : COL1;
+  coreGrad.addColorStop(0,'rgba(255,255,255,0.95)');
+  coreGrad.addColorStop(0.3,rgbStr(coreCol,0.9));
+  coreGrad.addColorStop(1,rgbStr(coreCol,0));
+  ctx.beginPath(); ctx.arc(0,0,coreR*2,0,Math.PI*2);
+  ctx.fillStyle=coreGrad; ctx.fill();
+
+  ctx.restore();
+
+  // Corner targeting brackets
+  const bSize=40, bOff=IW*0.08;
+  const corners=[[bOff,bOff],[IW-bOff,bOff],[IW-bOff,IH-bOff],[bOff,IH-bOff]];
+  const bracketAlpha = listening ? 0.8 : 0.3;
+  ctx.strokeStyle=rgbStr(COL1,bracketAlpha); ctx.lineWidth=2;
+  corners.forEach(([x,y],i)=>{
+    const sx=i<2?1:-1, sy=i===0||i===3?1:-1;
+    ctx.beginPath();
+    ctx.moveTo(x+sx*bSize,y); ctx.lineTo(x,y); ctx.lineTo(x,y+sy*bSize);
+    ctx.stroke();
+  });
+
+  // HUD text
+  ctx.font='13px monospace';
+  ctx.fillStyle=rgbStr(COL1,0.35);
+  ctx.fillText(`APERTURE: ${(gladosOpen*100).toFixed(0)}%`, 20, IH-40);
+  ctx.fillText(listening?'SUBJECT DETECTED':thinking?'PROCESSING':'MONITORING', 20, IH-20);
+}
+
+// ===========================================================================
+// STYLE 3 — Matrix Rain
+// ===========================================================================
+
+// Characters: katakana half-width + digits + symbols
+const MATRIX_CHARS =
+  'ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789:.<>+-=/\\|*#@$%&';
+
+const MATRIX_COLS    = 36;
+const MATRIX_COL_W   = IW / MATRIX_COLS;
+const MATRIX_CELL_H  = 28;
+const MATRIX_ROWS    = Math.ceil(IH / MATRIX_CELL_H) + 2;
+
+// Per-column state
+const mCols = Array.from({length: MATRIX_COLS}, (_,i) => ({
+  y:      Math.random() * -MATRIX_ROWS,
+  speed:  0.3 + Math.random() * 0.7,
+  bright: Array.from({length: MATRIX_ROWS}, () => Math.random()),
+  chars:  Array.from({length: MATRIX_ROWS}, () => MATRIX_CHARS[Math.floor(Math.random()*MATRIX_CHARS.length)]),
+  refreshTimer: Array.from({length: MATRIX_ROWS}, () => Math.random()*30),
+}));
+
+let matrixFrame = 0;
+
+function drawMatrix() {
+  matrixFrame++;
+  const listening=!!state.listening, thinking=!!state.thinking;
+  const amp=currentAmp(), speaking=amp!==null;
+
+  // Background — semi-transparent to leave trails
+  const trailAlpha = thinking ? 0.25 : 0.15;
+  ctx.fillStyle = `rgba(0,0,0,${trailAlpha})`;
+  ctx.fillRect(0,0,IW,IH);
+
+  // Pick character colour per state
+  const charCol  = listening ? COL1 : thinking ? COL2 : BG === '#0d1b4c' ? '#00ff41' : COL1;
+  const headCol  = COL2; // bright head character always white/secondary
+
+  for(let c=0; c<MATRIX_COLS; c++){
+    const col = mCols[c];
+
+    // Advance column
+    const speedMult = listening ? 2.5 : thinking ? 0 : speaking ? (1+amp*2) : 1;
+    if (!thinking) col.y += col.speed * speedMult;
+    if (col.y > MATRIX_ROWS + 5) {
+      col.y = -Math.random()*MATRIX_ROWS*0.5;
+      col.speed = 0.3 + Math.random()*0.7;
+    }
+
+    // Randomly refresh characters
+    for(let r=0; r<MATRIX_ROWS; r++){
+      col.refreshTimer[r]--;
+      if (col.refreshTimer[r] <= 0) {
+        col.chars[r]  = MATRIX_CHARS[Math.floor(Math.random()*MATRIX_CHARS.length)];
+        col.refreshTimer[r] = thinking
+          ? 2 + Math.random()*8    // fast random sparkle in thinking mode
+          : 15 + Math.random()*45; // slow drift normally
+        if (thinking) col.bright[r] = Math.random();
+      }
+    }
+
+    // Draw characters
+    const x = c * MATRIX_COL_W + MATRIX_COL_W/2;
+    for(let r=0; r<MATRIX_ROWS; r++){
+      const y     = r * MATRIX_CELL_H;
+      const rowY  = r;
+      const dist  = col.y - rowY;
+      let alpha, fontSize, colour;
+
+      if (thinking) {
+        // Scattered sparkle — no falling
+        alpha    = col.bright[r] * 0.8;
+        fontSize = 14 + Math.floor(col.bright[r]*10);
+        colour   = charCol;
+      } else {
+        // Falling column — head bright, trail fades
+        if (dist < 0 || dist > MATRIX_ROWS*0.7) { alpha=0; }
+        else if (dist < 1.5) {
+          alpha    = 1;
+          colour   = headCol; // bright head
+          fontSize = 18;
+        } else {
+          const fade = 1-(dist/(MATRIX_ROWS*0.7));
+          alpha    = Math.pow(fade,1.5) * (speaking ? (0.3+(amp||0)*0.7) : 0.7);
+          colour   = charCol;
+          fontSize = 14;
+        }
+      }
+
+      if (alpha < 0.02) continue;
+      ctx.font          = `bold ${fontSize||14}px monospace`;
+      ctx.fillStyle     = colour
+        ? rgbStr(colour, alpha)
+        : `rgba(0,255,65,${alpha})`;
+      ctx.textAlign     = 'center';
+      ctx.textBaseline  = 'middle';
+      ctx.fillText(col.chars[r], x, y);
+    }
+  }
+}
+
+// ===========================================================================
+// STYLE 4 — ASCII Face
+// ===========================================================================
+
+// Background char field
+const ASCII_BG_COLS = 60;
+const ASCII_BG_ROWS = 100;
+const bgChars = Array.from({length:ASCII_BG_ROWS*ASCII_BG_COLS}, () => ({
+  ch: String.fromCharCode(33+Math.floor(Math.random()*93)),
+  timer: Math.random()*60,
+  alpha: Math.random()*0.12,
+}));
+
+function drawASCII() {
+  const listening=!!state.listening, thinking=!!state.thinking;
+  const amp=currentAmp(), speaking=amp!==null;
+
+  ctx.fillStyle = BG; ctx.fillRect(0,0,IW,IH);
+
+  // Background character field
+  const bgCellW=IW/ASCII_BG_COLS, bgCellH=IH/ASCII_BG_ROWS;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(let i=0;i<bgChars.length;i++){
+    const ch=bgChars[i];
+    ch.timer--;
+    if(ch.timer<=0){
+      ch.ch=String.fromCharCode(33+Math.floor(Math.random()*93));
+      ch.timer=30+Math.random()*90;
+      ch.alpha=Math.random()*(listening?0.2:thinking?0.15:0.1);
+    }
+    const col=i%ASCII_BG_COLS, row=Math.floor(i/ASCII_BG_COLS);
+    ctx.font=`${8+Math.floor(ch.alpha*20)}px monospace`;
+    ctx.fillStyle=rgbStr(COL1,ch.alpha);
+    ctx.fillText(ch.ch, col*bgCellW+bgCellW/2, row*bgCellH+bgCellH/2);
+  }
+
+  // Face expressions per state
+  // Face is drawn as large ASCII art centred on canvas
+  const t=Date.now()/1000;
+
+  let leftEye='O', rightEye='O', nose='∆', mouth='-';
+  let eyeSize=72, mouthSize=64, faceColour=COL2;
+
+  if (listening) {
+    leftEye='◉'; rightEye='◉'; mouth='O'; eyeSize=88;
+    faceColour=COL1;
+  } else if (thinking) {
+    leftEye='>'; rightEye='<'; mouth='·'; eyeSize=64;
+    faceColour=COL2;
+  } else if (speaking) {
+    const mouthFrames=['-','_','o','O','0','O','o','_'];
+    const mouthIdx=Math.floor(t*8*(1+(amp||0)*3))%mouthFrames.length;
+    mouth=mouthFrames[mouthIdx];
+    const blinkCycle=Math.sin(t*1.5);
+    leftEye=rightEye=(blinkCycle<-0.95?'_':'O');
+    eyeSize=56+(amp||0)*24;
+    faceColour=COL1;
+  } else {
+    // Idle: occasional slow blink
+    const blinkCycle=Math.sin(t*0.7);
+    if(blinkCycle<-0.9){ leftEye='-'; rightEye='-'; }
+    faceColour=COL2;
+  }
+
+  // Draw face elements
+  const faceCX=IW/2, faceCY=IH/2;
+
+  // Eyes
+  ctx.font=`bold ${eyeSize}px monospace`;
+  ctx.fillStyle=faceColour;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(leftEye,  faceCX-130, faceCY-80);
+  ctx.fillText(rightEye, faceCX+130, faceCY-80);
+
+  // Nose
+  ctx.font=`bold 40px monospace`;
+  ctx.fillStyle=rgbStr(faceColour,0.5);
+  ctx.fillText(nose, faceCX, faceCY+10);
+
+  // Mouth
+  ctx.font=`bold ${mouthSize}px monospace`;
+  ctx.fillStyle=faceColour;
+  ctx.fillText(mouth, faceCX, faceCY+130);
+
+  // Eyebrows
+  const browL = thinking ? '\\' : listening ? '/' : '-';
+  const browR = thinking ? '/'  : listening ? '\\': '-';
+  ctx.font='bold 36px monospace';
+  ctx.fillStyle=rgbStr(faceColour,0.7);
+  ctx.fillText(browL, faceCX-130, faceCY-145);
+  ctx.fillText(browR, faceCX+130, faceCY-145);
+
+  // State label
+  const label=listening?'[ LISTENING ]':thinking?'[ THINKING ]':speaking?'[ SPEAKING ]':'[ IDLE ]';
+  ctx.font='18px monospace';
+  ctx.fillStyle=rgbStr(COL1,0.4);
+  ctx.textAlign='center';
+  ctx.fillText(label, faceCX, IH-50);
+}
+
+// ===========================================================================
+// STYLE 5 — T-800 Terminator
+// ===========================================================================
+
+let t800Scan     = 0;        // eye scan position -1..1
+let t800ScanDir  = 1;
+let t800HudTick  = 0;
+let t800JawOpen  = 0;
+let t800GlowPulse = 0;
+
+// Scrolling HUD data lines
+const T800_HUD_LINES = [
+  'TARGET ACQUIRED','NEURAL NET ONLINE','THREAT ASSESSMENT: NONE',
+  'CPU: 6502B  RAM: 1024K','SCANNING...','AUDIO INPUT: ACTIVE',
+  'VISUAL CORTEX: NOMINAL','LANGUAGE: EN-CA','MISSION: ACTIVE',
+  'POWER: 100%','ENDOSKELETON: INTACT','SERVO: ALL SYSTEMS GO',
+];
+let t800HudLines = [...T800_HUD_LINES];
+let t800HudOffset = 0;
+
+function drawT800() {
+  const listening = !!state.listening, thinking = !!state.thinking;
+  const amp = currentAmp(), speaking = amp !== null;
+  const t = Date.now() / 1000;
+
+  // Eye scan
+  const scanSpeed = listening ? 0 : thinking ? 0.008 : 0.018;
+  t800Scan += t800ScanDir * scanSpeed;
+  if (t800Scan >  1) { t800Scan =  1; t800ScanDir = -1; }
+  if (t800Scan < -1) { t800Scan = -1; t800ScanDir =  1; }
+  if (listening) t800Scan = 0;  // lock centre
+
+  // Jaw
+  const jawTarget = speaking ? (amp || 0) * 0.7 : 0;
+  t800JawOpen += (jawTarget - t800JawOpen) * 0.25;
+
+  // Glow
+  const glowTarget = listening ? 1.0 : speaking ? 0.5 + (amp||0)*0.5 : 0.6;
+  t800GlowPulse += (glowTarget - t800GlowPulse) * 0.08;
+
+  // HUD scroll
+  t800HudTick++;
+  if (t800HudTick % 4 === 0) t800HudOffset = (t800HudOffset + 1) % T800_HUD_LINES.length;
+
+  // Background — dark with red atmospheric tint
+  ctx.fillStyle = '#080508';
+  ctx.fillRect(0, 0, IW, IH);
+
+  // Atmospheric red glow from top
+  const atmGrad = ctx.createRadialGradient(IW/2, 0, 0, IW/2, 0, IH * 0.7);
+  atmGrad.addColorStop(0, `rgba(180,10,10,${0.12 * t800GlowPulse})`);
+  atmGrad.addColorStop(1, 'rgba(180,10,10,0)');
+  ctx.fillStyle = atmGrad;
+  ctx.fillRect(0, 0, IW, IH);
+
+  const cx = IW / 2, cy = IH / 2;
+
+  // --- Skull structure — geometric schematic lines ---
+  ctx.strokeStyle = 'rgba(200,220,255,0.18)';
+  ctx.lineWidth = 1.5;
+
+  // Cranium arc
+  ctx.beginPath();
+  ctx.arc(cx, cy - 120, 240, Math.PI * 0.85, Math.PI * 0.15);
+  ctx.stroke();
+
+  // Cheekbone lines
+  [[cx - 180, cy - 20, cx - 240, cy + 120],
+   [cx + 180, cy - 20, cx + 240, cy + 120]].forEach(([x1,y1,x2,y2]) => {
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  });
+
+  // Zygomatic arch (cheek ridge)
+  [[cx - 240, cy + 120, cx - 160, cy + 180],
+   [cx + 240, cy + 120, cx + 160, cy + 180]].forEach(([x1,y1,x2,y2]) => {
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  });
+
+  // Jaw
+  const jawDrop = t800JawOpen * 80;
+  ctx.beginPath();
+  ctx.moveTo(cx - 160, cy + 180);
+  ctx.lineTo(cx - 100, cy + 280 + jawDrop);
+  ctx.lineTo(cx,       cy + 300 + jawDrop);
+  ctx.lineTo(cx + 100, cy + 280 + jawDrop);
+  ctx.lineTo(cx + 160, cy + 180);
+  ctx.stroke();
+
+  // Nasal cavity lines
+  ctx.beginPath();
+  ctx.moveTo(cx - 30, cy + 60);
+  ctx.lineTo(cx - 50, cy + 140);
+  ctx.lineTo(cx,      cy + 160);
+  ctx.lineTo(cx + 50, cy + 140);
+  ctx.lineTo(cx + 30, cy + 60);
+  ctx.stroke();
+
+  // Teeth (upper)
+  for (let i = -3; i <= 3; i++) {
+    ctx.beginPath();
+    ctx.rect(cx + i*22 - 9, cy + 180, 18, 22);
+    ctx.strokeStyle = 'rgba(200,220,255,0.25)';
+    ctx.stroke();
+  }
+
+  // Teeth (lower — moves with jaw)
+  for (let i = -3; i <= 3; i++) {
+    ctx.beginPath();
+    ctx.rect(cx + i*22 - 9, cy + 210 + jawDrop, 18, 22);
+    ctx.strokeStyle = 'rgba(200,220,255,0.20)';
+    ctx.stroke();
+  }
+
+  // Brow ridge
+  ctx.strokeStyle = 'rgba(200,220,255,0.22)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(cx - 200, cy - 130);
+  ctx.lineTo(cx - 60,  cy - 100);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 200, cy - 130);
+  ctx.lineTo(cx + 60,  cy - 100);
+  ctx.stroke();
+
+  // --- Optical sensors (the eyes) ---
+  const eyeY    = cy - 60;
+  const eyeW    = 120, eyeH = 36;
+  const eyeOffX = 98;
+  const scanX   = t800Scan * (eyeW * 0.35);
+
+  [cx - eyeOffX, cx + eyeOffX].forEach((ex, idx) => {
+    // Eye socket — dark recess
+    ctx.fillStyle = '#050202';
+    ctx.beginPath();
+    ctx.roundRect(ex - eyeW/2 - 4, eyeY - eyeH/2 - 4, eyeW + 8, eyeH + 8, 4);
+    ctx.fill();
+
+    // Red glow behind sensor
+    const eyeGlow = ctx.createRadialGradient(ex, eyeY, 0, ex, eyeY, eyeW*0.7);
+    eyeGlow.addColorStop(0, `rgba(255,20,20,${0.6 * t800GlowPulse})`);
+    eyeGlow.addColorStop(1, 'rgba(255,20,20,0)');
+    ctx.fillStyle = eyeGlow;
+    ctx.fillRect(ex - eyeW, eyeY - eyeH, eyeW*2, eyeH*2);
+
+    // Sensor bar
+    const barGrad = ctx.createLinearGradient(ex - eyeW/2, 0, ex + eyeW/2, 0);
+    barGrad.addColorStop(0,   'rgba(180,0,0,0.4)');
+    barGrad.addColorStop(0.5, `rgba(255,40,40,${t800GlowPulse})`);
+    barGrad.addColorStop(1,   'rgba(180,0,0,0.4)');
+    ctx.fillStyle = barGrad;
+    ctx.beginPath();
+    ctx.roundRect(ex - eyeW/2, eyeY - eyeH/2, eyeW, eyeH, 3);
+    ctx.fill();
+
+    // Scan dot — the bright moving pupil
+    const dotX = ex + scanX * (idx === 0 ? 1 : 1);
+    const dotGrad = ctx.createRadialGradient(dotX, eyeY, 0, dotX, eyeY, eyeH * 0.9);
+    dotGrad.addColorStop(0, 'rgba(255,255,220,1)');
+    dotGrad.addColorStop(0.3, 'rgba(255,80,20,1)');
+    dotGrad.addColorStop(1, 'rgba(255,20,20,0)');
+    ctx.fillStyle = dotGrad;
+    ctx.beginPath();
+    ctx.arc(dotX, eyeY, eyeH * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sensor grid lines
+    ctx.strokeStyle = 'rgba(255,40,40,0.2)';
+    ctx.lineWidth = 1;
+    for (let g = -2; g <= 2; g++) {
+      ctx.beginPath();
+      ctx.moveTo(ex - eyeW/2, eyeY + g * (eyeH/5));
+      ctx.lineTo(ex + eyeW/2, eyeY + g * (eyeH/5));
+      ctx.stroke();
+    }
+  });
+
+  // --- HUD overlay ---
+  const hudAlpha = thinking ? 0.75 : listening ? 0.5 : 0.3;
+
+  // Corner targeting brackets
+  const bSz = 35, bOff = 28;
+  const corners = [[bOff,bOff],[IW-bOff,bOff],[IW-bOff,IH-bOff],[bOff,IH-bOff]];
+  ctx.strokeStyle = `rgba(255,40,40,${hudAlpha * 0.8})`;
+  ctx.lineWidth = 2;
+  corners.forEach(([x,y], i) => {
+    const sx = i < 2 ? 1 : -1, sy = i===0||i===3 ? 1 : -1;
+    ctx.beginPath();
+    ctx.moveTo(x + sx*bSz, y); ctx.lineTo(x, y); ctx.lineTo(x, y + sy*bSz);
+    ctx.stroke();
+  });
+
+  // HUD data text — right side scrolling
+  ctx.font = '14px monospace';
+  ctx.fillStyle = `rgba(255,60,60,${hudAlpha})`;
+  ctx.textAlign = 'right';
+  for (let i = 0; i < 8; i++) {
+    const line = T800_HUD_LINES[(t800HudOffset + i) % T800_HUD_LINES.length];
+    ctx.fillText(line, IW - 35, 70 + i * 22);
+  }
+
+  // Status line bottom
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 16px monospace';
+  ctx.fillStyle = `rgba(255,40,40,${hudAlpha * 1.2})`;
+  const statusText = listening ? 'INPUT: VOICE DETECTED' :
+                     thinking  ? 'CPU: ANALYZING...' :
+                     speaking  ? 'OUTPUT: VOCAL SYNTHESIS' : 'STATUS: STANDBY';
+  ctx.fillText(statusText, 35, IH - 40);
+
+  // Thinking mode: data cascade
+  if (thinking) {
+    ctx.font = '12px monospace';
+    ctx.fillStyle = 'rgba(255,40,40,0.4)';
+    ctx.textAlign = 'left';
+    for (let i = 0; i < 5; i++) {
+      const hex = Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase().padStart(4,'0');
+      ctx.fillText(`0x${hex}`, 35, 70 + i * 22);
+    }
+  }
+
+  ctx.textAlign = 'left';
+}
+
+// ===========================================================================
+// STYLE 6 — Johnny 5 (Short Circuit)
+// ===========================================================================
+
+let j5EyeX = 0, j5EyeY = 0;          // eye gaze direction
+let j5EyeXTarget = 0, j5EyeYTarget = 0;
+let j5BrowAngle = 0, j5BrowTarget = 0; // eyebrow tilt
+let j5PupilR = 1.0, j5PupilTarget = 1.0; // pupil size scale
+let j5SensorAngle = 0;                // rotating sensor dish
+let j5WanderTimer = 0;
+let j5BlinkProgress = 1;             // 1=open, 0=closed
+let j5BlinkTimer = 0;
+
+function drawJohnny5() {
+  const listening = !!state.listening, thinking = !!state.thinking;
+  const amp = currentAmp(), speaking = amp !== null;
+  const t = Date.now() / 1000;
+
+  // --- State-driven targets ---
+  if (listening) {
+    j5EyeXTarget    = 0;
+    j5EyeYTarget    = 0;
+    j5BrowTarget    = 0.3;   // raised
+    j5PupilTarget   = 1.4;   // wide
+  } else if (thinking) {
+    j5EyeXTarget    = 0;
+    j5EyeYTarget    = -0.3;  // looking up
+    j5BrowTarget    = -0.5;  // furrowed
+    j5PupilTarget   = 0.6;   // squinting
+  } else if (speaking) {
+    j5PupilTarget   = 0.9 + (amp||0) * 0.5;
+    j5BrowTarget    = 0.1 + (amp||0) * 0.2;
+  } else {
+    // Idle — eyes wander
+    j5WanderTimer++;
+    if (j5WanderTimer > 120 + Math.random() * 80) {
+      j5EyeXTarget  = (Math.random() - 0.5) * 1.2;
+      j5EyeYTarget  = (Math.random() - 0.5) * 0.8;
+      j5BrowTarget  = (Math.random() - 0.3) * 0.4;
+      j5WanderTimer = 0;
+    }
+    j5PupilTarget = 1.0;
+  }
+
+  // Smooth tracking
+  j5EyeX       += (j5EyeXTarget    - j5EyeX)       * 0.06;
+  j5EyeY       += (j5EyeYTarget    - j5EyeY)        * 0.06;
+  j5BrowAngle  += (j5BrowTarget    - j5BrowAngle)   * 0.08;
+  j5PupilR     += (j5PupilTarget   - j5PupilR)      * 0.10;
+
+  // Sensor rotation
+  const sensorSpeed = thinking ? 0.06 : listening ? 0.04 : 0.015;
+  j5SensorAngle += sensorSpeed;
+
+  // Blink
+  j5BlinkTimer++;
+  if (j5BlinkProgress === 1 && j5BlinkTimer > 200 + Math.random() * 150) {
+    j5BlinkProgress = 0.99;
+    j5BlinkTimer = 0;
+  }
+  if (j5BlinkProgress < 1 && j5BlinkProgress > 0) {
+    j5BlinkProgress -= 0.12;
+    if (j5BlinkProgress <= 0) j5BlinkProgress = -0.1;
+  }
+  if (j5BlinkProgress < 0) {
+    j5BlinkProgress += 0.15;
+    if (j5BlinkProgress >= 1) j5BlinkProgress = 1;
+  }
+
+  // Background — warm dark charcoal, friendly
+  ctx.fillStyle = '#0a0c10';
+  ctx.fillRect(0, 0, IW, IH);
+
+  // Subtle blue-white ambient glow
+  const ambGrad = ctx.createRadialGradient(IW/2, IH/2, 0, IW/2, IH/2, IH*0.6);
+  ambGrad.addColorStop(0, 'rgba(60,120,200,0.06)');
+  ambGrad.addColorStop(1, 'rgba(60,120,200,0)');
+  ctx.fillStyle = ambGrad;
+  ctx.fillRect(0, 0, IW, IH);
+
+  const cx = IW/2, cy = IH/2 + 40;
+
+  // --- Sensor dish on top ---
+  const dishY = cy - 340;
+  ctx.save();
+  ctx.translate(cx, dishY);
+  ctx.rotate(j5SensorAngle);
+
+  // Dish base
+  ctx.strokeStyle = 'rgba(180,200,220,0.5)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, 38, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Dish spokes
+  for (let s = 0; s < 4; s++) {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    const a = (s / 4) * Math.PI * 2;
+    ctx.lineTo(Math.cos(a) * 38, Math.sin(a) * 38);
+    ctx.stroke();
+  }
+
+  // Centre hub
+  ctx.fillStyle = 'rgba(100,160,220,0.8)';
+  ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+
+  ctx.restore();
+
+  // Dish stem
+  ctx.strokeStyle = 'rgba(180,200,220,0.4)';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(cx, dishY + 38);
+  ctx.lineTo(cx, dishY + 90);
+  ctx.stroke();
+
+  // --- Head housing ---
+  // Main head box — slightly rounded rectangle
+  ctx.fillStyle = '#1a1e28';
+  ctx.strokeStyle = 'rgba(140,170,210,0.5)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(cx - 220, cy - 280, 440, 400, 30);
+  ctx.fill();
+  ctx.stroke();
+
+  // Head highlight top
+  ctx.fillStyle = 'rgba(180,200,240,0.04)';
+  ctx.beginPath();
+  ctx.roundRect(cx - 220, cy - 280, 440, 120, [30,30,0,0]);
+  ctx.fill();
+
+  // Panel lines
+  ctx.strokeStyle = 'rgba(140,170,210,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - 220, cy - 140); ctx.lineTo(cx + 220, cy - 140); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - 220, cy + 20);  ctx.lineTo(cx + 220, cy + 20);  ctx.stroke();
+
+  // --- Eyes ---
+  const eyeOffX = 95, eyeOffY = cy - 160;
+  const eyeR    = 85;
+  const maxGaze = eyeR * 0.28;
+  const blinkScale = Math.max(0, j5BlinkProgress);
+
+  [-1, 1].forEach((side, idx) => {
+    const ex = cx + side * eyeOffX;
+    const ey = eyeOffY;
+    const gazeX = j5EyeX * maxGaze * side;
+    const gazeY = j5EyeY * maxGaze;
+
+    // Eye socket (dark surround)
+    ctx.fillStyle = '#080a10';
+    ctx.beginPath(); ctx.arc(ex, ey, eyeR + 8, 0, Math.PI*2); ctx.fill();
+
+    // Outer ring — chrome
+    ctx.strokeStyle = 'rgba(160,190,220,0.7)';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(ex, ey, eyeR, 0, Math.PI*2); ctx.stroke();
+
+    // Inner ring
+    ctx.strokeStyle = 'rgba(100,140,200,0.4)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(ex, ey, eyeR * 0.75, 0, Math.PI*2); ctx.stroke();
+
+    // Iris — blue gradient
+    const irisGrad = ctx.createRadialGradient(
+      ex + gazeX*0.3, ey + gazeY*0.3, 0,
+      ex, ey, eyeR * 0.65
+    );
+    irisGrad.addColorStop(0, 'rgba(80,160,255,0.9)');
+    irisGrad.addColorStop(0.5, 'rgba(40,100,200,0.8)');
+    irisGrad.addColorStop(1, 'rgba(10,40,120,0.6)');
+    ctx.fillStyle = irisGrad;
+    ctx.beginPath(); ctx.arc(ex, ey, eyeR * 0.65, 0, Math.PI*2); ctx.fill();
+
+    // Pupil — follows gaze, scales with state
+    const pupilR = eyeR * 0.28 * j5PupilR;
+    const pupilGrad = ctx.createRadialGradient(
+      ex + gazeX, ey + gazeY, 0,
+      ex + gazeX, ey + gazeY, pupilR
+    );
+    pupilGrad.addColorStop(0, 'rgba(240,248,255,0.95)');
+    pupilGrad.addColorStop(0.15, '#000');
+    pupilGrad.addColorStop(1, '#000');
+    ctx.fillStyle = pupilGrad;
+    ctx.beginPath();
+    ctx.arc(ex + gazeX, ey + gazeY, pupilR, 0, Math.PI*2);
+    ctx.fill();
+
+    // Specular highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath();
+    ctx.arc(ex + gazeX - pupilR*0.5, ey + gazeY - pupilR*0.5, pupilR*0.22, 0, Math.PI*2);
+    ctx.fill();
+
+    // Blink lid — scales vertically
+    if (blinkScale < 0.95) {
+      const lidH = eyeR * (1 - blinkScale) * 2.2;
+      ctx.fillStyle = '#1a1e28';
+      ctx.beginPath();
+      ctx.ellipse(ex, ey - eyeR + lidH/2, eyeR + 2, lidH/2 + 2, 0, 0, Math.PI*2);
+      ctx.fill();
+      // Bottom lid
+      ctx.beginPath();
+      ctx.ellipse(ex, ey + eyeR - lidH/2, eyeR + 2, lidH/2 + 2, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // --- Eyebrow unit ---
+    const browY  = ey - eyeR - 28;
+    const browTilt = j5BrowAngle * (side === -1 ? -1 : 1) * 18;
+    ctx.save();
+    ctx.translate(ex, browY);
+    ctx.rotate((browTilt * Math.PI) / 180);
+    ctx.fillStyle = 'rgba(160,190,220,0.85)';
+    ctx.beginPath();
+    ctx.roundRect(-42, -9, 84, 18, 9);
+    ctx.fill();
+    // Brow highlight
+    ctx.fillStyle = 'rgba(220,240,255,0.3)';
+    ctx.beginPath();
+    ctx.roundRect(-38, -6, 76, 6, 4);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // --- Nose sensor array (between eyes, below) ---
+  const noseY = cy - 60;
+  ctx.fillStyle = 'rgba(60,100,160,0.5)';
+  ctx.beginPath();
+  ctx.moveTo(cx - 20, noseY - 10);
+  ctx.lineTo(cx + 20, noseY - 10);
+  ctx.lineTo(cx + 12, noseY + 20);
+  ctx.lineTo(cx - 12, noseY + 20);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(100,160,220,0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // Centre dot
+  ctx.fillStyle = listening ? 'rgba(100,200,255,0.9)' : 'rgba(80,140,200,0.6)';
+  ctx.beginPath(); ctx.arc(cx, noseY + 5, 5, 0, Math.PI*2); ctx.fill();
+
+  // --- Status light strip at bottom of head ---
+  const stripY = cy + 90, stripW = 360, stripH = 14;
+  ctx.fillStyle = '#0f1218';
+  ctx.beginPath(); ctx.roundRect(cx - stripW/2, stripY, stripW, stripH, 4); ctx.fill();
+
+  const lightCount = 12;
+  const lightW = (stripW - 16) / lightCount;
+  for (let l = 0; l < lightCount; l++) {
+    const lx = cx - stripW/2 + 8 + l * lightW + lightW/2;
+    const active = speaking
+      ? l < Math.floor((amp||0) * lightCount)
+      : listening
+      ? l % 2 === 0
+      : thinking
+      ? l === Math.floor(t * 3) % lightCount
+      : l < 3;
+    ctx.fillStyle = active
+      ? 'rgba(80,200,255,0.95)'
+      : 'rgba(40,80,120,0.4)';
+    ctx.beginPath(); ctx.arc(lx, stripY + stripH/2, 4, 0, Math.PI*2); ctx.fill();
+  }
+
+  // State label
+  ctx.font = 'bold 20px monospace';
+  ctx.fillStyle = 'rgba(100,160,220,0.6)';
+  ctx.textAlign = 'center';
+  const j5Label = listening ? 'INPUT ACTIVE' : thinking ? 'PROCESSING' :
+                  speaking ? 'OUTPUT' : 'CURIOUS';
+  ctx.fillText(j5Label, cx, cy + 130);
+}
+
+// ===========================================================================
+// Style initialisation
+// ===========================================================================
+
+function initStyle(s) {
+  if (s===3) {
+    // Reset matrix trails
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,IW,IH);
+  }
+}
+initStyle(currentStyle);
+showStyleLabel();
+
+// ===========================================================================
+// Main draw loop
+// ===========================================================================
+
+function draw() {
+  switch(currentStyle) {
+    case 0: drawTriangles(); break;
+    case 1: drawHAL();       break;
+    case 2: drawGLaDOS();    break;
+    case 3: drawMatrix();    break;
+    case 4: drawASCII();     break;
+    case 5: drawT800();      break;
+    case 6: drawJohnny5();      break;
+    case 7: drawHALTerminal(); break;
+  }
+
+  // Style name overlay — fades out after switch
+  if (styleLabelAlpha > 0.01) {
+    ctx.font='bold 28px monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle=rgbStr(COL2, styleLabelAlpha*0.9);
+    ctx.fillText(STYLE_NAMES[currentStyle], IW/2, 60);
+    styleLabelAlpha *= 0.97;
+  }
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>

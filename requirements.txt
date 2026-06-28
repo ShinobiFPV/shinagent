@@ -1,0 +1,39 @@
+# IMQ2 Requirements
+# Core (always needed)
+anthropic>=0.25.0
+pyyaml>=6.0
+python-dotenv>=1.0
+
+# Memory
+chromadb>=0.5.0
+
+# STT — pick one (or install all for fallback capability)
+deepgram-sdk>=3.0.0
+openai>=1.30.0          # also covers whisper_cloud STT and openai_tts TTS
+
+# TTS
+elevenlabs>=1.0.0
+
+# Voice I/O
+sounddevice>=0.4.6
+soundfile>=0.12.1
+pynput>=1.7.6          # talk button listener (8BitDo Zero 2 / Flipper Zero keyboard mode)
+
+# Web search tool
+requests>=2.31.0
+# tavily-python>=0.3.0  # optional — or use raw requests as above
+
+# Local STT fallback (install when migrating to Pi or going offline)
+# faster-whisper>=1.0.0
+
+# Local TTS fallback
+# piper-tts is a binary install — see scripts/setup_piper.sh
+
+# Wake word (optional, requires Picovoice account for access key)
+# pvporcupine>=3.0.0
+
+# Body / serial interface
+pyserial>=3.5
+
+# Platform-specific audio fallback
+# pyaudio>=0.2.14       # alternative to sounddevice on some platforms

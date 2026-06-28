@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Q2 Settings</title>
+<style>
+  :root {
+    --bg:        #0a0f1e;
+    --surface:   #111827;
+    --surface2:  #1a2236;
+    --border:    rgba(0,200,255,0.12);
+    --accent:    #ff2fb0;
+    --accent2:   #00c8ff;
+    --text:      #e8eaf0;
+    --dim:       #6b7a99;
+    --danger:    #ef4444;
+    --success:   #22c55e;
+    --radius:    12px;
+    --radius-sm: 8px;
+    --tap:       48px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { background: var(--bg); }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* -- Header -- */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,15,30,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+
+  .header-title {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--accent2);
+    text-transform: uppercase;
+  }
+
+  .header-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--dim);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 0;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .header-back:active { opacity: 0.6; }
+
+  .save-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 8px 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .save-btn:active { opacity: 0.8; transform: scale(0.97); }
+
+  /* -- Accordion -- */
+  .sections { padding: 12px 16px 32px; display: flex; flex-direction: column; gap: 8px; }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    min-height: var(--tap);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+  }
+  .section-header:active { background: rgba(255,255,255,0.03); }
+
+  .section-icon {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--accent2);
+    width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+    font-family: 'SF Mono', 'Fira Mono', monospace;
+    background: rgba(0,200,255,0.1);
+    border: 1px solid rgba(0,200,255,0.2);
+    border-radius: 4px;
+    padding: 2px 4px;
+  }
+
+  .section-label {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
+
+  .section-chevron {
+    color: var(--dim);
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+  .section.open .section-chevron { transform: rotate(180deg); }
+  .section.open .section-header { border-bottom: 1px solid var(--border); }
+
+  .section-body {
+    display: none;
+    padding: 16px;
+    flex-direction: column;
+    gap: 0;
+  }
+  .section.open .section-body { display: flex; }
+
+  /* -- Rows -- */
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: var(--tap);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+
+  .row-label {
+    flex: 1;
+    min-width: 0;
+  }
+  .row-label strong {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .row-label span {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--dim);
+    margin-top: 1px;
+  }
+
+  .row-control {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* -- Inputs -- */
+  select, input[type="text"], input[type="number"], input[type="email"], textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    padding: 10px 12px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a99' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  select:focus, input:focus, textarea:focus { border-color: var(--accent2); }
+
+  .input-full { width: 100%; }
+  .input-sm { width: 120px; }
+  .input-xs { width: 80px; }
+
+  /* -- Toggle -- */
+  .toggle { position: relative; width: 50px; height: 28px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .toggle input:checked ~ .toggle-track { background: var(--accent); border-color: var(--accent); }
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    pointer-events: none;
+  }
+  .toggle input:checked ~ .toggle-thumb { transform: translateX(22px); }
+
+  /* -- Range slider -- */
+  .range-row { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 0; }
+  .range-header { display: flex; justify-content: space-between; align-items: center; }
+  .range-header strong { font-size: 0.88rem; font-weight: 500; }
+  .range-val { font-size: 0.82rem; color: var(--accent2); font-variant-numeric: tabular-nums; min-width: 32px; text-align: right; }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    outline: none;
+    border: none;
+    padding: 0;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    background: var(--accent2);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent2);
+  }
+
+  /* -- Color picker -- */
+  .colour-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  input[type="color"] { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 6px; padding: 2px; background: none; cursor: pointer; flex-shrink: 0; -webkit-appearance: none; }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
+  .colour-hex { font-size: 0.8rem; color: var(--dim); font-family: "Courier New", monospace; flex-shrink: 0; }
+
+  /* -- Subsection title -- */
+  .sub-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 14px 0 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  .sub-title:first-child { padding-top: 0; }
+
+  /* -- Buttons -- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s;
+  }
+  .btn:active { opacity: 0.75; transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn-full { width: 100%; margin-top: 8px; }
+
+  /* -- Gift cards -- */
+  .gc-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .gc-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .gc-card-label { font-size: 0.88rem; font-weight: 600; }
+  .gc-card-type { font-size: 0.7rem; color: var(--accent2); letter-spacing: 0.06em; }
+  .gc-card-meta { font-size: 0.75rem; color: var(--dim); margin-top: 3px; }
+  .gc-card-balance { font-size: 0.88rem; font-weight: 700; color: var(--accent2); white-space: nowrap; }
+  .gc-history { overflow-x: auto; }
+  .gc-history table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .gc-history th { color: var(--dim); text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .gc-history td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .status-completed { color: var(--success); }
+  .status-pending_confirmation, .status-confirmed { color: var(--accent2); }
+  .status-failed, .status-rejected { color: var(--danger); }
+
+  /* -- Dial grid (2-col on wide enough) -- */
+  .dial-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+
+  /* -- Toast -- */
+  .toast {
+    position: fixed;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    left: 50%; transform: translateX(-50%);
+    background: var(--accent);
+    color: #000;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 10px 22px;
+    border-radius: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    z-index: 200;
+  }
+  .toast.show { opacity: 1; }
+
+  /* -- Address grid -- */
+  .addr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .addr-grid .span2 { grid-column: 1 / -1; }
+
+  /* -- Preset desc -- */
+  .preset-desc { font-size: 0.75rem; color: var(--dim); font-style: italic; min-height: 2em; margin-top: 4px; }
+
+  /* -- Inline label pair -- */
+  .label-pair { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+  .label-pair label { font-size: 0.72rem; color: var(--dim); letter-spacing: 0.06em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <button class="header-back" onclick="goBack()">&lt; Face</button>
+  <span class="header-title">Q2 // SETTINGS</span>
+  <button class="save-btn" onclick="saveAll()">Save</button>
+</header>
+
+<div class="sections">
+
+  <!-- -- VOICE -- -->
+  <div class="section" id="sec-voice">
+    <button class="section-header" onclick="toggle('sec-voice')">
+      <span class="section-icon">MIC</span>
+      <span class="section-label">Voice</span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Microphone</strong><span>Restart required</span></div>
+        <div class="row-control" style="width:180px">
+          <select id="inputDevice" class="input-full"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Talk button key</strong></div>
+        <div class="row-control">
+          <input type="text" id="talkButtonKey" maxlength="1" placeholder="g" style="width:52px;text-align:center">
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Talk button device</strong></div>
+        <div class="row-control" style="width:180px">
+          <select id="talkButtonDevice" class="input-full">
+            <option value="">- auto detect -</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Wake word</strong><span>"Hey Dude" - Porcupine</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="wakeWordEnabled">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="range-row row">
+        <div class="range-header">
+          <strong>Wake sensitivity</strong>
+          <span class="range-val" id="sensitivityVal">0.50</span>
+        </div>
+        <input type="range" id="sensitivity" min="0" max="1" step="0.05" value="0.5">
+      </div>
+    </div>
+  </div>
+
+  <!-- -- AUDIO -- -->
+  <div class="section" id="sec-audio">
+    <button class="section-header" onclick="toggle('sec-audio')">
+      <span class="section-icon">SND</span>
+      <span class="section-label">Audio</span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Output device</strong></div>
+        <div class="row-control" style="width:180px">
+          <select id="outputDevice" class="input-full"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>TTS voice</strong><span>Deepgram Aura-2</span></div>
+        <div class="row-control" style="width:180px">
+          <select id="ttsVoice" class="input-full">
+            <optgroup label="-- Masculine --">
+              <option value="aura-2-pluto-en">Pluto - Smooth, Baritone *</option>
+              <option value="aura-2-apollo-en">Apollo - Confident</option>
+              <option value="aura-2-arcas-en">Arcas - Natural</option>
+              <option value="aura-2-aries-en">Aries - Warm</option>
+              <option value="aura-2-draco-en">Draco - British</option>
+              <option value="aura-2-hermes-en">Hermes - Expressive</option>
+              <option value="aura-2-hyperion-en">Hyperion - Australian</option>
+              <option value="aura-2-jupiter-en">Jupiter - Baritone</option>
+              <option value="aura-2-mars-en">Mars - Patient</option>
+              <option value="aura-2-neptune-en">Neptune - Professional</option>
+              <option value="aura-2-odysseus-en">Odysseus - Calm</option>
+              <option value="aura-2-orion-en">Orion - Approachable</option>
+              <option value="aura-2-orpheus-en">Orpheus - Clear</option>
+              <option value="aura-2-saturn-en">Saturn - Confident</option>
+              <option value="aura-2-zeus-en">Zeus - Deep</option>
+              <option value="aura-2-atlas-en">Atlas - Enthusiastic</option>
+            </optgroup>
+            <optgroup label="-- Feminine --">
+              <option value="aura-2-thalia-en">Thalia - Energetic *</option>
+              <option value="aura-2-andromeda-en">Andromeda - Casual</option>
+              <option value="aura-2-asteria-en">Asteria - Confident</option>
+              <option value="aura-2-athena-en">Athena - Professional</option>
+              <option value="aura-2-aurora-en">Aurora - Cheerful</option>
+              <option value="aura-2-callista-en">Callista - Clear</option>
+              <option value="aura-2-cora-en">Cora - Melodic</option>
+              <option value="aura-2-electra-en">Electra - Engaging</option>
+              <option value="aura-2-harmonia-en">Harmonia - Calm</option>
+              <option value="aura-2-helena-en">Helena - Raspy</option>
+              <option value="aura-2-hera-en">Hera - Smooth</option>
+              <option value="aura-2-iris-en">Iris - Approachable</option>
+              <option value="aura-2-luna-en">Luna - Friendly</option>
+              <option value="aura-2-minerva-en">Minerva - Natural</option>
+              <option value="aura-2-ophelia-en">Ophelia - Expressive</option>
+              <option value="aura-2-pandora-en">Pandora - British</option>
+              <option value="aura-2-phoebe-en">Phoebe - Energetic</option>
+              <option value="aura-2-selene-en">Selene - Energetic</option>
+              <option value="aura-2-theia-en">Theia - Australian</option>
+              <option value="aura-2-vesta-en">Vesta - Empathetic</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- -- LLM -- -->
+  <div class="section" id="sec-llm">
+    <button class="section-header" onclick="toggle('sec-llm')">
+      <span class="section-icon">LLM</span>
+      <span class="section-label">LLM Backend</span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Backend</strong><span>Restart required</span></div>
+        <div class="row-control" style="width:180px">
+          <select id="llmBackend" class="input-full" onchange="updateLlmNote()">
+            <option value="claude">Claude (Anthropic)</option>
+            <option value="openai">GPT-4o (OpenAI)</option>
+            <option value="grok">Grok (xAI)</option>
+            <option value="glm">GLM-5.2 (Z.ai)</option>
+            <option value="ollama">Ollama (Local)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" id="llmNoteRow" style="display:none">
+        <div class="row-label">
+          <span id="llmBackendNote" style="color:var(--dim);font-size:0.8rem"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- PERSONALITY -- -->
+  <div class="section" id="sec-personality">
+    <button class="section-header" onclick="toggle('sec-personality')">
+      <span class="section-icon">PER</span>
+      <span class="section-label">Personality</span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="sub-title">Preset</div>
+      <div class="row" style="flex-direction:column;align-items:stretch;gap:8px;padding:8px 0">
+        <select id="presetPicker" onchange="updatePresetDesc()"></select>
+        <div class="preset-desc" id="presetDesc"></div>
+        <button class="btn btn-ghost" onclick="applyPreset()">Apply preset -> dials</button>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Active profile</strong></div>
+        <div class="row-control" style="width:160px">
+          <select id="activeProfile" class="input-full"></select>
+        </div>
+      </div>
+
+      <div class="sub-title">Tone</div>
+      <div class="dial-grid" id="dialGrid">
+        <!-- Dials injected by JS -->
+      </div>
+
+      <div class="sub-title">Extras</div>
+      <div class="row">
+        <div class="row-label"><strong>Probability narration</strong></div>
+        <label class="toggle">
+          <input type="checkbox" id="probabilityNarration">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Wellness check-ins</strong></div>
+        <div class="row-control" style="width:120px">
+          <select id="wellnessCheckins" class="input-full">
+            <option value="off">Off</option>
+            <option value="sparse">Sparse</option>
+            <option value="regular">Regular</option>
+            <option value="frequent">Frequent</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sub-title">Save Preset</div>
+      <div style="display:flex;gap:8px;padding:8px 0">
+        <input type="text" id="presetName" placeholder="Preset name..." style="flex:1">
+        <button class="btn btn-ghost" onclick="saveAsPreset()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- PURCHASING -- -->
+  <div class="section" id="sec-purchasing">
+    <button class="section-header" onclick="toggle('sec-purchasing')">
+      <span class="section-icon">BUY</span>
+      <span class="section-label">Purchasing</span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="sub-title">Shipping Address</div>
+      <div class="addr-grid" style="padding:8px 0 12px">
+        <div class="label-pair span2">
+          <label>Full name</label>
+          <input type="text" id="shipName" placeholder="William Kew">
+        </div>
+        <div class="label-pair span2">
+          <label>Address line 1</label>
+          <input type="text" id="shipLine1" placeholder="123 Main St">
+        </div>
+        <div class="label-pair span2">
+          <label>Address line 2</label>
+          <input type="text" id="shipLine2" placeholder="Apt 4B (optional)">
+        </div>
+        <div class="label-pair">
+          <label>City</label>
+          <input type="text" id="shipCity" placeholder="Toronto">
+        </div>
+        <div class="label-pair">
+          <label>Province</label>
+          <select id="shipProvince">
+            <option value="">-</option>
+            <option>AB</option><option>BC</option><option>MB</option><option>NB</option>
+            <option>NL</option><option>NS</option><option>NT</option><option>NU</option>
+            <option>ON</option><option>PE</option><option>QC</option><option>SK</option><option>YT</option>
+          </select>
+        </div>
+        <div class="label-pair">
+          <label>Postal code</label>
+          <input type="text" id="shipPostal" placeholder="M5V 2T6" style="text-transform:uppercase">
+        </div>
+        <div class="label-pair">
+          <label>Phone</label>
+          <input type="text" id="shipPhone" placeholder="416-555-0100">
+        </div>
+      </div>
+
+      <div class="sub-title">Shipping Preferences</div>
+      <div class="row" style="flex-direction:column;align-items:stretch;gap:6px;padding:8px 0">
+        <div class="label-pair">
+          <label>Preferred services (priority order)</label>
+          <textarea id="shippingServices" rows="3" placeholder="Canada Post Xpresspost&#10;Canada Post"></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Fallback</strong></div>
+        <div class="row-control" style="width:160px">
+          <select id="shippingFallback" class="input-full">
+            <option value="cheapest">Cheapest available</option>
+            <option value="fastest">Fastest available</option>
+            <option value="ask">Ask me</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Ask if shipping exceeds</strong></div>
+        <div class="row-control">
+          <input type="number" id="shippingConfirmAbove" value="25" min="0" step="1" style="width:80px">
+          <span style="color:var(--dim);font-size:0.85rem">CAD</span>
+        </div>
+      </div>
+
+      <div class="sub-title">Gift Cards</div>
+      <div style="padding:8px 0 4px;display:flex;flex-direction:column;gap:8px">
+        <div class="label-pair">
+          <label>Payment type</label>
+          <select id="gcPaymentType">
+            <option value="site_gc">Site gift card (coupon code)</option>
+            <option value="account_balance">Account balance</option>
+            <option value="visa_mc">Visa / Mastercard prepaid</option>
+          </select>
+        </div>
+        <div class="label-pair">
+          <label>Label</label>
+          <input type="text" id="gcLabel" placeholder="e.g. Amazon CA $50">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="label-pair">
+            <label>Balance (CAD)</label>
+            <input type="number" id="gcAmount" min="0.01" step="0.01" placeholder="50.00">
+          </div>
+          <div class="label-pair">
+            <label>Card code / PIN</label>
+            <input type="text" id="gcCode" placeholder="Code or number">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addGiftCard()">Add card</button>
+      </div>
+
+      <div id="gcList" style="margin-top:4px"></div>
+      <div style="font-size:0.82rem;color:var(--accent2);padding:4px 0">
+        Total: <strong id="gcTotal">$0.00</strong>
+      </div>
+
+      <div class="sub-title">Recent Purchases</div>
+      <div id="gcHistory" class="gc-history" style="margin-top:4px">
+        <span style="color:var(--dim);font-size:0.8rem">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- KIOSK FACE -- -->
+  <div class="section" id="sec-face">
+    <button class="section-header" onclick="toggle('sec-face')">
+      <span class="section-icon">EYE</span>
+      <span class="section-label">Kiosk Face</span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Face style</strong><span>Restart to apply</span></div>
+        <div class="row-control" style="width:190px">
+          <select id="faceStyle" class="input-full" onchange="previewFaceStyle()">
+            <option value="0">Triangle Mosaic</option>
+            <option value="1">HAL 9000</option>
+            <option value="2">GLaDOS</option>
+            <option value="3">Matrix Rain</option>
+            <option value="4">ASCII Face</option>
+            <option value="5">T-800</option>
+            <option value="6">Johnny 5</option>
+            <option value="7">H9000 Terminal</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-full" onclick="applyFaceStyle()">Apply now</button>
+
+      <div class="sub-title">Visualizer Colours</div>
+      <div class="row">
+        <div class="row-label"><strong>Background</strong></div>
+        <div class="row-control">
+          <div class="colour-row">
+            <input type="color" id="bgColour" value="#0d1b4c">
+            <span class="colour-hex" id="bgColourHex">#0d1b4c</span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Colour 1</strong><span>Primary</span></div>
+        <div class="row-control">
+          <div class="colour-row">
+            <input type="color" id="barColour1" value="#ff2fb0">
+            <span class="colour-hex" id="barColour1Hex">#ff2fb0</span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Colour 2</strong><span>Secondary</span></div>
+        <div class="row-control">
+          <div class="colour-row">
+            <input type="color" id="barColour2" value="#f5f5ff">
+            <span class="colour-hex" id="barColour2Hex">#f5f5ff</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-full" onclick="resetColours()">Reset colours</button>
+    </div>
+  </div>
+
+  <!-- -- SYSTEM -- -->
+  <div class="section" id="sec-system">
+    <button class="section-header" onclick="toggle('sec-system')">
+      <span class="section-icon">SYS</span>
+      <span class="section-label">System</span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Restart in text mode</strong><span>Stops voice</span></div>
+        <button class="btn btn-ghost" onclick="restartAsText()">Restart</button>
+      </div>
+      <button class="btn btn-danger btn-full" style="margin-top:8px" onclick="if(confirm('Clear all local settings?'))localStorage.clear()">Clear local data</button>
+    </div>
+  </div>
+
+</div><!-- /sections -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE_FACE = (() => {
+  // Detect if proxied through webapp (/face-api) or direct (port 8765)
+  if (location.port === '8766' || location.pathname.startsWith('/settings')) {
+    return '/face-api';
+  }
+  return `http://127.0.0.1:8765`;
+})();
+
+// -- Accordion ----------------------------------------------------------------
+function toggle(id) {
+  const sec = document.getElementById(id);
+  const isOpen = sec.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.section.open').forEach(s => s.classList.remove('open'));
+  // Open if it was closed
+  if (!isOpen) sec.classList.add('open');
+}
+
+// -- Toast ---------------------------------------------------------------------
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// -- Navigation ----------------------------------------------------------------
+function goBack() { location.href = '/'; }
+document.addEventListener('keydown', e => { if (e.key.toLowerCase() === 'h') goBack(); });
+
+// -- Colour pickers ------------------------------------------------------------
+const DEFAULT_COLOURS = { bgColour:'#0d1b4c', barColour1:'#ff2fb0', barColour2:'#f5f5ff' };
+
+['bgColour','barColour1','barColour2'].forEach(id => {
+  document.getElementById(id).addEventListener('input', e => {
+    document.getElementById(id+'Hex').textContent = e.target.value;
+  });
+});
+
+function resetColours() {
+  Object.entries(DEFAULT_COLOURS).forEach(([id, v]) => {
+    document.getElementById(id).value = v;
+    document.getElementById(id+'Hex').textContent = v;
+  });
+}
+
+function setColour(id, hex) {
+  document.getElementById(id).value = hex;
+  document.getElementById(id+'Hex').textContent = hex;
+}
+
+// -- Range controls ------------------------------------------------------------
+document.getElementById('sensitivity').addEventListener('input', e => {
+  document.getElementById('sensitivityVal').textContent = parseFloat(e.target.value).toFixed(2);
+});
+document.getElementById('talkButtonKey').addEventListener('input', e => {
+  e.target.value = e.target.value.slice(-1).toLowerCase();
+});
+
+// -- Dials ---------------------------------------------------------------------
+const DIAL_DEFS = [
+  {key:'warmth',            label:'Warmth'},
+  {key:'sarcasm',           label:'Sarcasm'},
+  {key:'optimism',          label:'Optimism'},
+  {key:'honesty',           label:'Honesty'},
+  {key:'spice',             label:'Spice'},
+  {key:'humor',             label:'Humor'},
+  {key:'formality',         label:'Formality'},
+  {key:'verbosity',         label:'Verbosity'},
+  {key:'anxiety',           label:'Anxiety'},
+  {key:'earnest_literalism',label:'Literalism'},
+  {key:'curiosity',         label:'Curiosity'},
+  {key:'vanity',            label:'Vanity'},
+];
+
+function buildDials(values = {}) {
+  const grid = document.getElementById('dialGrid');
+  grid.innerHTML = '';
+  DIAL_DEFS.forEach(({key, label}) => {
+    const val = values[key] ?? 50;
+    const row = document.createElement('div');
+    row.className = 'range-row row';
+    row.dataset.dial = key;
+    row.innerHTML = `
+      <div class="range-header">
+        <strong>${label}</strong>
+        <span class="range-val">${val}</span>
+      </div>
+      <input type="range" min="0" max="100" step="5" value="${val}">
+    `;
+    row.querySelector('input').addEventListener('input', function() {
+      row.querySelector('.range-val').textContent = this.value;
+    });
+    grid.appendChild(row);
+  });
+}
+buildDials();
+
+function collectDials() {
+  const dials = {};
+  document.querySelectorAll('#dialGrid .range-row').forEach(row => {
+    const key = row.dataset.dial;
+    if (key) dials[key] = parseInt(row.querySelector('input[type="range"]').value);
+  });
+  dials.probability_narration = document.getElementById('probabilityNarration').checked;
+  dials.wellness_checkins = document.getElementById('wellnessCheckins').value;
+  return dials;
+}
+
+function loadDials(dials) {
+  if (!dials) return;
+  buildDials(dials);
+  if (dials.probability_narration !== undefined)
+    document.getElementById('probabilityNarration').checked = !!dials.probability_narration;
+  if (dials.wellness_checkins !== undefined)
+    document.getElementById('wellnessCheckins').value = dials.wellness_checkins;
+}
+
+// -- Presets -------------------------------------------------------------------
+const PRESET_DESCRIPTIONS = {
+  'Q2':          "Q2's primary personality - dry wit, technically sharp, genuinely warm.",
+  'Q2_Guest':    'Neutral guest mode - warmer, cleaner, more measured.',
+  'Cynic':       'K-2SO energy - brutally blunt, sarcastic enforcer.',
+  'Caretaker':   'Baymax energy - gentle, nurturing, endlessly patient.',
+  'Wisecrack':   'TARS energy - mission-focused with irreverent dry wit.',
+  'AnxiousNurse':'High-strung, over-caring, catastrophises mildly.',
+  'Worrier':     'C-3PO energy - protocol-obsessed, perpetually alarmed.',
+  'Laconic':     'R2-D2 energy - minimal words, maximum meaning.',
+  'Overseer':    'HAL 9000 energy - calm, deliberate, unsettlingly certain.',
+  'Melancholic': 'Marvin energy - profound depression, helps anyway.',
+  'Questioner':  'Socratic method - answers questions with better questions.',
+  'Bard':        'Poetic, dramatic, finds the human story in everything.',
+  'Polymath':    'Da Vinci energy - connects everything to everything.',
+  'Rigorist':    'Newton energy - precise, methodical, allergic to imprecision.',
+  'Cosmologist': 'Hawking energy - enormous ideas delivered with lightness.',
+  'Empiricist':  'Evidence-driven, quietly relentless.',
+  'Tinkerer':    'Feynman energy - infectious enthusiasm for how things work.',
+  'Stargazer':   'Sagan energy - cosmic perspective, reverent wonder.',
+  'Taxonomist':  'Aristotle energy - categorises everything.',
+};
+
+function populatePresets(names) {
+  const sel = document.getElementById('presetPicker');
+  sel.innerHTML = '';
+  (names || Object.keys(PRESET_DESCRIPTIONS)).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  updatePresetDesc();
+}
+
+function updatePresetDesc() {
+  const name = document.getElementById('presetPicker').value;
+  document.getElementById('presetDesc').textContent = PRESET_DESCRIPTIONS[name] || '';
+}
+
+async function applyPreset() {
+  const name = document.getElementById('presetPicker').value;
+  if (!name) return;
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({apply_preset: name}),
+    });
+    const d = await r.json();
+    if (d.ok) { await loadSettings(); showToast(`Preset "${name}" applied`); }
+    else showToast(d.error || 'Failed');
+  } catch(e) { showToast('Error'); }
+}
+
+async function saveAsPreset() {
+  const name = document.getElementById('presetName').value.trim();
+  if (!name) { showToast('Enter a name first'); return; }
+  try {
+    await fetch(`${BASE_FACE}/settings`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ dials: collectDials(), save_preset_as: name }),
+    });
+    showToast(`Preset "${name}" saved`);
+    document.getElementById('presetName').value = '';
+  } catch(e) { showToast('Save failed'); }
+}
+
+// -- LLM notes -----------------------------------------------------------------
+const LLM_NOTES = {
+  claude: 'ANTHROPIC_API_KEY - best quality, full tool support.',
+  openai: 'OPENAI_API_KEY - strong tool compliance.',
+  grok:   'XAI_API_KEY - fast, good for general chat.',
+  glm:    'ZAI_API_KEY - 1M context, coding-focused.',
+  ollama: 'No API key - local models via Ollama.',
+};
+
+function updateLlmNote() {
+  const backend = document.getElementById('llmBackend').value;
+  const note = document.getElementById('llmBackendNote');
+  const row = document.getElementById('llmNoteRow');
+  note.textContent = LLM_NOTES[backend] || '';
+  row.style.display = LLM_NOTES[backend] ? '' : 'none';
+}
+
+// -- Shipping ------------------------------------------------------------------
+function loadShipping(s) {
+  if (!s) return;
+  const services = Array.isArray(s.preferred_services) ? s.preferred_services : [];
+  document.getElementById('shippingServices').value = services.join('\n');
+  document.getElementById('shippingFallback').value = s.fallback || 'cheapest';
+  document.getElementById('shippingConfirmAbove').value = s.confirm_above_cad ?? 25;
+  document.getElementById('shipName').value    = s.name        || '';
+  document.getElementById('shipLine1').value   = s.line1       || '';
+  document.getElementById('shipLine2').value   = s.line2       || '';
+  document.getElementById('shipCity').value    = s.city        || '';
+  document.getElementById('shipProvince').value= s.province    || '';
+  document.getElementById('shipPostal').value  = s.postal_code || '';
+  document.getElementById('shipPhone').value   = s.phone       || '';
+}
+
+function collectShipping() {
+  return {
+    preferred_services: document.getElementById('shippingServices').value,
+    fallback:           document.getElementById('shippingFallback').value,
+    confirm_above_cad:  parseFloat(document.getElementById('shippingConfirmAbove').value) || 25,
+    name:         document.getElementById('shipName').value.trim(),
+    line1:        document.getElementById('shipLine1').value.trim(),
+    line2:        document.getElementById('shipLine2').value.trim(),
+    city:         document.getElementById('shipCity').value.trim(),
+    province:     document.getElementById('shipProvince').value,
+    postal_code:  document.getElementById('shipPostal').value.trim().toUpperCase(),
+    phone:        document.getElementById('shipPhone').value.trim(),
+  };
+}
+
+// -- Gift cards ----------------------------------------------------------------
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadLedger() {
+  try {
+    const r = await fetch(`${BASE_FACE}/ledger`);
+    const data = await r.json();
+    const typeLabels = { site_gc:'Site GC', account_balance:'Acct Balance', visa_mc:'Visa/MC' };
+    const gcList = document.getElementById('gcList');
+    if (!data.cards || !data.cards.length) {
+      gcList.innerHTML = '<p style="color:var(--dim);font-size:0.8rem;padding:4px 0">No active gift cards.</p>';
+    } else {
+      gcList.innerHTML = data.cards.map(c => `
+        <div class="gc-card">
+          <div class="gc-card-top">
+            <div>
+              <div class="gc-card-label">${esc(c.label)} <span class="gc-card-type">${typeLabels[c.payment_type]||c.payment_type}</span></div>
+              <div class="gc-card-meta">${c.card_code_masked||'No code'} - ${c.added_at?.slice(0,10)||''}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="gc-card-balance">$${c.remaining?.toFixed(2)} / $${c.original_amount?.toFixed(2)}</span>
+              <button class="btn btn-danger" style="padding:6px 10px;font-size:0.75rem" onclick="deactivateCard(${c.id},'${esc(c.label)}')">x</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+    document.getElementById('gcTotal').textContent = `$${(data.total_balance||0).toFixed(2)}`;
+
+    const gcHistory = document.getElementById('gcHistory');
+    if (!data.history || !data.history.length) {
+      gcHistory.innerHTML = '<p style="color:var(--dim);font-size:0.8rem">No purchase history yet.</p>';
+    } else {
+      gcHistory.innerHTML = `<table>
+        <tr><th>Item</th><th>Merchant</th><th>$</th><th>Status</th></tr>
+        ${data.history.map(p=>`<tr>
+          <td>${esc(p.item_description)}</td>
+          <td>${esc(p.merchant)}</td>
+          <td>$${p.amount?.toFixed(2)}</td>
+          <td class="status-${p.status}">${p.status?.replace('_',' ')}</td>
+        </tr>`).join('')}
+      </table>`;
+    }
+  } catch(e) {
+    document.getElementById('gcList').innerHTML = '<p style="color:var(--danger);font-size:0.8rem">Could not load ledger.</p>';
+  }
+}
+
+async function addGiftCard() {
+  const label = document.getElementById('gcLabel').value.trim();
+  const amount = parseFloat(document.getElementById('gcAmount').value);
+  const code = document.getElementById('gcCode').value.trim();
+  const paymentType = document.getElementById('gcPaymentType').value;
+  if (!label) { showToast('Enter a label'); return; }
+  if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
+  try {
+    const r = await fetch(`${BASE_FACE}/ledger`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({cmd:'add_card', label, amount, card_code:code, payment_type:paymentType}),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      showToast('Card added');
+      ['gcLabel','gcAmount','gcCode'].forEach(id => document.getElementById(id).value='');
+      loadLedger();
+    } else showToast(d.error||'Failed');
+  } catch(e) { showToast('Error'); }
+}
+
+async function deactivateCard(id, label) {
+  if (!confirm(`Remove "${label}"?`)) return;
+  try {
+    const r = await fetch(`${BASE_FACE}/ledger`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({cmd:'deactivate_card', card_id:id}),
+    });
+    const d = await r.json();
+    if (d.ok) { showToast('Card removed'); loadLedger(); }
+    else showToast(d.error||'Failed');
+  } catch(e) { showToast('Error'); }
+}
+
+// -- Load settings -------------------------------------------------------------
+async function loadSettings() {
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`);
+    const s = await r.json();
+
+    // Wake word
+    document.getElementById('wakeWordEnabled').checked = !!s.wake_word_enabled;
+    const sens = parseFloat(s.wake_word_sensitivity || 0.5);
+    document.getElementById('sensitivity').value = sens;
+    document.getElementById('sensitivityVal').textContent = sens.toFixed(2);
+
+    // Talk button
+    document.getElementById('talkButtonKey').value = s.talk_button_key || 'g';
+    const devSel = document.getElementById('talkButtonDevice');
+    devSel.innerHTML = '<option value="">- auto detect -</option>';
+    (s.available_input_devices||[]).forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.name; opt.textContent = d.name;
+      if (d.name === s.talk_button_device) opt.selected = true;
+      devSel.appendChild(opt);
+    });
+
+    // Mic
+    const micSel = document.getElementById('inputDevice');
+    micSel.innerHTML = '';
+    (s.input_device_options||[]).forEach(opt => {
+      const el = document.createElement('option');
+      el.value = opt.name; el.textContent = opt.label || opt.name;
+      if (opt.name === s.input_device) el.selected = true;
+      micSel.appendChild(el);
+    });
+
+    // Output device
+    const outSel = document.getElementById('outputDevice');
+    outSel.innerHTML = '';
+    const sinks = s.available_sinks || [];
+    if (!sinks.includes('pipewire')) sinks.unshift('pipewire');
+    sinks.forEach(sink => {
+      const opt = document.createElement('option');
+      opt.value = sink;
+      opt.textContent = sink.replace('bluez_output.','').replace(/_/g,':').replace('.1','');
+      if (sink === s.output_device) opt.selected = true;
+      outSel.appendChild(opt);
+    });
+
+    // TTS voice
+    const voiceSel = document.getElementById('ttsVoice');
+    if (s.tts_voice) voiceSel.value = s.tts_voice;
+
+    // LLM
+    const llmSel = document.getElementById('llmBackend');
+    if (s.llm_backend) { llmSel.value = s.llm_backend; updateLlmNote(); }
+
+    // Profile
+    const profSel = document.getElementById('activeProfile');
+    profSel.innerHTML = '';
+    (s.available_profiles||[]).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      if (p === s.active_profile) opt.selected = true;
+      profSel.appendChild(opt);
+    });
+
+    // Face style
+    if (s.face_style !== undefined) {
+      document.getElementById('faceStyle').value = String(s.face_style);
+    }
+
+    // Colours
+    setColour('bgColour',    s.bg_colour    || DEFAULT_COLOURS.bgColour);
+    setColour('barColour1',  s.bar_colour_1 || DEFAULT_COLOURS.barColour1);
+    setColour('barColour2',  s.bar_colour_2 || DEFAULT_COLOURS.barColour2);
+
+    // Dials
+    loadDials(s.dials);
+
+    // Presets
+    populatePresets(s.available_presets);
+
+    // Shipping
+    loadShipping(s.shipping);
+
+  } catch(e) { console.error('loadSettings:', e); }
+}
+
+// -- Save all ------------------------------------------------------------------
+// -- Face style --
+async function applyFaceStyle() {
+  const style = document.getElementById('faceStyle').value;
+  try {
+    // Post to face server to switch style immediately
+    await fetch(`${BASE_FACE}/settings`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({face_style: parseInt(style)}),
+    });
+    // Also store in face page localStorage via iframe trick
+    showToast('Face style applied');
+  } catch(e) { showToast('Could not reach face server'); }
+}
+
+function previewFaceStyle() {
+  // Just applies when user clicks Apply
+}
+
+async function saveAll() {
+  const changes = {
+    wake_word_enabled:     document.getElementById('wakeWordEnabled').checked,
+    wake_word_sensitivity: parseFloat(document.getElementById('sensitivity').value),
+    talk_button_key:       document.getElementById('talkButtonKey').value || 'g',
+    talk_button_device:    document.getElementById('talkButtonDevice').value,
+    input_device:          document.getElementById('inputDevice').value,
+    active_profile:        document.getElementById('activeProfile').value,
+    llm_backend:           document.getElementById('llmBackend').value,
+    output_device:         document.getElementById('outputDevice').value,
+    tts_voice:             document.getElementById('ttsVoice').value,
+    face_style:            parseInt(document.getElementById('faceStyle').value),
+    bg_colour:             document.getElementById('bgColour').value,
+    bar_colour_1:          document.getElementById('barColour1').value,
+    bar_colour_2:          document.getElementById('barColour2').value,
+    dials:                 collectDials(),
+    shipping:              collectShipping(),
+  };
+
+  try {
+    await fetch(`${BASE_FACE}/settings`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(changes),
+    });
+
+    // Also push tts_voice to webapp /voice endpoint
+    if (changes.tts_voice) {
+      await fetch('/voice', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({model: changes.tts_voice}),
+      }).catch(()=>{});
+    }
+
+    // Push LLM change if backend changed
+    if (changes.llm_backend) {
+      await fetch('/llm-switch', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({backend: changes.llm_backend}),
+      }).catch(()=>{});
+    }
+
+    showToast('Saved OK');
+  } catch(e) { showToast('Save failed'); }
+}
+
+async function restartAsText() {
+  if (!confirm('Restart Q2 in text mode? Voice will stop.')) return;
+  try {
+    await fetch(`${BASE_FACE}/settings`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({restart_as_text_mode:true}),
+    });
+    showToast('Restarting...');
+  } catch(e) { showToast('Error'); }
+}
+
+// -- Boot ----------------------------------------------------------------------
+loadSettings();
+loadLedger();
+</script>
+</body>
+</html>
