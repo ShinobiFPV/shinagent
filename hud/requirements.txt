@@ -1,0 +1,28 @@
+# ShinAgent HUD Requirements
+# This is the HUD desktop app's own dependency set -- separate from the
+# main imq2 agent (repo root requirements.txt) since the HUD runs as an
+# independent process (typically on the Windows gaming PC, not the Pi).
+
+pywebview>=5.0
+flask>=3.0
+flask-cors>=4.0
+requests>=2.31
+psutil>=5.9         # process detection (game_detector.py)
+
+# Retro gaming: Q2 as Player 2 (retro_manager.py, retro_ai.py) -- Windows
+# only, requires the ViGEmBus driver (installs automatically on first run).
+# RetroArch itself is a separate manual install (retroarch.com), not a pip
+# package. See hud/README.md's Retro Gaming section for full setup.
+vgamepad>=0.1.0
+
+# Windows only (noted)
+# pywin32>=306      # optional -- some pywebview backends use it for
+#                     always-on-top/window-chrome behaviour on Windows;
+#                     not required for the features implemented here.
+#
+# Note: bridge scripts (windows/*.py, launched by bridge_manager.py) have
+# their own dependencies -- see windows/requirements.txt at the repo root:
+#   AC bridge:  no extra deps (ctypes + stdlib)
+#   MSFS bridge: pip install SimConnect flask
+#   ED bridge:   pip install flask  (NOT watchdog -- ed_bridge.py uses
+#                seek-based polling instead, one fewer dependency)

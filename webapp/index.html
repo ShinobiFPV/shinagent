@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+<!-- PWA -->
+<link rel="manifest" href="/static/manifest.json">
+
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Q2">
+<link rel="apple-touch-icon" href="/static/icons/icon-180.png">
+
+<!-- Theme -->
+<meta name="theme-color" content="#00080a">
+<meta name="msapplication-TileColor" content="#00080a">
+
+<title>Q2</title>
+<style>
+  :root {
+    /* Core */
+    --bg:         #00080a;
+    --surface:    #021210;
+    --surface2:   #0a1f1a;
+    --border:     rgba(0, 220, 120, 0.15);
+
+    /* Text */
+    --text:       #c8f0dc;
+    --dim:        #4a8a6a;
+
+    /* Accents */
+    --accent:     #ff3c3c;
+    --accent2:    #00c8ff;
+    --accent3:    #00dc78;
+    --warning:    #ffb400;
+    --danger:     #ff3c3c;
+    --success:    #00dc78;
+
+    /* Unchanged layout vars */
+    --radius:     12px;
+    --radius-sm:  8px;
+    --tap:        48px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.08) 2px,
+      rgba(0, 0, 0, 0.08) 3px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    position: fixed;
+  }
+
+  body {
+    font-family: 'SF Mono', 'Fira Mono', 'Courier New', monospace;
+  }
+
+  /* ── Layout ── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    height: 100dvh;
+  }
+
+  header {
+    flex-shrink: 0;
+    padding: max(12px, env(safe-area-inset-top)) 16px 0;
+    background: rgba(0, 8, 10, 0.95);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  header h1, strong {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+    letter-spacing: 0.06em;
+  }
+  header h1 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--accent3);
+  }
+  .header-btns {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .header-btns::-webkit-scrollbar { display: none; }
+  .hbtn {
+    flex-shrink: 0;
+    background: none;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .hbtn-primary {
+    border: 1px solid rgba(255,60,60,0.5);
+    color: var(--accent);
+  }
+  .hbtn-secondary {
+    background: transparent;
+    border: 1px solid var(--accent3);
+    color: var(--accent3);
+  }
+  .hbtn.active {
+    border-color: var(--accent3);
+    color: var(--accent3);
+    background: rgba(0,220,120,0.1);
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #444;
+    transition: background 0.3s;
+  }
+  .status-dot.online  { background: var(--success); }
+  .status-dot.working { background: var(--accent2); animation: pulse-ring-cyan 1s ease-out infinite; }
+  .status-dot.offline { background: var(--danger); }
+
+  /* ── Message list ── */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .msg {
+    max-width: 82%;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--surface2);
+    border-left: 3px solid var(--accent3);
+  }
+  .msg.q2 {
+    align-self: flex-start;
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    color: var(--text);
+  }
+  .msg.q2 .name {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--accent2);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .msg.system {
+    align-self: center;
+    background: none;
+    font-size: 0.75rem;
+    color: var(--dim);
+    border: none;
+    padding: 4px 0;
+  }
+  .msg img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 6px;
+    display: block;
+  }
+  .thinking-dots span {
+    animation: blink 1.2s infinite;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+  }
+  .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100% { opacity:0.2 } 40% { opacity:1 } }
+
+  /* ── Input bar ── */
+  #input-bar {
+    flex-shrink: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px 12px calc(10px + var(--safe-bottom));
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  #text-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 10px 16px;
+    resize: none;
+    outline: none;
+    min-height: 42px;
+    max-height: 120px;
+    overflow-y: auto;
+    -webkit-appearance: none;
+    line-height: 1.4;
+  }
+  #text-input:focus { border-color: var(--accent3); }
+  #text-input::placeholder { color: var(--dim); }
+
+  .icon-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    transition: opacity 0.15s, transform 0.1s;
+    -webkit-user-select: none;
+  }
+  .icon-btn:active { transform: scale(0.9); opacity: 0.8; }
+
+  #send-btn   { background: var(--accent); color: #000; }
+  #camera-btn { background: rgba(0,220,120,0.15); color: var(--accent3); border: 1px solid rgba(0,220,120,0.3); }
+  #ptt-btn    { background: var(--surface2); color: var(--accent3); border: 2px solid var(--accent3); }
+
+  #ptt-btn.recording {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #000;
+    box-shadow: 0 0 20px rgba(255,60,60,0.4);
+    animation: pulse-ring-red 1s ease-out infinite;
+  }
+  @keyframes pulse-ring-cyan {
+    0%   { box-shadow: 0 0 0 0 rgba(0,200,255,0.5); }
+    70%  { box-shadow: 0 0 0 10px rgba(0,200,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(0,200,255,0); }
+  }
+  @keyframes pulse-ring-red {
+    0%   { box-shadow: 0 0 0 0 rgba(255,60,60,0.5); }
+    70%  { box-shadow: 0 0 0 10px rgba(255,60,60,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,60,60,0); }
+  }
+
+  /* Face mode */
+  #face-mode {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: #000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+  }
+  #face-mode.active { display: flex; }
+  #face-canvas-wrap {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #face-canvas { display: block; touch-action: none; }
+  #face-ptt-hint {
+    position: absolute;
+    bottom: 28px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    color: rgba(255,60,60,0.5);
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  #face-exit-btn {
+    position: absolute;
+    top: max(16px, env(safe-area-inset-top));
+    right: 16px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    color: var(--accent);
+    font-size: 0.75rem;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-family: inherit;
+    z-index: 10;
+  }
+
+  /* PTT source toggle -- AT HOME (physical controller, default) vs
+     IN-APP (tap the face canvas to fire PTT remotely via this phone) */
+  #ptt-source-toggle {
+    position: absolute;
+    top: max(16px, env(safe-area-inset-top));
+    left: 16px;
+    display: flex;
+    gap: 2px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px;
+    z-index: 10;
+  }
+  .ptt-source-opt {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 4px 12px;
+    border: none;
+    border-radius: 16px;
+    background: transparent;
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  }
+  .ptt-source-opt.active {
+    background: var(--accent3);
+    color: #000;
+    box-shadow: 0 0 10px rgba(0,220,120,0.4);
+  }
+  .ptt-source-opt:not(.active):active { color: var(--text); }
+
+  /* IN-APP PTT visual feedback -- dim overlay + pulsing dot + label,
+     shown while a remote PTT toggle (via /face-api/ptt) is active. This
+     is separate from the face canvas's own listening/thinking/speaking
+     animation reactivity, which only reflects the WEBAPP'S OWN local
+     recording state (see setFaceListening() etc.) and has no visibility
+     into the Pi's own mic being toggled remotely. */
+  #inapp-ptt-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.15);
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 60px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  #inapp-ptt-overlay.show { display: flex; }
+  .inapp-ptt-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--danger);
+    margin-bottom: 10px;
+    animation: pulse-ring-red 1s ease-out infinite;
+  }
+  #inapp-ptt-label {
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    color: var(--danger);
+  }
+  #inapp-ptt-label.processing { color: var(--accent2); animation: none; }
+
+  /* Hidden camera input */
+  #camera-input { display: none; }
+
+  /* Green glow on interactive elements */
+  .hbtn-primary:hover, #send-btn:hover {
+    box-shadow: 0 0 12px rgba(255,60,60,0.3);
+  }
+  .hbtn-secondary:hover, #ptt-btn:hover, select:focus {
+    box-shadow: 0 0 8px rgba(0,220,120,0.2);
+  }
+
+  /* Controller D-pad navigation (voice/controller.py's gamepad nav mode) */
+  .ctrl-focused {
+    outline: 2px solid #00dc78 !important;
+    outline-offset: 3px;
+    box-shadow: 0 0 12px rgba(0,220,120,0.4) !important;
+    transition: outline 0.1s;
+  }
+  #ctrl-nav-indicator {
+    display: none;
+    position: fixed;
+    bottom: 60px;
+    right: 12px;
+    background: rgba(0,220,120,0.15);
+    border: 1px solid rgba(0,220,120,0.4);
+    color: #00dc78;
+    font-size: 9px;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 3px 6px;
+    border-radius: 3px;
+    z-index: 9999;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Face Mode Overlay -->
+<div id="face-mode">
+  <div id="ptt-source-toggle">
+    <button class="ptt-source-opt" id="ptt-src-home" onclick="setPttSource('home')">AT HOME</button>
+    <button class="ptt-source-opt" id="ptt-src-inapp" onclick="setPttSource('inapp')">&#127908; IN-APP</button>
+  </div>
+  <button id="face-exit-btn" onclick="exitFaceMode()">x Chat</button>
+  <div id="face-canvas-wrap">
+    <canvas id="face-canvas"></canvas>
+    <div id="inapp-ptt-overlay"><div class="inapp-ptt-dot"></div><div id="inapp-ptt-label">LISTENING</div></div>
+    <div id="face-ptt-hint">TAP TO TALK</div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="header-top">
+      <h1>// Q2</h1>
+      <div class="status-dot" id="status-dot"></div>
+    </div>
+    <div class="header-btns">
+      <button onclick="enterFaceMode()" class="hbtn hbtn-primary">◉ Face</button>
+      <button onclick="toggleLlmPanel()" id="llm-toggle-btn" class="hbtn hbtn-secondary">
+        ⚡ <span id="llm-label">…</span>
+      </button>
+      <button id="voice-toggle" data-nav="voice-toggle" class="hbtn hbtn-secondary">🔇 Autoplay off</button>
+      <button onclick="toggleLiveCamera()" id="camera-live-btn" class="hbtn hbtn-secondary">📷 Camera</button>
+      <button onclick="toggleVoicePanel()" id="voice-panel-btn" class="hbtn hbtn-secondary">🎙 Voice</button>
+      <a href="/settings" target="_blank" data-nav="settings-link" class="hbtn hbtn-secondary">⚙ Settings</a>
+    </div>
+  </header>
+
+  <!-- Voice selector panel -->
+  <div id="voice-panel" style="display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:0.75rem;color:var(--dim);letter-spacing:0.06em">VOICE</span>
+      <select id="voice-select"
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+                     color:var(--text);font-size:0.8rem;padding:4px 8px;font-family:inherit;min-width:200px">
+        <optgroup label="── Masculine (American) ──">
+          <option value="aura-2-apollo-en">Apollo — Confident, Casual</option>
+          <option value="aura-2-arcas-en">Arcas — Natural, Smooth</option>
+          <option value="aura-2-aries-en">Aries — Warm, Energetic</option>
+          <option value="aura-2-hermes-en">Hermes — Expressive, Professional</option>
+          <option value="aura-2-jupiter-en">Jupiter — Knowledgeable, Baritone</option>
+          <option value="aura-2-mars-en">Mars — Smooth, Patient, Baritone</option>
+          <option value="aura-2-neptune-en">Neptune — Professional, Polite</option>
+          <option value="aura-2-odysseus-en">Odysseus — Calm, Smooth</option>
+          <option value="aura-2-orion-en">Orion — Approachable, Calm</option>
+          <option value="aura-2-orpheus-en">Orpheus — Clear, Trustworthy</option>
+          <option value="aura-2-pluto-en">Pluto — Smooth, Empathetic, Baritone ★</option>
+          <option value="aura-2-saturn-en">Saturn — Knowledgeable, Confident</option>
+          <option value="aura-2-zeus-en">Zeus — Deep, Trustworthy</option>
+          <option value="aura-2-atlas-en">Atlas — Enthusiastic, Friendly</option>
+        </optgroup>
+        <optgroup label="── Masculine (British/Australian) ──">
+          <option value="aura-2-draco-en">Draco — Warm, Baritone (British)</option>
+          <option value="aura-2-hyperion-en">Hyperion — Caring, Warm (Australian)</option>
+        </optgroup>
+        <optgroup label="── Feminine (American) ──">
+          <option value="aura-2-thalia-en">Thalia — Clear, Energetic ★</option>
+          <option value="aura-2-andromeda-en">Andromeda — Casual, Expressive</option>
+          <option value="aura-2-helena-en">Helena — Caring, Raspy</option>
+          <option value="aura-2-asteria-en">Asteria — Confident, Knowledgeable</option>
+          <option value="aura-2-athena-en">Athena — Calm, Professional</option>
+          <option value="aura-2-aurora-en">Aurora — Cheerful, Energetic</option>
+          <option value="aura-2-callista-en">Callista — Clear, Professional</option>
+          <option value="aura-2-cora-en">Cora — Smooth, Melodic</option>
+          <option value="aura-2-electra-en">Electra — Professional, Engaging</option>
+          <option value="aura-2-harmonia-en">Harmonia — Empathetic, Calm</option>
+          <option value="aura-2-hera-en">Hera — Smooth, Professional</option>
+          <option value="aura-2-iris-en">Iris — Cheerful, Approachable</option>
+          <option value="aura-2-luna-en">Luna — Friendly, Natural</option>
+          <option value="aura-2-luna-en">Luna — Friendly, Natural</option>
+          <option value="aura-2-minerva-en">Minerva — Positive, Natural</option>
+          <option value="aura-2-ophelia-en">Ophelia — Expressive, Enthusiastic</option>
+          <option value="aura-2-selene-en">Selene — Expressive, Energetic</option>
+          <option value="aura-2-vesta-en">Vesta — Natural, Empathetic</option>
+          <option value="aura-2-phoebe-en">Phoebe — Energetic, Casual</option>
+        </optgroup>
+        <optgroup label="── Feminine (British/Australian) ──">
+          <option value="aura-2-pandora-en">Pandora — Smooth, Melodic (British)</option>
+          <option value="aura-2-theia-en">Theia — Expressive, Sincere (Australian)</option>
+        </optgroup>
+      </select>
+      <button onclick="applyVoice()"
+              style="background:var(--accent);border:none;border-radius:8px;color:#000;
+                     font-size:0.8rem;padding:5px 14px;cursor:pointer;font-family:inherit;font-weight:600">
+        Apply
+      </button>
+      <span id="voice-note" style="font-size:0.7rem;color:var(--dim)"></span>
+    </div>
+  </div>
+
+  <!-- Live camera panel — hidden by default, toggled by the Camera button -->
+  <div id="camera-panel" style="display:none;background:#000;position:relative;">
+    <img id="camera-stream"
+         src="/camera/stream"
+         style="width:100%;display:block;max-height:35vh;object-fit:contain;"
+         onerror="this.src='';this.alt='Camera unavailable'">
+    <div style="position:absolute;top:6px;right:8px;display:flex;gap:6px">
+      <button onclick="askAboutCamera()"
+              style="background:rgba(0,0,0,0.6);border:1px solid rgba(255,60,60,0.5);
+                     border-radius:12px;color:#ff3c3c;font-size:0.75rem;padding:4px 10px;cursor:pointer">
+        Ask Q2
+      </button>
+      <button onclick="toggleLiveCamera()"
+              style="background:rgba(0,0,0,0.6);border:1px solid rgba(245,245,255,0.3);
+                     border-radius:12px;color:#aaa;font-size:0.75rem;padding:4px 10px;cursor:pointer">
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <!-- LLM Switcher Panel — slides down from header -->
+  <div id="llm-panel" style="display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:0.75rem;color:var(--dim);letter-spacing:0.06em">LLM</span>
+      <select id="webapp-llm-backend"
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+                     color:var(--text);font-size:0.8rem;padding:4px 8px;font-family:inherit">
+        <option value="claude">Claude (Anthropic)</option>
+        <option value="grok">Grok (xAI)</option>
+        <option value="openai">GPT-4o (OpenAI)</option>
+        <option value="ollama">Ollama (Local)</option>
+        <option value="glm">GLM-5.2 (Z.ai)</option>
+        <option value="gemini">Gemini 2.5 Flash (Google)</option>
+      </select>
+      <select id="webapp-llm-model"
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+                     color:var(--text);font-size:0.8rem;padding:4px 8px;font-family:inherit">
+        <option value="">default model</option>
+      </select>
+      <button id="llm-restart-btn" onclick="switchLlmAndRestart()"
+              style="background:var(--accent);border:none;border-radius:8px;color:#000;
+                     font-size:0.8rem;padding:5px 14px;cursor:pointer;font-family:inherit;font-weight:600">
+        Save &amp; Restart
+      </button>
+      <span id="webapp-llm-note" style="font-size:0.7rem;color:var(--dim);flex:1;min-width:100px"></span>
+    </div>
+  </div>
+
+  <div id="messages">
+    <div class="msg system" id="connection-msg">Connecting to Q2…</div>
+  </div>
+
+  <div id="input-bar">
+    <button class="icon-btn" id="camera-btn" title="Send photo" onclick="triggerCamera()">📷</button>
+    <input type="file" id="camera-input" accept="image/*" capture="environment">
+    <textarea id="text-input" placeholder="Message Q2…" rows="1"
+              oninput="autoResize(this)"
+              onkeydown="handleKey(event)"></textarea>
+    <button class="icon-btn" id="ptt-btn" data-nav="ptt-btn" title="Hold to talk">🎙</button>
+    <button class="icon-btn" id="send-btn" title="Send" onclick="sendText()">↑</button>
+  </div>
+</div>
+
+<script>
+// BASE auto-detects the current host and port so it works whether accessed
+// via local IP, Tailscale IP, or Tailscale Serve HTTPS hostname.
+const BASE = `${location.protocol}//${location.host}`;
+
+const messagesEl  = document.getElementById('messages');
+const textInput   = document.getElementById('text-input');
+const pttBtn      = document.getElementById('ptt-btn');
+const statusDot   = document.getElementById('status-dot');
+const cameraInput = document.getElementById('camera-input');
+
+// ── Autoplay toggle ──────────────────────────────────────────────────────────
+const voiceToggleBtn = document.getElementById('voice-toggle');
+// Default to ON — if the key hasn't been set yet (new device/browser) autoplay is on
+let autoplayEnabled = localStorage.getItem('q2-autoplay') !== 'false';
+
+function updateAutoplayToggle() {
+  if (autoplayEnabled) {
+    voiceToggleBtn.textContent = '🔊 Autoplay on';
+    voiceToggleBtn.classList.add('active');
+  } else {
+    voiceToggleBtn.textContent = '🔇 Autoplay off';
+    voiceToggleBtn.classList.remove('active');
+  }
+}
+updateAutoplayToggle();
+
+voiceToggleBtn.addEventListener('click', () => {
+  autoplayEnabled = !autoplayEnabled;
+  localStorage.setItem('q2-autoplay', autoplayEnabled);
+  updateAutoplayToggle();
+});
+
+async function speakReply(text) {
+  if (!text) return;
+
+  let arrayBuffer;
+  try {
+    const res = await fetch(`${BASE}/tts`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text}),
+    });
+    if (!res.ok) { console.warn('TTS endpoint returned', res.status); return; }
+    arrayBuffer = await res.arrayBuffer();
+  } catch(e) {
+    console.warn('TTS fetch error:', e);
+    return;
+  }
+
+  if (autoplayEnabled && audioCtx) {
+    try {
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+      // Drive face animation during playback
+      const fakeEnvelope = Array.from({length:20}, (_,i) => 0.5+0.4*Math.sin(i*0.8));
+      setFaceSpeaking(true, fakeEnvelope, audioBuffer.duration);
+      source.onended = () => setFaceSpeaking(false);
+      source.start(0);
+      return;
+    } catch(e) {
+      console.warn('AudioContext playback failed, falling back:', e);
+    }
+  }
+
+  // Autoplay off, or AudioContext not available — show tap-to-play button
+  const blob = new Blob([arrayBuffer], {type: 'audio/wav'});
+  const url  = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  audio.onended = () => { URL.revokeObjectURL(url); setFaceSpeaking(false); };
+  audio.onplay  = () => {
+    const fakeEnvelope = Array.from({length:20}, (_,i) => 0.5+0.4*Math.sin(i*0.8));
+    setFaceSpeaking(true, fakeEnvelope, audio.duration || 3);
+  };
+
+  if (autoplayEnabled) {
+    audio.play().catch(() => showPlayButton(audio));
+  } else {
+    showPlayButton(audio);
+  }
+}
+
+function showPlayButton(audio) {
+  const btn = document.createElement('div');
+  btn.className = 'msg system';
+  btn.style.cssText = 'cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;';
+  btn.innerHTML = '<span style="font-size:1.1rem">▶</span><span>Tap to hear Q2</span>';
+  btn.onclick = () => {
+    audio.play();
+    btn.innerHTML = '<span style="font-size:1.1rem">🔊</span><span>Playing…</span>';
+    audio.onended = () => { URL.revokeObjectURL(audio.src); btn.remove(); };
+  };
+  messagesEl.appendChild(btn);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// ── Voice Selector Panel ─────────────────────────────────────────────────────
+let voicePanelOpen = false;
+
+// Same reasoning as initLlmPanel() above: this webapp process has its own
+// config copy that can drift from the live value if a voice change was
+// made through the Pi kiosk's Settings panel without this subprocess
+// restarting. face/server.py (running inside the main Q2 process) is the
+// authoritative source, not this webapp's own state — so fetch from there,
+// never from localStorage or a hardcoded default.
+async function initVoicePanel() {
+  try {
+    const r = await fetch(`${BASE}/face-api/settings`, {cache:'no-store'});
+    const d = await r.json();
+    if (d.tts_voice) {
+      const sel = document.getElementById('voice-select');
+      if (sel) sel.value = d.tts_voice;
+    }
+  } catch(e) {}
+}
+
+function toggleVoicePanel() {
+  const panel = document.getElementById('voice-panel');
+  const btn   = document.getElementById('voice-panel-btn');
+  voicePanelOpen = !voicePanelOpen;
+  panel.style.display = voicePanelOpen ? 'block' : 'none';
+  btn.classList.toggle('active', voicePanelOpen);
+}
+
+async function applyVoice() {
+  const model = document.getElementById('voice-select')?.value;
+  if (!model) return;
+  const note = document.getElementById('voice-note');
+  try {
+    // Save through the face server (the single source of truth for
+    // config.yaml) rather than a webapp-local copy — same pattern as
+    // switchLlmAndRestart() above. No restart needed: voice/pipeline.py's
+    // get_tts() reads voice.deepgram_tts.model fresh every call, so the
+    // very next reply already uses the new voice.
+    const r = await fetch(`${BASE}/face-api/settings`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({tts_voice: model}),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      if (note) note.textContent = `✓ Voice set to ${model.replace('aura-2-','').replace('-en','')}`;
+      setTimeout(() => { if (note) note.textContent = ''; }, 3000);
+    } else {
+      if (note) note.textContent = d.error || 'Failed';
+    }
+  } catch(e) {
+    if (note) note.textContent = `Error: ${e.message}`;
+  }
+}
+
+// ── LLM Switcher Panel ────────────────────────────────────────────────────────
+const WEBAPP_LLM_MODELS = {
+  claude: ['claude-sonnet-4-6','claude-opus-4-6','claude-haiku-4-5-20251001'],
+  grok:   ['grok-3-mini','grok-3','grok-2'],
+  openai: ['gpt-4o','gpt-4o-mini','gpt-4-turbo'],
+  ollama: ['glm-5.2:cloud','llama3','mistral','phi3'],
+  glm:    ['glm-5.2','glm-5.1','glm-4.7'],
+  gemini: ['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash'],
+};
+const WEBAPP_LLM_LABELS = {
+  claude:'Claude', grok:'Grok', openai:'GPT-4o', ollama:'Ollama', gemini:'Gemini'
+};
+const WEBAPP_LLM_NOTES = {
+  claude:'Default — best quality, full tool support.',
+  grok:  'Requires XAI_API_KEY in .env.',
+  openai:'Requires OPENAI_API_KEY in .env.',
+  ollama:'Local model — no API key needed.',
+  glm:   'Requires ZAI_API_KEY in .env — get one at z.ai.',
+  gemini:'GEMINI_API_KEY — free tier at aistudio.google.com, no card needed.',
+};
+
+let llmPanelOpen = false;
+
+// The webapp runs as its own OS subprocess with its own config singleton
+// (see webapp/server.py's get_agent()), so it can drift from the actual
+// live backend if that changes via face/server.py's Settings panel without
+// this subprocess restarting. face/server.py runs inside the main Q2
+// process itself and always reflects the live config, so it — not this
+// webapp's own /health — is the authoritative source for llm_backend.
+async function initLlmPanel() {
+  try {
+    const r = await fetch(`${BASE}/face-api/settings`, {cache:'no-store'});
+    const d = await r.json();
+    if (d.llm_backend) {
+      const sel = document.getElementById('webapp-llm-backend');
+      if (sel) sel.value = d.llm_backend;
+      updateWebappLlmControls();
+      const label = document.getElementById('llm-label');
+      if (label) label.textContent = WEBAPP_LLM_LABELS[d.llm_backend] || d.llm_backend;
+    }
+  } catch(e) {}
+}
+
+function toggleLlmPanel() {
+  const panel = document.getElementById('llm-panel');
+  const btn   = document.getElementById('llm-toggle-btn');
+  llmPanelOpen = !llmPanelOpen;
+  panel.style.display = llmPanelOpen ? 'block' : 'none';
+  btn.classList.toggle('active', llmPanelOpen);
+}
+
+function updateWebappLlmControls() {
+  const backend  = document.getElementById('webapp-llm-backend')?.value || 'claude';
+  const modelSel = document.getElementById('webapp-llm-model');
+  const note     = document.getElementById('webapp-llm-note');
+  if (note) note.textContent = WEBAPP_LLM_NOTES[backend] || '';
+  if (modelSel) {
+    const models = WEBAPP_LLM_MODELS[backend] || [];
+    modelSel.innerHTML = '<option value="">default model</option>' +
+      models.map(m => `<option value="${m}">${m}</option>`).join('');
+  }
+  const label = document.getElementById('llm-label');
+  if (label) label.textContent = WEBAPP_LLM_LABELS[backend] || backend;
+}
+
+document.getElementById('webapp-llm-backend')?.addEventListener('change', updateWebappLlmControls);
+
+async function switchLlmAndRestart() {
+  const backend = document.getElementById('webapp-llm-backend')?.value || 'claude';
+  const model   = document.getElementById('webapp-llm-model')?.value || '';
+  const btn = document.getElementById('llm-restart-btn');
+  if (btn) { btn.textContent = 'Restarting…'; btn.disabled = true; }
+  try {
+    // Save through the face server (the single source of truth for
+    // config.yaml) rather than webapp/server.py's own config copy.
+    await fetch(`${BASE}/face-api/settings`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({llm_backend: backend, ...(model ? {llm_model: model} : {})}),
+    });
+    addMsg('system', `Switching to ${WEBAPP_LLM_LABELS[backend]||backend}${model?' ('+model+')':''} — restarting Q2…`);
+    await new Promise(r => setTimeout(r, 800));
+    await fetch(`${BASE}/restart`, {method:'POST'});
+    // Poll until back
+    let tries = 0;
+    const poll = setInterval(async () => {
+      tries++;
+      try {
+        const r = await fetch(`${BASE}/face-api/settings`,{cache:'no-store'});
+        if (r.ok) {
+          clearInterval(poll);
+          const d = await r.json();
+          const label = WEBAPP_LLM_LABELS[d.llm_backend||backend]||backend;
+          document.getElementById('llm-label').textContent = label;
+          addMsg('system', `Q2 restarted on ${label}.`);
+          if (btn) { btn.textContent = 'Save & Restart'; btn.disabled = false; }
+          toggleLlmPanel();
+        }
+      } catch(e){}
+      if (tries > 30) { clearInterval(poll); if (btn) { btn.textContent = 'Save & Restart'; btn.disabled = false; } }
+    }, 1000);
+  } catch(e) {
+    addMsg('system', `Switch failed: ${e.message}`);
+    if (btn) { btn.textContent = 'Save & Restart'; btn.disabled = false; }
+  }
+}
+
+// ── Face Mode ──────────────────────────────────────────────────────────────────
+let faceModeActive = false;
+let faceAnimFrame  = null;
+let faceState      = { speaking:false, listening:false, thinking:false,
+                       envelope:[], duration_s:0, started_at:0,
+                       face_style:1 };
+let faceT          = 0;
+
+// Triangle Mosaic / H9000 eye palette — predefined faces own their colours
+// directly now, no longer overridable from settings.
+const FACE_BG   = '#000000';
+const FACE_COL1 = '#ff3c3c';
+const FACE_COL2 = '#f5f5ff';
+let facePollTimer  = null;
+let kittTelemetry  = null;  // null when no race telemetry is active
+
+const faceCanvas  = document.getElementById('face-canvas');
+const faceCtx     = faceCanvas ? faceCanvas.getContext('2d') : null;
+const facePttHint = document.getElementById('face-ptt-hint');
+
+// ── PTT source: AT HOME (physical controller; face canvas tap does
+// nothing) vs IN-APP (face canvas tap fires PTT on the Pi's own mic
+// remotely, via POST /face-api/ptt -> talk_button_state). Persisted so
+// it survives page reloads; defaults to AT HOME.
+let pttSource      = localStorage.getItem('ptt_source') === 'inapp' ? 'inapp' : 'home';
+let inAppPttActive = false;
+const inappPttOverlay = document.getElementById('inapp-ptt-overlay');
+const inappPttLabel   = document.getElementById('inapp-ptt-label');
+
+function setPttSource(source) {
+  pttSource = (source === 'inapp') ? 'inapp' : 'home';
+  localStorage.setItem('ptt_source', pttSource);
+
+  document.getElementById('ptt-src-home').classList.toggle('active', pttSource === 'home');
+  document.getElementById('ptt-src-inapp').classList.toggle('active', pttSource === 'inapp');
+
+  if (facePttHint) {
+    facePttHint.textContent = pttSource === 'inapp' ? 'TAP TO TALK (THIS PHONE)' : 'PTT IS ON THE CONTROLLER';
+  }
+
+  // Switching away from IN-APP mid-recording shouldn't leave the Pi's
+  // mic stuck listening with no way to stop it from this screen.
+  if (pttSource === 'home' && inAppPttActive) toggleInAppPtt();
+}
+
+async function toggleInAppPtt() {
+  // talk_button_state.signal_toggle() alternates start/stop on every
+  // "press" -- same semantics the physical controller's PTT button uses,
+  // so a single call per tap is correct; there's no separate "release"
+  // to send (face/server.py's /ptt route treats it as a no-op, matching
+  // ControllerBridge._ptt() itself).
+  inAppPttActive = !inAppPttActive;
+
+  if (inAppPttActive) {
+    inappPttOverlay.classList.add('show');
+    inappPttLabel.textContent = 'LISTENING';
+    inappPttLabel.classList.remove('processing');
+  } else {
+    inappPttLabel.textContent = 'PROCESSING';
+    inappPttLabel.classList.add('processing');
+    // No real completion signal from the Pi's side is visible to this
+    // page (its own recording/transcription/response cycle runs
+    // entirely server-side) -- this is a best-effort timed fade, not a
+    // true "done" event.
+    setTimeout(() => { inappPttOverlay.classList.remove('show'); }, 1500);
+  }
+
+  try {
+    await fetch('/face-api/ptt', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({state: 'press', source: 'webapp'}),
+    });
+  } catch (e) {}
+}
+
+setPttSource(pttSource);  // apply persisted/default toggle state to the UI
+
+async function enterFaceMode() {
+  faceModeActive = true;
+  document.getElementById('face-mode').classList.add('active');
+  unlockAudio();
+  sizeFaceCanvas();
+  initFaceRenderer();
+  if (faceAnimFrame) cancelAnimationFrame(faceAnimFrame);
+
+  // Hide the canvas and fetch the real face style/colours from the Pi
+  // before the first frame renders — startFaceStatePoll() below only
+  // ticks every 2s, which is long enough for the hardcoded face_style:1
+  // default to flash visibly otherwise.
+  if (faceCanvas) { faceCanvas.style.opacity = '0'; faceCanvas.style.transition = 'opacity 0.3s'; }
+  try {
+    const d = await (await fetch('/face-api/state', {cache:'no-store'})).json();
+    if (d.face_style !== undefined) faceState.face_style = d.face_style;
+    kittTelemetry = d.telemetry || null;
+  } catch(e) {}
+
+  startFaceStatePoll();
+  faceAnimFrame = requestAnimationFrame(faceDrawLoop);
+  if (faceCanvas) faceCanvas.style.opacity = '1';
+}
+
+function exitFaceMode() {
+  faceModeActive = false;
+  document.getElementById('face-mode').classList.remove('active');
+  if (faceAnimFrame) { cancelAnimationFrame(faceAnimFrame); faceAnimFrame = null; }
+  if (facePollTimer) { clearInterval(facePollTimer); facePollTimer = null; }
+  if (isRecording) stopRecording();
+  if (inAppPttActive) toggleInAppPtt();  // don't leave the Pi's mic listening after leaving face mode
+}
+
+function sizeFaceCanvas() {
+  if (!faceCanvas) return;
+  const wrap = document.getElementById('face-canvas-wrap');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  const scale = Math.min(W/720, H/1280);
+  faceCanvas.width  = 720;
+  faceCanvas.height = 1280;
+  faceCanvas.style.width  = Math.round(720*scale) + 'px';
+  faceCanvas.style.height = Math.round(1280*scale) + 'px';
+}
+window.addEventListener('resize', () => { if (faceModeActive) sizeFaceCanvas(); });
+
+async function startFaceStatePoll() {
+  // Try to get colours from face server if running, but don't depend on it for state.
+  // State is driven locally by setFaceListening/setFaceThinking/setFaceSpeaking.
+  if (facePollTimer) clearInterval(facePollTimer);
+  facePollTimer = setInterval(async () => {
+    try {
+      const d = await (await fetch('/face-api/state',{cache:'no-store'})).json();
+      if (d.face_style !== undefined) faceState.face_style = d.face_style;
+      kittTelemetry = d.telemetry || null;
+    } catch(e) {}
+  }, 2000);
+}
+
+function setFaceListening(v) {
+  faceState.listening = v;
+  faceState.thinking  = false;
+  if (!v) faceState.speaking = false;
+}
+function setFaceThinking(v) {
+  faceState.thinking  = v;
+  faceState.listening = false;
+  faceState.speaking  = false;
+}
+function setFaceSpeaking(v, envelope, duration_s) {
+  faceState.speaking   = v;
+  if (v) {
+    // Only clear thinking when speaking actually starts
+    faceState.thinking  = false;
+    faceState.listening = false;
+  }
+  if (v && envelope) {
+    faceState.envelope   = envelope;
+    faceState.duration_s = duration_s || 0;
+    faceState.started_at = Date.now() / 1000;
+  } else if (!v) {
+    faceState.thinking  = false;
+    faceState.listening = false;
+  }
+}
+
+// Shared colour helpers for face canvas
+function fhexRgb(hex) {
+  const h = hex.replace('#','');
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];
+}
+function frgb(hex,a) {
+  const [r,g,b]=fhexRgb(hex);
+  return a!==undefined?`rgba(${r},${g},${b},${a})`:`rgb(${r},${g},${b})`;
+}
+function fAmp() {
+  if (!faceState.speaking||!faceState.envelope?.length) return null;
+  const el=Date.now()/1000-faceState.started_at;
+  if (el<0||el>faceState.duration_s) return null;
+  const idx=Math.floor((el/faceState.duration_s)*(faceState.envelope.length-1));
+  return faceState.envelope[Math.max(0,Math.min(idx,faceState.envelope.length-1))];
+}
+
+// Triangle mosaic renderer (disabled — face now uses iframe to face server)
+const FW=720, FH=1280, FCOLS=20;
+const FcellW=FW/(FCOLS/2), FcellH=FcellW*Math.sqrt(3)/2;
+const FROWS=Math.ceil(FH/FcellH)+2, FmaxD=Math.sqrt(FW*FW+FH*FH);
+let faceTris=[];
+
+function initFaceRenderer() {
+  faceTris=[];
+  for (let row=0;row<FROWS;row++) {
+    for (let col=0;col<FCOLS;col++) {
+      const hw=FcellW/2,x0=col*hw,y0=row*FcellH,isUp=(col+row)%2===0;
+      const verts=isUp?[[x0,y0+FcellH],[x0+FcellW,y0+FcellH],[x0+hw,y0]]:[[x0,y0],[x0+FcellW,y0],[x0+hw,y0+FcellH]];
+      const cx=(verts[0][0]+verts[1][0]+verts[2][0])/3,cy=(verts[0][1]+verts[1][1]+verts[2][1])/3;
+      const dx=cx-FW/2,dy=cy-FH/2,dist=Math.sqrt(dx*dx+dy*dy)/(FmaxD/2);
+      const seed=Math.sin(col*127.1+row*311.7)*43758.5453,phase=(seed-Math.floor(seed))*Math.PI*2;
+      faceTris.push({verts,cx,cy,dist,phase,bright:0});
+    }
+  }
+}
+
+// HAL eye state for webapp
+let wHalAngle=0, wHalGlow=0, wHalPulse=0;
+function drawWebappHAL(terminal) {
+  const BG=FACE_BG, C1=FACE_COL1, C2=FACE_COL2;
+  const listening=!!faceState.listening, thinking=!!faceState.thinking;
+  const amp=fAmp(), speaking=amp!==null;
+  wHalAngle+=0.008;
+  let coreSize=0.13, glowTarget=0.5, ringSpeed=1, eyeColour=C1;
+  if (listening)     { glowTarget=0.9; ringSpeed=2.5; coreSize=0.17; }
+  else if (thinking) { glowTarget=0.6; ringSpeed=0.5; eyeColour=C2; }
+  else if (speaking) { glowTarget=0.4+(amp||0)*0.5; ringSpeed=1.5+(amp||0)*2; }
+  wHalGlow  += (glowTarget - wHalGlow) * 0.08;
+  wHalPulse  = speaking ? (amp||0) : (0.5+0.5*Math.sin(Date.now()/1400));
+  const cx=FW/2, cy=FH/2, R=Math.min(FW,FH)*0.38;
+  faceCtx.fillStyle = terminal ? '#00080a' : BG;
+  faceCtx.fillRect(0,0,FW,FH);
+  if (terminal) {
+    for (let sy=0;sy<FH;sy+=3) { faceCtx.fillStyle='rgba(0,200,100,0.04)'; faceCtx.fillRect(0,sy,FW,1); }
+    faceCtx.font='11px Courier New,monospace'; faceCtx.fillStyle='rgba(0,200,255,0.3)';
+    faceCtx.textBaseline='top'; faceCtx.fillText('H9000 TERMINAL // Q2', 16, 16);
+    const ts=new Date().toTimeString().slice(0,8);
+    const mode=thinking?'THINKING':listening?'LISTENING':speaking?'SPEAKING':'READY';
+    faceCtx.textBaseline='bottom'; faceCtx.fillStyle='rgba(0,200,255,0.4)';
+    faceCtx.fillText('Q2 // '+mode+' // '+ts, 16, FH-12);
+  }
+  function rgbS(hex,a){const h=hex.replace('#','');const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);return 'rgba('+r+','+g+','+b+','+a+')';}
+  const grad=faceCtx.createRadialGradient(cx,cy,R*0.85,cx,cy,R);
+  grad.addColorStop(0,'rgba(40,40,50,1)'); grad.addColorStop(1,'rgba(10,10,15,1)');
+  faceCtx.beginPath(); faceCtx.arc(cx,cy,R,0,Math.PI*2); faceCtx.fillStyle=grad; faceCtx.fill();
+  for (let r=0;r<7;r++) {
+    const rad=R*(0.75-r*0.07),dir=r%2===0?1:-1,alpha=0.15+r*0.04;
+    faceCtx.beginPath(); faceCtx.arc(cx,cy,rad,0,Math.PI*2);
+    faceCtx.strokeStyle=rgbS(eyeColour,alpha); faceCtx.lineWidth=1.5+r*0.3; faceCtx.stroke();
+    const numT=12+r*4;
+    for (let t=0;t<numT;t++) {
+      const ang=(t/numT)*Math.PI*2+wHalAngle*ringSpeed*dir*(r+1)*0.15;
+      const x1=cx+Math.cos(ang)*rad,y1=cy+Math.sin(ang)*rad;
+      const x2=cx+Math.cos(ang)*(rad-6),y2=cy+Math.sin(ang)*(rad-6);
+      faceCtx.beginPath(); faceCtx.moveTo(x1,y1); faceCtx.lineTo(x2,y2);
+      faceCtx.strokeStyle=rgbS(eyeColour,0.25+wHalPulse*0.15);
+      faceCtx.lineWidth=1; faceCtx.stroke();
+    }
+  }
+  const irisR=R*0.38;
+  const iG=faceCtx.createRadialGradient(cx,cy,irisR*0.6,cx,cy,irisR);
+  iG.addColorStop(0,rgbS(eyeColour,0.15)); iG.addColorStop(1,rgbS(eyeColour,0.55));
+  faceCtx.beginPath(); faceCtx.arc(cx,cy,irisR,0,Math.PI*2); faceCtx.fillStyle=iG; faceCtx.fill();
+  const coreR=Math.min(FW,FH)*(coreSize+wHalPulse*0.02);
+  const cG=faceCtx.createRadialGradient(cx,cy,0,cx,cy,coreR);
+  cG.addColorStop(0,'rgba(255,255,230,1)'); cG.addColorStop(0.2,rgbS(eyeColour,1));
+  cG.addColorStop(0.7,rgbS(eyeColour,wHalGlow)); cG.addColorStop(1,rgbS(eyeColour,0));
+  faceCtx.beginPath(); faceCtx.arc(cx,cy,coreR*2.5,0,Math.PI*2); faceCtx.fillStyle=cG; faceCtx.fill();
+  faceCtx.beginPath(); faceCtx.arc(cx-coreR*0.25,cy-coreR*0.25,coreR*0.18,0,Math.PI*2);
+  faceCtx.fillStyle='rgba(255,255,255,0.85)'; faceCtx.fill();
+  const hG=faceCtx.createRadialGradient(cx,cy,R*0.9,cx,cy,R*1.4);
+  hG.addColorStop(0,rgbS(eyeColour,wHalGlow*0.4)); hG.addColorStop(1,rgbS(eyeColour,0));
+  faceCtx.beginPath(); faceCtx.arc(cx,cy,R*1.4,0,Math.PI*2); faceCtx.fillStyle=hG; faceCtx.fill();
+  if (thinking) {
+    const sweep=(Date.now()/2000)%(Math.PI*2);
+    faceCtx.save(); faceCtx.translate(cx,cy); faceCtx.rotate(sweep);
+    faceCtx.strokeStyle=rgbS(C2,0.4); faceCtx.lineWidth=1;
+    faceCtx.beginPath(); faceCtx.moveTo(-R*0.9,0); faceCtx.lineTo(R*0.9,0); faceCtx.stroke();
+    faceCtx.beginPath(); faceCtx.moveTo(0,-R*0.9); faceCtx.lineTo(0,R*0.9); faceCtx.stroke();
+    faceCtx.restore();
+  }
+}
+
+// KITT speech-visualiser renderer for the webapp — identical logic to
+// face/index.html's drawKITT() since the canvas dimensions match
+// (sizeFaceCanvas() scales the 720x1280 canvas for display, doesn't
+// resize it), just using faceCtx/FW/FH/faceState/fAmp() throughout.
+function wRoundRect(c, x, y, w, h, r) {
+  if (c.roundRect) {
+    c.beginPath();
+    c.roundRect(x, y, w, h, r);
+  } else {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.lineTo(x + w - r, y);
+    c.arcTo(x+w, y, x+w, y+r, r);
+    c.lineTo(x+w, y+h-r);
+    c.arcTo(x+w, y+h, x+w-r, y+h, r);
+    c.lineTo(x+r, y+h);
+    c.arcTo(x, y+h, x, y+h-r, r);
+    c.lineTo(x, y+r);
+    c.arcTo(x, y, x+r, y, r);
+    c.closePath();
+  }
+}
+
+let wKittLitCentre = 2;   // current lit segment count, centre column (0-14)
+let wKittLitSide   = 1;   // current lit segment count, side columns (0-9)
+let wKittIdleP = 0, wKittListenP = 0, wKittThinkP = 0;
+
+function wKittCentreZone(i) {
+  if (i <= 4) return '#ff4400';
+  if (i <= 9) return '#ff6600';
+  return '#ff2200';
+}
+function wKittSideZone(i) {
+  if (i <= 3) return '#ff4400';
+  if (i <= 6) return '#ff6600';
+  return '#ff2200';
+}
+
+function drawWKittColumn(barX, cy, barW, segCount, litCount, zoneColourFn, thinking) {
+  const segH = 19, gap = 5, step = segH + gap, segR = 10;
+  for (let dir = -1; dir <= 1; dir += 2) {
+    for (let i = 0; i < segCount; i++) {
+      const segY = dir < 0 ? cy - (i + 1) * step : cy + i * step;
+      const isLit = i < litCount;
+      const isTip = i >= segCount - 2;
+      let fillColour;
+      if (!isLit) {
+        faceCtx.shadowBlur = 0;
+        fillColour = thinking ? 'rgba(40,40,60,0.3)' : 'rgba(80,15,0,0.35)';
+      } else if (thinking) {
+        fillColour = '#ffffff';
+        faceCtx.shadowColor = '#ffffff';
+        faceCtx.shadowBlur = 12;
+      } else if (isTip) {
+        fillColour = 'rgba(255,100,30,1.0)';
+        faceCtx.shadowColor = fillColour;
+        faceCtx.shadowBlur = 16;
+      } else {
+        fillColour = zoneColourFn(i);
+        faceCtx.shadowColor = fillColour;
+        faceCtx.shadowBlur = 8;
+      }
+      faceCtx.fillStyle = fillColour;
+      wRoundRect(faceCtx, barX - barW/2, segY, barW, segH, segR);
+      faceCtx.fill();
+    }
+  }
+  faceCtx.shadowBlur = 0;
+}
+
+// --- Telemetry readout helpers (KITT left/right instrument panels) --------
+// Identical logic to face/index.html's drawKittTelemetry()/drawKittRpmBar()
+// since the canvas dimensions match.
+
+const WKITT_AMBER = 'rgba(255,170,0,0.65)';
+const WKITT_LABEL = 'rgba(255,170,0,0.35)';
+const WKITT_DASH  = 'rgba(255,170,0,0.35)';
+
+function wKittFmtLapTime(ms) {
+  if (!ms || ms <= 0) return '--:--.---';
+  const m = Math.floor(ms / 60000);
+  const s = (ms % 60000) / 1000;
+  const secStr = s.toFixed(3);
+  return `${m}:${s < 10 ? '0' + secStr : secStr}`;
+}
+
+function wKittTyreTempColour(t) {
+  if (t < 60) return 'rgba(0,160,255,0.8)';
+  if (t <= 110) return 'rgba(0,220,120,0.75)';
+  return 'rgba(255,60,60,0.85)';
+}
+function wKittTyreWearColour(w) {
+  if (w > 50) return 'rgba(0,220,120,0.7)';
+  if (w >= 25) return 'rgba(255,170,0,0.75)';
+  return 'rgba(255,60,60,0.85)';
+}
+function wKittFuelColour(f) {
+  if (f > 30) return WKITT_AMBER;
+  if (f >= 10) return 'rgba(255,170,0,0.9)';
+  return 'rgba(255,60,60,0.9)';
+}
+function wKittFlagColour(flag) {
+  if (flag === 'BLUE') return 'rgba(0,160,255,0.9)';
+  if (flag === 'YELLOW') return 'rgba(255,200,0,0.9)';
+  if (flag === 'BLACK') return 'rgba(200,200,200,0.9)';
+  if (flag === 'RED') return 'rgba(255,60,60,0.9)';
+  return WKITT_LABEL; // CLEAR / unknown
+}
+
+function wKittRow(c, x, y, align, label, value, colour) {
+  c.textAlign = align;
+  c.font = '16px "Courier New",monospace';
+  const vw = c.measureText(value).width;
+  const labelX = align === 'right' ? x - vw - 6 : x + vw + 6;
+  if (label) {
+    c.font = '12px "Courier New",monospace';
+    c.fillStyle = WKITT_LABEL;
+    c.fillText(label, labelX, y);
+  }
+  c.font = '16px "Courier New",monospace';
+  c.fillStyle = colour;
+  c.fillText(value, x, y);
+}
+
+function drawWKittTelemetry(c, cy, telem) {
+  const STEP = 28;
+  // Align the value columns' outer edges with the "NO TELEMETRY" placeholder
+  // text below (same font, same panel midpoints) so live data lines up
+  // exactly where the placeholder sits when no game is running.
+  c.font = '12px "Courier New",monospace';
+  const noTelHalfW = c.measureText('NO TELEMETRY').width / 2;
+  const LX = 120 + noTelHalfW;
+  const RX = 600 - noTelHalfW;
+  try {
+    c.save();
+    c.textBaseline = 'middle';
+
+    if (!telem) {
+      ['SPD','GEAR','RPM','LAP','POS','FUEL','EST'].forEach((label, i) => {
+        wKittRow(c, LX, cy - 14 - i*STEP, 'right', label, '--', WKITT_DASH);
+      });
+      ['T-FL','T-FR','T-RL','T-RR'].forEach((label, i) => {
+        wKittRow(c, LX, cy + 14 + i*STEP, 'right', label, '--C', WKITT_DASH);
+      });
+      ['BEST','LAST','CUR','COMP','FLAG'].forEach((label, i) => {
+        wKittRow(c, RX, cy - 14 - i*STEP, 'left', label, i < 3 ? '--:--.---' : '--', WKITT_DASH);
+      });
+      ['WEAR','','',''].forEach((label, i) => {
+        wKittRow(c, RX, cy + 14 + i*STEP, 'left', label, '--', WKITT_DASH);
+      });
+
+      c.textAlign = 'center';
+      c.font = '12px "Courier New",monospace';
+      c.fillStyle = 'rgba(255,170,0,0.2)';
+      c.fillText('NO TELEMETRY', 120, cy + 150);
+      c.fillText('NO TELEMETRY', 600, cy + 150);
+      c.restore();
+      return;
+    }
+
+    const speed = telem.speed_kmh != null ? Math.round(telem.speed_kmh) + '' : '--';
+    const gear  = telem.gear != null ? (telem.gear === 0 ? 'N' : String(telem.gear)) : '--';
+    const rpm   = telem.rpm != null ? (Math.round(telem.rpm/100)*100) + '' : '--';
+    const lap   = telem.lap != null ? String(telem.lap) : '--';
+    const fuelPct = telem.fuel_pct;
+    const fuel  = fuelPct != null ? Math.round(fuelPct) + '%' : '--';
+    const fuelColour = fuelPct != null ? wKittFuelColour(fuelPct) : WKITT_DASH;
+    const est   = telem.fuel_laps != null ? telem.fuel_laps.toFixed(1) : '--';
+    const posColour = telem.is_in_pit ? 'rgba(0,220,120,0.9)' : WKITT_AMBER;
+    const posValue  = telem.is_in_pit ? 'PIT' : (telem.position != null ? 'P'+telem.position : '--');
+
+    wKittRow(c, LX, cy - 14 - 0*STEP, 'right', 'SPD',  speed, WKITT_AMBER);
+    wKittRow(c, LX, cy - 14 - 1*STEP, 'right', 'GEAR', gear,  WKITT_AMBER);
+    wKittRow(c, LX, cy - 14 - 2*STEP, 'right', 'RPM',  rpm,   WKITT_AMBER);
+    wKittRow(c, LX, cy - 14 - 3*STEP, 'right', 'LAP',  lap,   WKITT_AMBER);
+    wKittRow(c, LX, cy - 14 - 4*STEP, 'right', 'POS',  posValue, posColour);
+    wKittRow(c, LX, cy - 14 - 5*STEP, 'right', 'FUEL', fuel,  fuelColour);
+    wKittRow(c, LX, cy - 14 - 6*STEP, 'right', 'EST',  est,   WKITT_AMBER);
+
+    const tyreTemps  = [telem.tyre_temp_fl, telem.tyre_temp_fr, telem.tyre_temp_rl, telem.tyre_temp_rr];
+    const tyreLabels = ['T-FL','T-FR','T-RL','T-RR'];
+    tyreTemps.forEach((t, i) => {
+      const val = t != null ? Math.round(t) + 'C' : '--C';
+      const colour = t != null ? wKittTyreTempColour(t) : WKITT_DASH;
+      wKittRow(c, LX, cy + 14 + i*STEP, 'right', tyreLabels[i], val, colour);
+    });
+
+    wKittRow(c, RX, cy - 14 - 0*STEP, 'left', 'BEST', wKittFmtLapTime(telem.best_lap_ms), WKITT_AMBER);
+    wKittRow(c, RX, cy - 14 - 1*STEP, 'left', 'LAST', wKittFmtLapTime(telem.last_lap_ms), WKITT_AMBER);
+    wKittRow(c, RX, cy - 14 - 2*STEP, 'left', 'CUR',  wKittFmtLapTime(telem.current_lap_ms), WKITT_AMBER);
+
+    const compound = telem.compound ? telem.compound.slice(0,4).toUpperCase() : '--';
+    wKittRow(c, RX, cy - 14 - 3*STEP, 'left', 'COMP', compound, WKITT_AMBER);
+
+    const flagRaw = telem.flag;
+    const flag = (!flagRaw || flagRaw === 'None') ? 'CLEAR' : flagRaw.toUpperCase();
+    wKittRow(c, RX, cy - 14 - 4*STEP, 'left', 'FLAG', flag, wKittFlagColour(flag));
+
+    const wearVals = [telem.tyre_wear_fl, telem.tyre_wear_fr, telem.tyre_wear_rl, telem.tyre_wear_rr];
+    const wearTags = ['W-FL','W-FR','W-RL','W-RR'];
+    wearVals.forEach((w, i) => {
+      const val = w != null ? `${wearTags[i]} ${Math.round(w)}%` : '--';
+      const colour = w != null ? wKittTyreWearColour(w) : WKITT_DASH;
+      wKittRow(c, RX, cy + 14 + i*STEP, 'left', i === 0 ? 'WEAR' : '', val, colour);
+    });
+
+    c.textAlign = 'center';
+    c.restore();
+  } catch (e) {
+    c.restore();
+  }
+}
+
+function drawWKittRpmBar(c, cy, telem) {
+  try {
+    if (!telem || telem.rpm == null || !telem.rpm_max) return;
+    const x0 = 20, x1 = 236, y = cy - 210, h = 6, w = x1 - x0;
+    c.save();
+    c.fillStyle = 'rgba(80,15,0,0.4)';
+    c.fillRect(x0, y, w, h);
+    const pct = Math.max(0, Math.min(1, telem.rpm / telem.rpm_max));
+    let colour;
+    if (pct < 0.7) colour = 'rgba(0,220,120,0.7)';
+    else if (pct < 0.9) colour = 'rgba(255,170,0,0.8)';
+    else colour = 'rgba(255,60,60,0.9)';
+    c.fillStyle = colour;
+    c.fillRect(x0, y, w*pct, h);
+    c.restore();
+  } catch (e) {}
+}
+
+function drawWebappKITT() {
+  const listening=!!faceState.listening, thinking=!!faceState.thinking;
+  const amp=fAmp(), speaking=amp!==null;
+  const cx=FW/2, cy=FH/2;
+
+  faceCtx.fillStyle = '#050505';
+  faceCtx.fillRect(0,0,FW,FH);
+  for (let sy=0; sy<FH; sy+=3) { faceCtx.fillStyle='rgba(0,0,0,0.12)'; faceCtx.fillRect(0,sy,FW,1); }
+
+  // === Telemetry instrument panels (drawn before the bars so bar glow
+  // overlays the text slightly for depth) ===
+  drawWKittTelemetry(faceCtx, cy, kittTelemetry);
+  drawWKittRpmBar(faceCtx, cy, kittTelemetry);
+
+  if (thinking) {
+    wKittThinkP += 0.02;
+    const centreExtra = Math.round(2*Math.abs(Math.sin(wKittThinkP)));
+    const sideExtra   = Math.round(1*Math.abs(Math.sin(wKittThinkP+0.7)));
+    wKittLitCentre = 8 + centreExtra;
+    wKittLitSide   = 5 + sideExtra;
+  } else if (listening) {
+    wKittListenP += 0.08;
+    wKittLitCentre = 4 + Math.round(5*Math.abs(Math.sin(wKittListenP)));
+    wKittLitSide   = 3 + Math.round(3*Math.abs(Math.sin(wKittListenP+0.6)));
+  } else if (speaking) {
+    const a = amp || 0;
+    const targetCentre = Math.round(a*14);
+    const targetSide   = Math.round(a*9);
+    wKittLitCentre += (targetCentre - wKittLitCentre) * 0.4;
+    wKittLitSide   += (targetSide   - wKittLitSide)   * 0.4;
+    wKittLitCentre = Math.max(1, wKittLitCentre);
+    wKittLitSide   = Math.max(1, wKittLitSide);
+  } else {
+    wKittIdleP += 0.025;
+    wKittLitCentre = 2 + Math.round(1*Math.abs(Math.sin(wKittIdleP)));
+    wKittLitSide   = 1 + Math.round(1*Math.abs(Math.sin(wKittIdleP+0.4)));
+  }
+
+  const litCentreCount = Math.min(14, Math.max(0, Math.round(wKittLitCentre)));
+  const litSideCount   = Math.min(9,  Math.max(0, Math.round(wKittLitSide)));
+
+  const barW = 64, gap = 44;
+  drawWKittColumn(cx-(barW+gap), cy, barW, 9,  litSideCount,   wKittSideZone,   thinking);
+  drawWKittColumn(cx,            cy, barW, 14, litCentreCount, wKittCentreZone, thinking);
+  drawWKittColumn(cx+(barW+gap), cy, barW, 9,  litSideCount,   wKittSideZone,   thinking);
+
+  faceCtx.textBaseline = 'middle'; faceCtx.textAlign = 'center';
+  faceCtx.font = '14px "Courier New",monospace';
+  faceCtx.fillStyle = 'rgba(255,170,0,0.4)';
+  faceCtx.fillText('K N I G H T   I N D U S T R I E S   T W O   T H O U S A N D', cx, 92);
+
+  let stateText;
+  if (thinking) stateText = 'PROCESSING';
+  else if (listening) stateText = 'LISTENING';
+  else if (speaking) stateText = 'SPEAKING';
+  else stateText = 'READY';
+
+  faceCtx.font = '17px "Courier New",monospace';
+  faceCtx.fillStyle = thinking ? 'rgba(255,255,255,0.85)' : 'rgba(255,170,0,0.7)';
+  faceCtx.fillText(stateText, cx, 120);
+
+  faceCtx.font = '14px "Courier New",monospace';
+  faceCtx.fillStyle = 'rgba(255,60,0,0.3)';
+  faceCtx.fillText('KITT  v1', cx, FH-55);
+}
+
+// KITT Hi-Con — high-contrast KITT variant, same pattern as drawWebappKITT()
+// above mirrors drawKITT(): a colour-modified copy, not a parameterised
+// version, with its own state variables so it can never cross-contaminate
+// the regular KITT style's animation.
+let wKittHCLitCentre = 2;
+let wKittHCLitSide   = 1;
+let wKittHCIdleP = 0, wKittHCListenP = 0, wKittHCThinkP = 0;
+
+const WKITT_HC_VALUE = '#ffffff';
+const WKITT_HC_LABEL = 'rgba(180,180,180,0.9)';
+
+function wKittTyreTempColourHiCon(t) {
+  if (t < 60) return '#4488ff';
+  if (t <= 110) return '#00ff88';
+  return '#ff4444';
+}
+function wKittTyreWearColourHiCon(w) {
+  if (w > 50) return '#ffffff';
+  if (w >= 25) return '#ffdd00';
+  return '#ff4444';
+}
+function wKittFuelColourHiCon(f) {
+  if (f > 30) return '#ffffff';
+  if (f >= 10) return '#ffdd00';
+  return '#ff4444';
+}
+
+function drawWKittColumnHiCon(barX, cy, barW, segCount, litCount, appState) {
+  const segH = 19, gap = 5, step = segH + gap, segR = 10;
+  for (let dir = -1; dir <= 1; dir += 2) {
+    for (let i = 0; i < segCount; i++) {
+      const segY = dir < 0 ? cy - (i + 1) * step : cy + i * step;
+      const isLit = i < litCount;
+      const isTip = i >= segCount - 2;
+      let fillColour;
+      if (!isLit) {
+        faceCtx.shadowBlur = 0;
+        fillColour = 'rgba(60,60,60,0.5)';
+      } else if (appState.mode === 'thinking') {
+        fillColour = '#00ff88';
+        faceCtx.shadowColor = '#00ff88'; faceCtx.shadowBlur = 20;
+      } else if (appState.mode === 'listening') {
+        fillColour = '#4488ff';
+        faceCtx.shadowColor = '#4488ff'; faceCtx.shadowBlur = 20;
+      } else if (appState.mode === 'speaking') {
+        fillColour = '#ffffff';
+        faceCtx.shadowColor = '#ffffff'; faceCtx.shadowBlur = 20 + (appState.amp||0)*20;
+      } else if (isTip) {
+        fillColour = 'rgba(255,255,255,0.9)';
+        faceCtx.shadowColor = '#ffffff'; faceCtx.shadowBlur = 20;
+      } else {
+        fillColour = 'rgba(180,180,180,0.8)';
+        faceCtx.shadowBlur = 0;
+      }
+      faceCtx.fillStyle = fillColour;
+      wRoundRect(faceCtx, barX - barW/2, segY, barW, segH, segR);
+      faceCtx.fill();
+    }
+  }
+  faceCtx.shadowBlur = 0;
+}
+
+function wKittRowHiCon(c, x, y, align, label, value, colour) {
+  c.textAlign = align;
+  c.font = '16px "Courier New",monospace';
+  const vw = c.measureText(value).width;
+  const labelX = align === 'right' ? x - vw - 6 : x + vw + 6;
+  if (label) {
+    c.font = '12px "Courier New",monospace';
+    c.fillStyle = WKITT_HC_LABEL;
+    c.fillText(label, labelX, y);
+  }
+  c.font = '16px "Courier New",monospace';
+  c.fillStyle = colour;
+  c.fillText(value, x, y);
+}
+
+function drawWKittTelemetryHiCon(c, cy, telem) {
+  const STEP = 28;
+  c.font = '12px "Courier New",monospace';
+  const noTelHalfW = c.measureText('NO TELEMETRY').width / 2;
+  const LX = 120 + noTelHalfW;
+  const RX = 600 - noTelHalfW;
+  try {
+    c.save();
+    c.textBaseline = 'middle';
+
+    if (!telem) {
+      ['SPD','GEAR','RPM','LAP','POS','FUEL','EST'].forEach((label, i) => {
+        wKittRowHiCon(c, LX, cy - 14 - i*STEP, 'right', label, '--', WKITT_HC_LABEL);
+      });
+      ['T-FL','T-FR','T-RL','T-RR'].forEach((label, i) => {
+        wKittRowHiCon(c, LX, cy + 14 + i*STEP, 'right', label, '--C', WKITT_HC_LABEL);
+      });
+      ['BEST','LAST','CUR','COMP','FLAG'].forEach((label, i) => {
+        wKittRowHiCon(c, RX, cy - 14 - i*STEP, 'left', label, i < 3 ? '--:--.---' : '--', WKITT_HC_LABEL);
+      });
+      ['WEAR','','',''].forEach((label, i) => {
+        wKittRowHiCon(c, RX, cy + 14 + i*STEP, 'left', label, '--', WKITT_HC_LABEL);
+      });
+
+      c.textAlign = 'center';
+      c.font = '12px "Courier New",monospace';
+      c.fillStyle = 'rgba(180,180,180,0.3)';
+      c.fillText('NO TELEMETRY', 120, cy + 150);
+      c.fillText('NO TELEMETRY', 600, cy + 150);
+      c.restore();
+      return;
+    }
+
+    const speed = telem.speed_kmh != null ? Math.round(telem.speed_kmh) + '' : '--';
+    const gear  = telem.gear != null ? (telem.gear === 0 ? 'N' : String(telem.gear)) : '--';
+    const rpm   = telem.rpm != null ? (Math.round(telem.rpm/100)*100) + '' : '--';
+    const lap   = telem.lap != null ? String(telem.lap) : '--';
+    const fuelPct = telem.fuel_pct;
+    const fuel  = fuelPct != null ? Math.round(fuelPct) + '%' : '--';
+    const fuelColour = fuelPct != null ? wKittFuelColourHiCon(fuelPct) : WKITT_HC_LABEL;
+    const est   = telem.fuel_laps != null ? telem.fuel_laps.toFixed(1) : '--';
+    const posColour = telem.is_in_pit ? '#00ff88' : WKITT_HC_VALUE;
+    const posValue  = telem.is_in_pit ? 'PIT' : (telem.position != null ? 'P'+telem.position : '--');
+
+    wKittRowHiCon(c, LX, cy - 14 - 0*STEP, 'right', 'SPD',  speed, WKITT_HC_VALUE);
+    wKittRowHiCon(c, LX, cy - 14 - 1*STEP, 'right', 'GEAR', gear,  WKITT_HC_VALUE);
+    wKittRowHiCon(c, LX, cy - 14 - 2*STEP, 'right', 'RPM',  rpm,   WKITT_HC_VALUE);
+    wKittRowHiCon(c, LX, cy - 14 - 3*STEP, 'right', 'LAP',  lap,   WKITT_HC_VALUE);
+    wKittRowHiCon(c, LX, cy - 14 - 4*STEP, 'right', 'POS',  posValue, posColour);
+    wKittRowHiCon(c, LX, cy - 14 - 5*STEP, 'right', 'FUEL', fuel,  fuelColour);
+    wKittRowHiCon(c, LX, cy - 14 - 6*STEP, 'right', 'EST',  est,   WKITT_HC_VALUE);
+
+    const tyreTemps  = [telem.tyre_temp_fl, telem.tyre_temp_fr, telem.tyre_temp_rl, telem.tyre_temp_rr];
+    const tyreLabels = ['T-FL','T-FR','T-RL','T-RR'];
+    tyreTemps.forEach((t, i) => {
+      const val = t != null ? Math.round(t) + 'C' : '--C';
+      const colour = t != null ? wKittTyreTempColourHiCon(t) : WKITT_HC_LABEL;
+      wKittRowHiCon(c, LX, cy + 14 + i*STEP, 'right', tyreLabels[i], val, colour);
+    });
+
+    wKittRowHiCon(c, RX, cy - 14 - 0*STEP, 'left', 'BEST', wKittFmtLapTime(telem.best_lap_ms), WKITT_HC_VALUE);
+    wKittRowHiCon(c, RX, cy - 14 - 1*STEP, 'left', 'LAST', wKittFmtLapTime(telem.last_lap_ms), WKITT_HC_VALUE);
+    wKittRowHiCon(c, RX, cy - 14 - 2*STEP, 'left', 'CUR',  wKittFmtLapTime(telem.current_lap_ms), WKITT_HC_VALUE);
+
+    const compound = telem.compound ? telem.compound.slice(0,4).toUpperCase() : '--';
+    wKittRowHiCon(c, RX, cy - 14 - 3*STEP, 'left', 'COMP', compound, WKITT_HC_VALUE);
+
+    const flagRaw = telem.flag;
+    const flag = (!flagRaw || flagRaw === 'None') ? 'CLEAR' : flagRaw.toUpperCase();
+    wKittRowHiCon(c, RX, cy - 14 - 4*STEP, 'left', 'FLAG', flag, wKittFlagColour(flag));
+
+    const wearVals = [telem.tyre_wear_fl, telem.tyre_wear_fr, telem.tyre_wear_rl, telem.tyre_wear_rr];
+    const wearTags = ['W-FL','W-FR','W-RL','W-RR'];
+    wearVals.forEach((w, i) => {
+      const val = w != null ? `${wearTags[i]} ${Math.round(w)}%` : '--';
+      const colour = w != null ? wKittTyreWearColourHiCon(w) : WKITT_HC_LABEL;
+      wKittRowHiCon(c, RX, cy + 14 + i*STEP, 'left', i === 0 ? 'WEAR' : '', val, colour);
+    });
+
+    c.textAlign = 'center';
+    c.restore();
+  } catch (e) {
+    c.restore();
+  }
+}
+
+function drawWKittRpmBarHiCon(c, cy, telem) {
+  try {
+    if (!telem || telem.rpm == null || !telem.rpm_max) return;
+    const x0 = 20, x1 = 236, y = cy - 210, h = 6, w = x1 - x0;
+    c.save();
+    c.fillStyle = 'rgba(60,60,60,0.5)';
+    c.fillRect(x0, y, w, h);
+    const pct = Math.max(0, Math.min(1, telem.rpm / telem.rpm_max));
+    let colour;
+    if (pct < 0.7) colour = '#00ff88';
+    else if (pct < 0.9) colour = '#ffdd00';
+    else colour = '#ff4444';
+    c.fillStyle = colour;
+    c.fillRect(x0, y, w*pct, h);
+    c.restore();
+  } catch (e) {}
+}
+
+function drawWebappKITTHiCon() {
+  const listening=!!faceState.listening, thinking=!!faceState.thinking;
+  const amp=fAmp(), speaking=amp!==null;
+  const cx=FW/2, cy=FH/2;
+
+  faceCtx.fillStyle = '#000000';
+  faceCtx.fillRect(0,0,FW,FH);
+  for (let sy=0; sy<FH; sy+=3) { faceCtx.fillStyle='rgba(0,0,0,0.12)'; faceCtx.fillRect(0,sy,FW,1); }
+
+  drawWKittTelemetryHiCon(faceCtx, cy, kittTelemetry);
+  drawWKittRpmBarHiCon(faceCtx, cy, kittTelemetry);
+
+  if (thinking) {
+    wKittHCThinkP += 0.02;
+    const centreExtra = Math.round(2*Math.abs(Math.sin(wKittHCThinkP)));
+    const sideExtra   = Math.round(1*Math.abs(Math.sin(wKittHCThinkP+0.7)));
+    wKittHCLitCentre = 8 + centreExtra;
+    wKittHCLitSide   = 5 + sideExtra;
+  } else if (listening) {
+    wKittHCListenP += 0.08;
+    wKittHCLitCentre = 4 + Math.round(5*Math.abs(Math.sin(wKittHCListenP)));
+    wKittHCLitSide   = 3 + Math.round(3*Math.abs(Math.sin(wKittHCListenP+0.6)));
+  } else if (speaking) {
+    const a = amp || 0;
+    const targetCentre = Math.round(a*14);
+    const targetSide   = Math.round(a*9);
+    wKittHCLitCentre += (targetCentre - wKittHCLitCentre) * 0.4;
+    wKittHCLitSide   += (targetSide   - wKittHCLitSide)   * 0.4;
+    wKittHCLitCentre = Math.max(1, wKittHCLitCentre);
+    wKittHCLitSide   = Math.max(1, wKittHCLitSide);
+  } else {
+    wKittHCIdleP += 0.025;
+    wKittHCLitCentre = 2 + Math.round(1*Math.abs(Math.sin(wKittHCIdleP)));
+    wKittHCLitSide   = 1 + Math.round(1*Math.abs(Math.sin(wKittHCIdleP+0.4)));
+  }
+
+  const litCentreCount = Math.min(14, Math.max(0, Math.round(wKittHCLitCentre)));
+  const litSideCount   = Math.min(9,  Math.max(0, Math.round(wKittHCLitSide)));
+
+  const appState = thinking ? {mode:'thinking'} : listening ? {mode:'listening'} : speaking ? {mode:'speaking', amp} : {mode:'idle'};
+
+  const barW = 64, gap = 44;
+  drawWKittColumnHiCon(cx-(barW+gap), cy, barW, 9,  litSideCount,   appState);
+  drawWKittColumnHiCon(cx,            cy, barW, 14, litCentreCount, appState);
+  drawWKittColumnHiCon(cx+(barW+gap), cy, barW, 9,  litSideCount,   appState);
+
+  faceCtx.textBaseline = 'middle'; faceCtx.textAlign = 'center';
+  faceCtx.font = '14px "Courier New",monospace';
+  faceCtx.fillStyle = 'rgba(200,200,200,0.8)';
+  faceCtx.fillText('K N I G H T   I N D U S T R I E S   T W O   T H O U S A N D', cx, 92);
+
+  let stateText;
+  if (thinking) stateText = 'PROCESSING';
+  else if (listening) stateText = 'LISTENING';
+  else if (speaking) stateText = 'SPEAKING';
+  else stateText = 'READY';
+
+  faceCtx.font = '17px "Courier New",monospace';
+  faceCtx.fillStyle = '#ffffff';
+  faceCtx.fillText(stateText, cx, 120);
+
+  faceCtx.font = '14px "Courier New",monospace';
+  faceCtx.fillStyle = 'rgba(160,160,160,0.7)';
+  faceCtx.fillText('KITT HI-CON', cx, FH-55);
+}
+
+function faceDrawLoop() {
+  if (!faceModeActive||!faceCtx) return;
+  faceT+=0.022;
+  const style = faceState.face_style || 0;
+  if (style===1) {
+    drawWebappHAL(true);
+    faceCtx.shadowBlur=0;
+    if(facePttHint)facePttHint.style.opacity=isRecording?'0':'1';
+    faceAnimFrame=requestAnimationFrame(faceDrawLoop); return;
+  }
+  if (style===2) {
+    drawWebappKITT();
+    faceCtx.shadowBlur=0;
+    if(facePttHint)facePttHint.style.opacity=isRecording?'0':'1';
+    faceAnimFrame=requestAnimationFrame(faceDrawLoop); return;
+  }
+  if (style===3) {
+    drawWebappKITTHiCon();
+    faceCtx.shadowBlur=0;
+    if(facePttHint)facePttHint.style.opacity=isRecording?'0':'1';
+    faceAnimFrame=requestAnimationFrame(faceDrawLoop); return;
+  }
+  const BG=FACE_BG,C1=FACE_COL1,C2=FACE_COL2;
+  const listening=!!faceState.listening,thinking=!!faceState.thinking;
+  const amp=fAmp(),speaking=amp!==null;
+
+  faceCtx.fillStyle=listening?C1:thinking?C2:BG;
+  faceCtx.fillRect(0,0,FW,FH);
+
+  for (let i=0;i<faceTris.length;i++) {
+    const {cx,cy,dist,phase,verts}=faceTris[i];
+    let target;
+    if (listening)     target=0.15+0.3*Math.abs(Math.sin((1-dist)*Math.PI*3-faceT*2.2+phase*0.15));
+    else if (thinking) target=0.05+0.45*Math.pow(Math.max(0,Math.sin(faceT*2.8+phase)),4);
+    else if (speaking) target=Math.max(0.05,Math.min(1,amp*(0.4+0.6*Math.sin(dist*Math.PI*6-faceT*3.5+phase*0.1))*(1-dist*0.25)));
+    else               target=0.05+0.25*Math.abs(Math.sin((cx/FW+cy/FH)*Math.PI*1.8-faceT*0.9+phase));
+    faceTris[i].bright+=(target-faceTris[i].bright)*0.15;
+    const b=Math.max(0,Math.min(1,faceTris[i].bright));
+    if (b<0.02) continue;
+    let fill;
+    if (listening||thinking){const rgb=fhexRgb(listening?BG:C1);fill=`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${(b*0.9).toFixed(3)})`;}
+    else if (speaking){const base=[BG,C1,C2][(i+Math.floor(faceT*2))%3];fill=frgb(base,b);}
+    else fill=frgb(i%2===0?C1:C2,b*0.85);
+    if (speaking&&b>0.5){faceCtx.shadowColor=fill;faceCtx.shadowBlur=b*14;}
+    else faceCtx.shadowBlur=0;
+    faceCtx.fillStyle=fill;
+    faceCtx.beginPath();
+    faceCtx.moveTo(verts[0][0],verts[0][1]);
+    faceCtx.lineTo(verts[1][0],verts[1][1]);
+    faceCtx.lineTo(verts[2][0],verts[2][1]);
+    faceCtx.closePath(); faceCtx.fill();
+  }
+  faceCtx.shadowBlur=0;
+
+  // PTT hint fades while either PTT path is actively recording
+  if (facePttHint) facePttHint.style.opacity = (isRecording || inAppPttActive) ? '0' : '1';
+
+  faceAnimFrame = requestAnimationFrame(faceDrawLoop);
+}
+
+// Tap anywhere on face canvas = PTT toggle. Only in IN-APP mode -- AT
+// HOME (default) leaves PTT to the physical controller and taps here do
+// nothing, per the ptt-source-toggle above.
+faceCanvas?.addEventListener('touchstart', e => {
+  e.preventDefault();
+  unlockAudio();  // must call explicitly — preventDefault stops bubbling to document listener
+  if (pttSource === 'inapp') toggleInAppPtt();
+}, {passive:false});
+faceCanvas?.addEventListener('click', () => {
+  unlockAudio();
+  if (pttSource === 'inapp') toggleInAppPtt();
+});
+
+// ── Audio context unlock (Safari autoplay fix) ─────────────────────────────────
+// Safari blocks audio.play() unless it's called within a user gesture.
+// We create an AudioContext on the first tap anywhere, which unlocks
+// subsequent programmatic audio.play() calls for the rest of the session.
+let audioCtx = null;
+
+function unlockAudio() {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // Always attempt resume — iOS can suspend the context after inactivity
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  } catch(e) {}
+}
+
+// Unlock on any tap — covers button taps, keyboard, anywhere
+document.addEventListener('click',     unlockAudio, {once: false, passive: true});
+document.addEventListener('touchstart', unlockAudio, {once: false, passive: true});
+document.addEventListener('keydown',   unlockAudio, {once: false, passive: true});
+
+// ── Live camera ──────────────────────────────────────────────────────────────
+let cameraLiveOpen = false;
+
+async function toggleLiveCamera() {
+  const panel  = document.getElementById('camera-panel');
+  const btn    = document.getElementById('camera-live-btn');
+  const stream = document.getElementById('camera-stream');
+  cameraLiveOpen = !cameraLiveOpen;
+  if (cameraLiveOpen) {
+    // Request camera permission explicitly — needed for iOS PWA context
+    try {
+      const testStream = await navigator.mediaDevices.getUserMedia({video: true});
+      testStream.getTracks().forEach(t => t.stop()); // release immediately
+    } catch(e) {
+      cameraLiveOpen = false;
+      if (e.name === 'NotAllowedError') {
+        addMsg('system', '📷 Camera permission denied. Go to Settings → Q2 → Camera and allow access.');
+      } else {
+        addMsg('system', `📷 Camera unavailable: ${e.message || e.name}`);
+      }
+      return;
+    }
+    stream.src = `${BASE}/camera/stream?t=${Date.now()}`;
+    panel.style.display = 'block';
+    btn.classList.add('active');
+  } else {
+    stream.src = '';
+    panel.style.display = 'none';
+    btn.classList.remove('active');
+  }
+}
+
+async function askAboutCamera() {
+  const prompt = textInput.value.trim() || 'What do you see?';
+  textInput.value = '';
+  addMsg('user', `[camera] ${prompt}`);
+  const thinking = addThinking();
+  setStatus('working');
+  try {
+    const res  = await fetch(`${BASE}/chat`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: `Look at what the webcam sees and ${prompt}`}),
+    });
+    const data = await res.json();
+    thinking.remove();
+    const reply = data.reply || data.error || '(no reply)';
+    addMsg('q2', reply);
+    speakReply(reply);
+  } catch(e) {
+    thinking.remove();
+    addMsg('system', `Error: ${e.message}`);
+  }
+  setStatus('online');
+}
+
+// ── Status ──────────────────────────────────────────────────────────────────
+function setStatus(state) {
+  statusDot.className = 'status-dot ' + state;
+}
+setStatus('working');
+fetch(`${BASE}/health`).then(r => r.json()).then(d => {
+  setStatus('online');
+  const msg = document.getElementById('connection-msg');
+  if (msg) msg.textContent = 'Connected to Q2 on your-pi.';
+  initLlmPanel();
+  initVoicePanel();
+}).catch(() => {
+  setStatus('offline');
+  const msg = document.getElementById('connection-msg');
+  if (msg) msg.textContent = '⚠ Cannot reach Q2 — check your connection.';
+});
+
+// ── Message rendering ────────────────────────────────────────────────────────
+// Detect URLs in text and render them as tappable links
+function linkify(text) {
+  const urlRe = /(https?:\/\/[^\s<>"]+)/g;
+  const parts = text.split(urlRe);
+  const frag = document.createDocumentFragment();
+  parts.forEach((part, i) => {
+    if (i % 2 === 1) {
+      const a = document.createElement('a');
+      a.href = part;
+      a.textContent = part;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.style.cssText = 'color:var(--accent2);word-break:break-all;';
+      frag.appendChild(a);
+    } else if (part) {
+      frag.appendChild(document.createTextNode(part));
+    }
+  });
+  return frag;
+}
+
+function addMsg(role, content, imgSrc) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  if (role === 'q2') {
+    const name = document.createElement('div');
+    name.className = 'name';
+    name.textContent = 'Q2';
+    div.appendChild(name);
+  }
+  if (content) {
+    const p = document.createElement('div');
+    if (role === 'q2') {
+      p.appendChild(linkify(content));
+    } else {
+      p.textContent = content;
+    }
+    div.appendChild(p);
+  }
+  if (imgSrc) {
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    div.appendChild(img);
+  }
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return div;
+}
+
+function addThinking() {
+  const div = document.createElement('div');
+  div.className = 'msg q2';
+  div.innerHTML = '<div class="name">Q2</div><div class="thinking-dots"><span>•</span><span>•</span><span>•</span></div>';
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return div;
+}
+
+// ── Text chat ────────────────────────────────────────────────────────────────
+let isSending = false;
+
+const sendBtn = document.getElementById('send-btn');
+
+async function sendText() {
+  if (isSending) return;
+  const text = textInput.value.trim();
+  if (!text) return;
+  isSending = true;
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = '0.5'; }
+  textInput.value = '';
+  textInput.style.height = '';
+  addMsg('user', text);
+  const thinking = addThinking();
+  setStatus('working');
+  setFaceThinking(true);
+  try {
+    const res  = await fetch(`${BASE}/chat`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: text}),
+    });
+    const data = await res.json();
+    thinking.remove();
+    const reply = data.reply || data.error || '(no reply)';
+    addMsg('q2', reply);
+    setFaceThinking(false);
+    speakReply(reply);
+  } catch(e) {
+    thinking.remove();
+    setFaceThinking(false);
+    addMsg('system', `Error: ${e.message}`);
+  }
+  setStatus('online');
+  isSending = false;
+  if (sendBtn) { sendBtn.disabled = false; sendBtn.style.opacity = ''; }
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!isSending) sendText();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = '';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── Camera / image ───────────────────────────────────────────────────────────
+function triggerCamera() {
+  cameraInput.click();
+}
+
+cameraInput.addEventListener('change', async () => {
+  const file = cameraInput.files[0];
+  if (!file) return;
+  cameraInput.value = '';
+
+  const objectUrl = URL.createObjectURL(file);
+  const prompt    = textInput.value.trim() || 'Please analyze this image.';
+  textInput.value = '';
+  addMsg('user', prompt, objectUrl);
+  const thinking = addThinking();
+  setStatus('working');
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('message', prompt);
+    const res  = await fetch(`${BASE}/analyze`, {method: 'POST', body: formData});
+    const data = await res.json();
+    thinking.remove();
+    const reply = data.reply || data.error || '(no reply)';
+    addMsg('q2', reply);
+    speakReply(reply);
+  } catch(e) {
+    thinking.remove();
+    addMsg('system', `Error: ${e.message}`);
+  }
+  setStatus('online');
+});
+
+// ── Voice PTT ────────────────────────────────────────────────────────────────
+// We request a fresh getUserMedia stream for every recording session rather
+// than reusing one. Reusing a stream causes it to go stale after a few uses
+// in Safari/Chrome, leading to silent recordings or "device in use" errors.
+let mediaRecorder = null;
+let audioChunks   = [];
+let isRecording   = false;
+
+async function startRecording() {
+  if (isRecording) return;
+  unlockAudio();  // ensure AudioContext is live before recording
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    addMsg('system',
+      location.protocol === 'https:'
+        ? 'Microphone not available in this browser.'
+        : '⚠ Voice requires HTTPS. Connect via Tailscale for microphone access.'
+    );
+    return;
+  }
+
+  let stream;
+  try {
+    // Fresh stream every time — avoids stale track errors after several recordings
+    stream = await navigator.mediaDevices.getUserMedia({audio: true, video: false});
+  } catch(e) {
+    const msg = e.name === 'NotAllowedError'
+      ? 'Microphone permission denied. Allow mic access in Settings → Safari.'
+      : `Microphone error: ${e.message || e.name}`;
+    addMsg('system', msg);
+    return;
+  }
+
+  const mimeOptions = [
+    'audio/webm;codecs=opus', 'audio/webm',
+    'audio/ogg;codecs=opus',  'audio/ogg',
+    'audio/mp4', '',
+  ];
+  const mimeType = mimeOptions.find(m => !m || MediaRecorder.isTypeSupported(m)) || '';
+
+  try {
+    mediaRecorder = new MediaRecorder(stream, mimeType ? {mimeType} : {});
+  } catch(e) {
+    stream.getTracks().forEach(t => t.stop());
+    addMsg('system', `Recording error: ${e.message}`);
+    return;
+  }
+
+  audioChunks = [];
+  const capturedStream = stream;  // close over this specific stream instance
+  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+  mediaRecorder.onstop = async () => {
+    // Stop only the tracks from THIS recording session — not any newer stream
+    // that may have already been acquired by the next startRecording() call.
+    capturedStream.getTracks().forEach(t => t.stop());
+    const blob = new Blob(audioChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+    await sendAudio(blob);
+  };
+  mediaRecorder.onerror = e => {
+    capturedStream.getTracks().forEach(t => t.stop());
+    isRecording = false;
+    pttBtn.classList.remove('recording');
+    pttBtn.textContent = '🎙';
+    addMsg('system', `Recording error: ${e.error?.message || 'unknown'}`);
+  };
+
+  mediaRecorder.start();
+  isRecording = true;
+  pttBtn.classList.add('recording');
+  pttBtn.textContent = '⏹';
+  addMsg('system', 'Recording…');
+  setFaceListening(true);
+}
+
+function stopRecording() {
+  if (!isRecording || !mediaRecorder) return;
+  mediaRecorder.stop();
+  isRecording = false;
+  pttBtn.classList.remove('recording');
+  pttBtn.textContent = '🎙';
+  setFaceListening(false);
+}
+
+async function sendAudio(blob) {
+  const thinking = addThinking();
+  setStatus('working');
+  setFaceThinking(true);
+  try {
+    const formData = new FormData();
+    formData.append('audio', blob, 'recording.webm');
+    const tRes       = await fetch(`${BASE}/transcribe`, {method: 'POST', body: formData});
+    const tData      = await tRes.json();
+    const transcript = tData.transcript || '';
+
+    if (!transcript.trim()) {
+      thinking.remove();
+      setFaceThinking(false);
+      addMsg('system', '(Nothing transcribed — try again)');
+      setStatus('online');
+      return;
+    }
+
+    addMsg('user', transcript);
+
+    const cRes  = await fetch(`${BASE}/chat`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: transcript}),
+    });
+    const cData = await cRes.json();
+    thinking.remove();
+    const reply = cData.reply || cData.error || '(no reply)';
+    addMsg('q2', reply);
+    setFaceThinking(false);
+    speakReply(reply);
+  } catch(e) {
+    thinking.remove();
+    setFaceThinking(false);
+    addMsg('system', `Error: ${e.message}`);
+  }
+  setStatus('online');
+}
+
+// Toggle PTT on tap
+pttBtn.addEventListener('click', () => {
+  if (isRecording) stopRecording();
+  else startRecording();
+});
+
+// Hold-to-talk on desktop only — pointer events, not mouse, to avoid
+// double-firing with the click handler on touch devices.
+pttBtn.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'mouse' && e.button === 0) startRecording();
+});
+pttBtn.addEventListener('pointerup', e => {
+  if (e.pointerType === 'mouse') stopRecording();
+});
+
+// ── Service Worker registration ───────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(reg => console.log('Q2 SW registered:', reg.scope))
+      .catch(err => console.warn('Q2 SW registration failed:', err));
+  });
+}
+
+// ── Controller navigation (voice/controller.py's gamepad nav mode) ────────
+// Polls face/server.py's controller-event buffer (proxied through
+// /face-api since this page isn't served from face/server.py's own port)
+// so the physical 8BitDo Zero 2 can drive this page's DOM even though the
+// controller itself is only ever read locally on the Pi via evdev.
+let ctrlLastPoll    = 0;
+let ctrlNavFocusIdx = 0;
+
+function initControllerNav() {
+  setInterval(pollControllerNavEvents, 200);
+}
+
+async function pollControllerNavEvents() {
+  try {
+    const r = await fetch(`${BASE}/face-api/controller/events?since=${ctrlLastPoll}`).then(r => r.json());
+    for (const evt of (r.events || [])) {
+      ctrlLastPoll = Math.max(ctrlLastPoll, evt.ts || 0);
+      if (evt.type === 'nav') handleNavEvent(evt);
+    }
+  } catch(e) {}
+}
+
+function handleNavEvent(evt) {
+  const ind = document.getElementById('ctrl-nav-indicator');
+  if (ind) ind.style.display = evt.nav_mode ? 'block' : 'none';
+
+  if (!evt.nav_mode) return;
+
+  const dpad = evt.dpad || {};
+  if (dpad.y === -1) ctrlMove(-1);
+  if (dpad.y ===  1) ctrlMove(+1);
+  if (evt.action === 'nav_confirm') ctrlConfirm();
+  if (evt.action === 'nav_back')    ctrlBack();
+}
+
+function ctrlMove(dir) {
+  document.querySelectorAll('.ctrl-focused').forEach(el => el.classList.remove('ctrl-focused'));
+
+  const items = Array.from(document.querySelectorAll('[data-nav]'));
+  if (!items.length) return;
+
+  ctrlNavFocusIdx = Math.max(0, Math.min(items.length - 1, ctrlNavFocusIdx + dir));
+
+  const target = items[ctrlNavFocusIdx];
+  if (target) {
+    target.classList.add('ctrl-focused');
+    target.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+}
+
+function ctrlConfirm() {
+  const el = document.querySelector('.ctrl-focused');
+  if (el) el.click();
+}
+
+function ctrlBack() {
+  // Close whichever panel is currently open (this page has no generic
+  // modal/panel-close convention -- voice-panel and llm-panel each track
+  // their own open/closed state via toggleVoicePanel()/toggleLlmPanel()).
+  if (typeof voicePanelOpen !== 'undefined' && voicePanelOpen) { toggleVoicePanel(); return; }
+  if (typeof llmPanelOpen !== 'undefined' && llmPanelOpen) { toggleLlmPanel(); return; }
+}
+
+initControllerNav();
+</script>
+<div id="ctrl-nav-indicator">NAV</div>
+</body>
+</html>

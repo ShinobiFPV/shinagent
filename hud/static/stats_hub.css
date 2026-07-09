@@ -1,0 +1,437 @@
+/* ── Stats Hub Base ─────────────────────────────────────── */
+
+.stats-hub {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Courier New', monospace;
+}
+
+.sport-selector {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid var(--sport-accent, rgba(0,220,120,0.2));
+    flex-wrap: wrap;
+}
+
+.sport-btn {
+    padding: 5px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-family: inherit;
+    transition: all 0.15s;
+    background: transparent;
+    color: rgba(200, 200, 200, 0.4);
+}
+
+.sport-btn.active,
+.sport-btn:hover {
+    color: var(--sport-text);
+    border-color: var(--sport-accent);
+    background: var(--sport-bg-accent);
+}
+
+.stats-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.stats-title {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--sport-accent);
+    color: var(--sport-accent-bright);
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.stats-table th {
+    text-align: left;
+    padding: 4px 8px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sport-dim);
+    border-bottom: 1px solid var(--sport-accent);
+}
+
+.stats-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--sport-text);
+}
+
+.stats-table tr:hover td {
+    background: var(--sport-bg-accent);
+}
+
+.pos-badge {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.pos-1 { background: #FFD700; color: #000; }
+.pos-2 { background: #C0C0C0; color: #000; }
+.pos-3 { background: #CD7F32; color: #000; }
+
+/* ── FORMULA DRIFT THEME ───────────────────────────────── */
+/* Black, Red, White -- aggressive motorsport */
+
+.theme-formula-drift {
+    --sport-bg:         #0a0000;
+    --sport-accent:     rgba(232, 0, 42, 0.4);
+    --sport-accent-bright: #e8002a;
+    --sport-bg-accent:  rgba(232, 0, 42, 0.06);
+    --sport-text:       #f0e0e0;
+    --sport-dim:        rgba(232, 100, 100, 0.5);
+
+    background: var(--sport-bg);
+}
+
+.theme-formula-drift .sport-logo {
+    color: #e8002a;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+}
+
+.theme-formula-drift .stats-table tr.leader td {
+    color: #e8002a;
+    font-weight: 700;
+}
+
+/* ── X GAMES THEME ─────────────────────────────────────── */
+/* Blue, Yellow, White -- ESPN action sports energy */
+
+.theme-xgames {
+    --sport-bg:         #000820;
+    --sport-accent:     rgba(0, 48, 135, 0.6);
+    --sport-accent-bright: #FFD700;
+    --sport-bg-accent:  rgba(255, 215, 0, 0.06);
+    --sport-text:       #e8eef8;
+    --sport-dim:        rgba(100, 140, 200, 0.5);
+
+    background: var(--sport-bg);
+}
+
+.theme-xgames .sport-logo {
+    color: #FFD700;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    font-style: italic;
+}
+
+.xg-score-small {
+    font-size: 14px;
+    font-weight: 700;
+    color: #FFD700;
+}
+
+.xg-discipline-tabs {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.xg-discipline-btn {
+    padding: 3px 8px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 2px;
+    cursor: pointer;
+    background: transparent;
+    color: rgba(255, 215, 0, 0.4);
+    font-family: inherit;
+}
+
+.xg-discipline-btn.active {
+    background: rgba(255, 215, 0, 0.12);
+    color: #FFD700;
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+/* ── F1 THEME ──────────────────────────────────────────── */
+/* Dark red, silver, black -- Formula 1 */
+
+.theme-f1 {
+    --sport-bg:         #0a0005;
+    --sport-accent:     rgba(225, 6, 0, 0.35);
+    --sport-accent-bright: #e10600;
+    --sport-bg-accent:  rgba(225, 6, 0, 0.06);
+    --sport-text:       #f0e8e8;
+    --sport-dim:        rgba(200, 100, 100, 0.5);
+
+    background: var(--sport-bg);
+}
+
+.theme-f1 .sport-logo {
+    color: #e10600;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+}
+
+/* ── UFC THEME ─────────────────────────────────────────── */
+/* Red, black, gold -- UFC */
+
+.theme-ufc {
+    --sport-bg:         #080000;
+    --sport-accent:     rgba(200, 16, 46, 0.4);
+    --sport-accent-bright: #c8102e;
+    --sport-bg-accent:  rgba(200, 16, 46, 0.06);
+    --sport-text:       #f0e0e0;
+    --sport-dim:        rgba(200, 100, 100, 0.5);
+
+    background: var(--sport-bg);
+}
+
+.theme-ufc .sport-logo {
+    color: #c8102e;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+}
+
+.ufc-fighter-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f0e0e0;
+}
+
+.ufc-record {
+    font-size: 10px;
+    color: rgba(200, 100, 100, 0.6);
+}
+
+/* ── NBA THEME ─────────────────────────────────────────── */
+/* Blue, red, white -- NBA */
+
+.theme-nba {
+    --sport-bg:         #000a15;
+    --sport-accent:     rgba(23, 64, 139, 0.5);
+    --sport-accent-bright: #1d428a;
+    --sport-bg-accent:  rgba(23, 64, 139, 0.08);
+    --sport-text:       #e8f0f8;
+    --sport-dim:        rgba(100, 140, 200, 0.5);
+
+    background: var(--sport-bg);
+}
+
+.theme-nba .sport-logo {
+    color: #c8102e;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+}
+
+.nba-score-big {
+    font-size: 36px;
+    font-weight: 900;
+    color: #e8f0f8;
+    line-height: 1;
+}
+
+.nba-team-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1d428a;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* ── NHL THEME ─────────────────────────────────────────── */
+/* Dark blue, white, silver -- NHL */
+
+.theme-nhl {
+    --sport-bg:         #000510;
+    --sport-accent:     rgba(0, 0, 168, 0.4);
+    --sport-accent-bright: #0033a0;
+    --sport-bg-accent:  rgba(0, 51, 160, 0.08);
+    --sport-text:       #e8eef8;
+    --sport-dim:        rgba(100, 130, 200, 0.5);
+
+    background: var(--sport-bg);
+}
+
+.theme-nhl .sport-logo {
+    color: #0033a0;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+}
+
+.nhl-score-big {
+    font-size: 42px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1;
+}
+
+/* ── NFL THEME ─────────────────────────────────────────── */
+/* Navy, red, white -- NFL shield colours */
+
+.theme-nfl {
+    --sport-bg:         #000b1e;
+    --sport-accent:     rgba(1, 51, 105, 0.5);
+    --sport-accent-bright: #4169e1;
+    --sport-bg-accent:  rgba(1, 51, 105, 0.08);
+    --sport-text:       #e8eef8;
+    --sport-dim:        rgba(100, 130, 200, 0.5);
+
+    background: var(--sport-bg);
+}
+
+.theme-nfl .sport-logo {
+    color: #D50A0A;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+}
+
+.nfl-score-big {
+    font-size: 38px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.nfl-team-abbr {
+    font-size: 13px;
+    font-weight: 900;
+    color: #4169e1;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.nfl-down-dist {
+    font-size: 11px;
+    color: #ff4444;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.nfl-possession-indicator {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ffcc00;
+    display: inline-block;
+    margin-right: 4px;
+    box-shadow: 0 0 6px #ffcc00;
+}
+
+/* ── MLB THEME ─────────────────────────────────────────── */
+/* Navy, red, white -- MLB brand colours */
+
+.theme-mlb {
+    --sport-bg:         #000818;
+    --sport-accent:     rgba(0, 45, 114, 0.5);
+    --sport-accent-bright: #0a4fa0;
+    --sport-bg-accent:  rgba(0, 45, 114, 0.08);
+    --sport-text:       #e8eef8;
+    --sport-dim:        rgba(100, 130, 200, 0.5);
+
+    background: var(--sport-bg);
+}
+
+.theme-mlb .sport-logo {
+    color: #D50032;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    font-style: italic;
+}
+
+.mlb-score-big {
+    font-size: 40px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.mlb-team-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #4a7fc9;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.mlb-inning {
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(100, 150, 220, 0.8);
+}
+
+.mlb-count {
+    font-size: 20px;
+    font-weight: 900;
+    color: #4a9fe0;
+    font-variant-numeric: tabular-nums;
+}
+
+.mlb-bases {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 6px;
+}
+
+.mlb-base {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    transform: rotate(45deg);
+    transition: background 0.2s;
+}
+
+.mlb-base.occupied {
+    background: #ffcc00;
+    border-color: #ffaa00;
+    box-shadow: 0 0 8px rgba(255,204,0,0.5);
+}
+
+.mlb-outs {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.mlb-out {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.mlb-out.recorded {
+    background: #D50032;
+    border-color: #aa0020;
+}

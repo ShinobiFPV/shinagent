@@ -1,0 +1,4404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Q2 Settings</title>
+<style>
+  :root {
+    /* Core */
+    --bg:         #00080a;
+    --surface:    #021210;
+    --surface2:   #0a1f1a;
+    --border:     rgba(0, 220, 120, 0.15);
+
+    /* Text */
+    --text:       #c8f0dc;
+    --dim:        #4a8a6a;
+
+    /* Accents */
+    --accent:     #ff3c3c;
+    --accent2:    #00c8ff;
+    --accent3:    #00dc78;
+    --warning:    #ffb400;
+    --danger:     #ff3c3c;
+    --success:    #00dc78;
+
+    /* Unchanged layout vars */
+    --radius:    12px;
+    --radius-sm: 8px;
+    --tap:       48px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { background: var(--bg); }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.08) 2px,
+      rgba(0, 0, 0, 0.08) 3px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  body {
+    font-family: 'SF Mono', 'Fira Mono', 'Courier New', monospace;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header-title, .section-label, strong {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+    letter-spacing: 0.06em;
+  }
+
+  /* -- Header -- */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(0,8,10,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+
+  .header-title {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--accent3);
+    text-transform: uppercase;
+  }
+
+  .header-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--dim);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 0;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .header-back:active { opacity: 0.6; }
+
+  .save-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 8px 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .save-btn:active { opacity: 0.8; transform: scale(0.97); }
+
+  /* -- Restart banner -- */
+  .restart-banner {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--warning);
+    border-bottom: 1px solid var(--warning);
+    color: #000;
+    padding: 10px 16px;
+    font-size: 0.82rem;
+  }
+  .restart-banner.show { display: flex; }
+  .restart-banner .btns { display: flex; gap: 8px; flex-shrink: 0; }
+  .restart-banner button {
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    cursor: pointer;
+    border: none;
+  }
+  .restart-banner .btn-go { background: var(--accent); color: #000; }
+  .restart-banner .btn-later { background: transparent; color: rgba(0,0,0,0.6); border: 1px solid rgba(0,0,0,0.3); }
+
+  /* -- Accordion -- */
+  .sections { padding: 12px 16px 32px; display: flex; flex-direction: column; gap: 8px; }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    min-height: var(--tap);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+  }
+  .section-header:active { background: rgba(255,255,255,0.03); }
+
+  .section-icon {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--accent2);
+    width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+    font-family: 'SF Mono', 'Fira Mono', monospace;
+    background: rgba(0,200,255,0.1);
+    border: 1px solid rgba(0,200,255,0.2);
+    border-radius: 4px;
+    padding: 2px 4px;
+  }
+  .section-icon .full { display: none; }
+
+  .section-label {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--accent3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dirty-dot {
+    display: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--warning);
+    flex-shrink: 0;
+  }
+  .section.dirty .dirty-dot { display: inline-block; }
+
+  .badge-restart {
+    display: none;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--warning);
+    border: 1px solid var(--warning);
+    border-radius: 4px;
+    padding: 2px 6px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .badge-restart.show { display: inline-block; }
+
+  .section-chevron {
+    color: var(--dim);
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+  .section.open .section-chevron { transform: rotate(180deg); }
+  .section.open .section-header { border-bottom: 1px solid var(--accent3); }
+
+  .section-body {
+    display: none;
+    padding: 16px;
+    flex-direction: column;
+    gap: 0;
+    background: var(--bg);
+  }
+  .section.open .section-body { display: flex; }
+
+  /* -- Rows -- */
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: var(--tap);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+
+  .row-label {
+    flex: 1;
+    min-width: 0;
+  }
+  .row-label strong {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .row-label span {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--dim);
+    margin-top: 1px;
+  }
+
+  .row-control {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* -- Inputs -- */
+  select, input[type="text"], input[type="number"], input[type="email"], textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    padding: 10px 12px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a8a6a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  select:focus, input:focus, textarea:focus { border-color: var(--accent3); box-shadow: 0 0 8px rgba(0,220,120,0.2); }
+
+  .input-full { width: 100%; }
+
+  /* -- Toggle -- */
+  .toggle { position: relative; width: 50px; height: 28px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .toggle input:checked ~ .toggle-track { background: var(--accent3); border-color: var(--accent3); }
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    background: #000;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    pointer-events: none;
+  }
+  .toggle input:checked ~ .toggle-thumb { transform: translateX(22px); }
+
+  /* -- Range slider -- */
+  .range-row { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 0; }
+  .range-header { display: flex; justify-content: space-between; align-items: center; }
+  .range-header strong { font-size: 0.88rem; font-weight: 500; }
+  .range-note { font-size: 0.75em; font-weight: 400; opacity: 0.6; }
+  .range-val { font-size: 0.82rem; color: var(--accent2); font-variant-numeric: tabular-nums; min-width: 32px; text-align: right; }
+
+  /* -- VAD live level meter (Voice section, Energy threshold row) -- */
+  .vad-meter { position: relative; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .vad-meter-fill { position: absolute; inset: 0; width: 0%; background: var(--accent2); transition: width 80ms linear; }
+  .vad-meter-mark { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; opacity: 0.7; left: 15%; }
+
+  /* -- Controller section -- */
+  .pairing-box {
+    background: rgba(0,200,80,0.04); border: 1px solid rgba(0,200,80,0.12);
+    border-radius: 6px; padding: 10px 12px; font-size: 0.75rem; line-height: 1.7;
+    color: var(--dim); margin-bottom: 10px;
+  }
+  .pairing-warn { color: var(--warn, #ffb400); }
+  .ctrl-map-row {
+    display: flex; align-items: center; padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06); gap: 10px;
+  }
+  .ctrl-map-row label { font-size: 0.78rem; font-weight: 500; width: 110px; flex-shrink: 0; }
+  .ctrl-map-row select {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 5px 8px; border-radius: 6px;
+    font-family: inherit; font-size: 0.78rem;
+  }
+  .ctrl-test-display {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px; padding: 12px; font-family: 'Courier New', monospace;
+    font-size: 0.9rem; color: var(--dim); min-height: 20px; text-align: center;
+    transition: color 0.2s;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    outline: none;
+    border: none;
+    padding: 0;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    background: var(--accent3);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent3);
+  }
+
+
+  /* -- Subsection title -- */
+  .sub-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 14px 0 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  .sub-title:first-child { padding-top: 0; }
+
+  /* -- Buttons -- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s;
+  }
+  .btn:active { opacity: 0.75; transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-ghost { background: transparent; color: var(--accent3); border: 1px solid var(--accent3); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn-full { width: 100%; margin-top: 8px; }
+
+  /* -- Vernacular chip/tag inputs (nicknames, sentence enders) -- */
+  .vn-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 28px; }
+  .vn-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 0.85rem;
+  }
+  .vn-chip-remove {
+    cursor: pointer; color: var(--dim); font-weight: 700;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+  }
+  .vn-chip-remove:hover { color: var(--accent); background: rgba(255,60,60,0.12); }
+  .vn-add-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .vn-add-row input { flex: 1; }
+  .vn-disabled-note {
+    background: rgba(255,180,0,0.08); border: 1px solid rgba(255,180,0,0.25);
+    border-radius: var(--radius-sm); padding: 10px 12px; font-size: 0.82rem;
+    color: var(--warning); margin-bottom: 12px;
+  }
+  #vernacularBody.vn-off > *:not(.vn-master-row):not(.vn-disabled-note) { opacity: 0.35; pointer-events: none; }
+  .vn-preview-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 8px;
+    font-size: 0.85rem; white-space: pre-wrap; max-height: 220px; overflow-y: auto;
+    display: none;
+  }
+
+  /* -- Gift cards -- */
+  .gc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .gc-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .gc-card-label { font-size: 0.88rem; font-weight: 600; }
+  .gc-card-type { font-size: 0.7rem; color: var(--accent2); letter-spacing: 0.06em; }
+  .gc-card-meta { font-size: 0.75rem; color: var(--dim); margin-top: 3px; }
+  .gc-card-balance { font-size: 0.88rem; font-weight: 700; color: var(--accent3); white-space: nowrap; }
+  .gc-history { overflow-x: auto; }
+  .gc-history table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .gc-history th { background: var(--surface2); color: var(--dim); text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .gc-history td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
+  .gc-history tbody tr:nth-child(odd)  { background: var(--surface); }
+  .gc-history tbody tr:nth-child(even) { background: var(--bg); }
+  .status-completed { color: var(--success); }
+  .status-pending_confirmation, .status-confirmed { color: var(--accent2); }
+  .status-failed, .status-rejected { color: var(--danger); }
+
+  /* -- First Officer: MSFS connection status dot -- */
+  .row-decorative { border-bottom: none; }
+  .fo-status-dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background: var(--danger);
+    vertical-align: middle;
+  }
+  .fo-status-dot.connected { background: var(--success); }
+  .fo-aircraft-detected { color: var(--accent2); font-size: 0.88rem; font-weight: 600; }
+
+  /* -- F1 race control feed -- */
+  /* A scrolling multi-line feed doesn't fit the label-left/control-right
+     split every other .row uses -- stack it instead, same pattern
+     .range-row already uses for its own full-width slider. */
+  .rc-row { flex-direction: column; align-items: stretch; gap: 6px; padding: 10px 0; }
+  .rc-row .row-control { width: 100%; }
+  .rc-feed {
+    background: rgba(0, 8, 10, 0.8);
+    border: 1px solid rgba(0, 220, 120, 0.12);
+    border-radius: 4px;
+    padding: 8px;
+    max-height: 160px;
+    overflow-y: auto;
+    font-family: 'SF Mono', 'Fira Mono', 'Courier New', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    width: 100%;
+  }
+  .rc-message {
+    display: flex;
+    gap: 10px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0, 220, 120, 0.05);
+    align-items: baseline;
+  }
+  .rc-message:last-child { border-bottom: none; }
+  .rc-time {
+    color: rgba(0, 200, 120, 0.4);
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+  .rc-text {
+    color: var(--text);
+    flex: 1;
+    word-break: break-word;
+    font-size: 0.82rem;
+  }
+  .rc-text.safety-car  { color: var(--warning); font-weight: 700; }
+  .rc-text.red-flag    { color: var(--danger); font-weight: 700; }
+  .rc-text.drs         { color: var(--accent3); }
+  .rc-text.chequered   { color: #ffffff; font-weight: 700; }
+  .rc-text.penalty     { color: #ff8c00; }
+  .rc-empty {
+    color: rgba(0, 200, 120, 0.25);
+    font-size: 0.78rem;
+    font-style: italic;
+    padding: 4px 0;
+  }
+  .rc-feed::-webkit-scrollbar { width: 4px; }
+  .rc-feed::-webkit-scrollbar-thumb {
+    background: rgba(0, 220, 120, 0.2);
+    border-radius: 2px;
+  }
+
+  /* -- Dial grid -- */
+  .dial-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+
+  /* -- Toast -- */
+  .toast {
+    position: fixed;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    left: 50%; transform: translateX(-50%);
+    background: var(--accent3);
+    color: #000;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 10px 22px;
+    border-radius: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    z-index: 200;
+  }
+  .toast.show { opacity: 1; }
+
+  /* -- Address grid -- */
+  .addr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .addr-grid .span2 { grid-column: 1 / -1; }
+
+  /* -- Preset desc -- */
+  .preset-desc { min-height: 2.8em; padding: 6px 0; margin-top: 4px; }
+  .preset-ref {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    font-family: 'SF Mono', 'Courier New', monospace;
+  }
+  .preset-desc-text { display: block; font-size: 0.78rem; color: var(--dim); font-style: italic; line-height: 1.4; }
+
+  /* -- Agent Mode: the most important selector in Personality, styled to
+     stand out clearly from the lighter/secondary tone-preset controls
+     below it -- a mode switch is a bigger behavioural change than a tone
+     tweak and should not look like just another dropdown. -- */
+  .agent-mode-block { padding-bottom: 4px; }
+  .agent-mode-title { color: var(--accent2); }
+  .agent-mode-desc { font-size: 0.78rem; color: var(--dim); margin: 0 0 10px; }
+  .agent-mode-select {
+    font-size: 1rem;
+    font-weight: 600;
+    background: var(--surface2);
+    border: 1px solid var(--accent2);
+    padding: 14px 32px 14px 14px;
+    margin-bottom: 10px;
+  }
+  .agent-mode-select:focus { border-color: var(--accent2); }
+
+  .tone-desc { font-size: 0.78rem; color: var(--dim); margin: 0 0 10px; }
+
+  /* -- Tone presets: lighter/secondary, fine-tuning rather than a mode
+     switch -- plain select styling, no accent border. -- */
+  .preset-block { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .preset-block:last-of-type { border-bottom: none; }
+  .preset-block-label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .preset-block select { margin-bottom: 6px; }
+  .preset-block-btns { display: flex; gap: 8px; }
+  .preset-block-btns .btn { flex: 1; }
+  .preset-credit { display: block; font-size: 0.7rem; color: var(--dim); margin-top: 6px; }
+  .preset-empty-hint { font-size: 0.78rem; color: var(--dim); margin: 0 0 6px; display: none; }
+
+  /* -- Inline label pair -- */
+  .label-pair { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+  .label-pair label { font-size: 0.72rem; color: var(--dim); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ======================================================================
+     Responsive: iPhone (default, <768px) vs Pi kiosk portrait (>=768px)
+     ====================================================================== */
+  @media (max-width: 767px) {
+    .row { min-height: 48px; }
+    .addr-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (min-width: 768px) {
+    /* Bumping the root font-size scales every rem-based rule in this file
+       (nearly all of them) by the same ~1.125x factor in one place, rather
+       than hand-editing dozens of individual declarations — the phone
+       breakpoint above is untouched, so this only affects the Pi kiosk
+       (1080px wide portrait, well past this threshold), viewed from
+       60-80cm where the previous ~11-14px effective sizes read as cramped. */
+    html { font-size: 18px; }
+    body { font-size: 18px; }
+
+    /* .row and .section-header previously SHRANK on the Pi breakpoint
+       (40px vs 48px on mobile) -- backwards for a kiosk viewed at
+       distance. Both share --tap (48px) as their base min-height; giving
+       them their own larger Pi-specific value here fixes that and adds
+       the breathing room the cramped-at-distance feedback was about. */
+    .row { min-height: 56px; padding: 10px 0; }
+    .section-header { min-height: 56px; padding: 0 20px; }
+    .section-body { padding: 20px; gap: 4px; }
+
+    .sub-title { font-size: 0.85rem; margin: 16px 0 10px; padding-bottom: 6px; }
+
+    .section-icon { width: auto; padding: 5px 14px; font-size: 0.8rem; }
+    .section-icon .abbr { display: none; }
+    .section-icon .full { display: inline; }
+
+    select, input[type="text"], input[type="number"], input[type="email"], textarea {
+      padding: 12px 14px;
+    }
+    input[type="range"] { height: 6px; }
+    input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; }
+
+    /* Toggle was already reasonably sized (50x28 / 20px thumb) -- a modest
+       bump rather than the aggressive resize a from-scratch component
+       would need. translateX distance recalculated for the new width
+       (54 - 22 thumb - 3px each-side inset = 26px travel). */
+    .toggle { width: 54px; height: 30px; }
+    .toggle-thumb { width: 22px; height: 22px; }
+    .toggle input:checked ~ .toggle-thumb { transform: translateX(26px); }
+
+    .btn { font-size: 0.95rem; padding: 12px 18px; }
+
+    .addr-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .row-control { min-width: 220px; }
+    .header-title { font-size: 1.1rem; }
+  }
+
+  /* -- Green glow on interactive elements -- */
+  .btn-primary:hover, .save-btn:hover {
+    box-shadow: 0 0 12px rgba(255,60,60,0.3);
+  }
+  .btn-ghost:hover {
+    box-shadow: 0 0 8px rgba(0,220,120,0.2);
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <button class="header-back" onclick="goBack()">&lt; Face</button>
+  <span class="header-title">Q2 // SETTINGS</span>
+  <button class="save-btn" onclick="saveAll()">Save</button>
+</header>
+
+<div class="restart-banner" id="restartBanner">
+  <span>Restart required for the last change to take effect.</span>
+  <div class="btns">
+    <button class="btn-go" onclick="restartQ2()">Restart Now</button>
+    <button class="btn-later" onclick="dismissRestartBanner()">Later</button>
+  </div>
+</div>
+
+<div class="sections">
+
+  <!-- -- VOICE -- -->
+  <div class="section" id="sec-voice">
+    <button class="section-header" onclick="toggle('sec-voice')">
+      <span class="section-icon"><span class="abbr">MIC</span><span class="full">VOICE</span></span>
+      <span class="section-label">Voice<span class="dirty-dot"></span><span class="badge-restart" id="voiceRestartBadge">Restart</span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Microphone</strong><span>Restart required</span></div>
+        <div class="row-control" style="width:180px">
+          <select id="inputDevice" class="input-full"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Wake word</strong><span>"Hey Dude" - Porcupine</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="wakeWordEnabled">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="range-row row" id="sensitivityRow">
+        <div class="range-header">
+          <strong>Wake sensitivity</strong>
+          <span class="range-val" id="sensitivityVal">0.50</span>
+        </div>
+        <input type="range" id="sensitivity" min="0" max="1" step="0.05" value="0.5">
+      </div>
+      <div class="range-row row">
+        <div class="range-header">
+          <strong>Energy threshold <span class="range-note">(VAD, no restart)</span></strong>
+          <span class="range-val" id="energyThreshVal">300</span>
+        </div>
+        <input type="range" id="energyThresh" min="50" max="2000" step="10" value="300">
+        <div class="vad-meter">
+          <div class="vad-meter-fill" id="vadMeterFill"></div>
+          <div class="vad-meter-mark" id="vadMeterMark"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- CONTROLLER -- -->
+  <div class="section" id="sec-controller">
+    <button class="section-header" onclick="toggle('sec-controller')">
+      <span class="section-icon"><span class="abbr">CTL</span><span class="full">CONTROLLER</span></span>
+      <span class="section-label">Controller<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row row-decorative">
+        <div class="row-label">
+          <strong><span class="fo-status-dot" id="ctrlStatusDot"></span><span id="ctrlStatusText">Checking...</span></strong>
+          <span id="ctrlDeviceText">8BitDo Zero 2, gamepad mode</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>D-pad mode</strong><span>Hat mode recommended -- see pairing notes</span></div>
+        <div class="row-control"><span id="ctrlDpadMode">--</span></div>
+      </div>
+
+      <div class="sub-title">Pairing (8BitDo Zero 2)</div>
+      <div class="pairing-box">
+        <strong style="color:var(--accent2)">Use GAMEPAD mode, not keyboard mode:</strong><br>
+        1. Clear old pairing: <code>bluetoothctl remove &lt;MAC&gt;</code><br>
+        2. Power on: hold <strong>B + START</strong> (LED blinks once per cycle)<br>
+        3. Pair mode: hold <strong>SELECT</strong> 3 sec (LED rapid-blinks)<br>
+        4. Pair via <code>bluetoothctl</code> (<code>scan on</code> &rarr; <code>pair</code> &rarr; <code>connect</code> &rarr; <code>trust</code>)<br>
+        5. Recommended: press <strong>LEFT + SELECT</strong> on the controller for hat-mode D-pad<br><br>
+        <span class="pairing-warn">&#9888; Avoid R + START (keyboard mode) -- causes typing conflicts in the web app</span>
+      </div>
+
+      <div class="sub-title">Button Mapping</div>
+      <div id="ctrlMappingGrid"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-primary btn-full" onclick="saveControllerMapping()">Save</button>
+        <button class="btn btn-ghost btn-full" onclick="resetControllerMapping()">Reset Defaults</button>
+      </div>
+
+      <div class="sub-title" style="margin-top:18px">Button Test</div>
+      <div style="font-size:0.75rem;color:var(--dim);margin-bottom:6px">Press a button to verify it registers correctly.</div>
+      <div id="ctrlTestDisplay" class="ctrl-test-display">--</div>
+
+      <div class="sub-title" style="margin-top:18px">Navigation Mode</div>
+      <div style="font-size:0.8rem;line-height:1.6;color:var(--dim)">
+        Press <strong>SELECT</strong> to toggle nav mode on/off in the web app.
+        D-pad moves focus, <strong>A</strong> confirms, <strong>B</strong> goes back.
+        PTT always works regardless of nav mode. A <strong>NAV</strong> badge
+        appears on screen while active.
+      </div>
+    </div>
+  </div>
+
+  <!-- -- PLAYERS (Flipper Zero Master Controller + P2-P4 USB) -- -->
+  <div class="section" id="sec-players">
+    <button class="section-header" onclick="toggle('sec-players')">
+      <span class="section-icon"><span class="abbr">P1-4</span><span class="full">PLAYERS</span></span>
+      <span class="section-label">Players<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="sub-title">Master Controller</div>
+      <div class="pairing-box" style="display:flex;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:0.68rem;letter-spacing:0.08em;color:var(--dim);margin-bottom:4px">FLIPPER ZERO (WIFI)</div>
+          <span class="fo-status-dot" id="flipperStatusDot"></span><span id="flipperStatusText">Not connected</span>
+          <div id="flipperDeviceName" style="font-size:0.72rem;color:var(--dim);margin-top:3px"></div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:0.68rem;letter-spacing:0.08em;color:var(--dim);margin-bottom:4px">8BITDO BT (FALLBACK)</div>
+          <span class="fo-status-dot" id="masterBtStatusDot"></span><span id="masterBtStatusText">Not connected</span>
+        </div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--dim);margin:6px 0 4px">
+        Flipper is Master when connected; 8BitDo is Master when Flipper is absent. The active Master has PTT and Q2 control.
+      </div>
+
+      <div class="sub-title">Flipper Zero Setup</div>
+      <div class="pairing-box">
+        Q2 WebSocket server: <code id="flipperWsUrl" style="color:var(--accent3)">ws://this-pi:8767</code><br>
+        1. Flash the WiFi devboard with the Q2 client script<br>
+        2. Script auto-connects on boot<br>
+        3. LED on the Flipper shows connection status<br>
+        4. Flipper becomes Master Controller automatically
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>WS Port</strong><span>Flipper connects here -- restart required after changing</span></div>
+        <div class="row-control" style="width:100px">
+          <input type="number" id="flipperPort" min="1024" max="65535" value="8767" class="input-full">
+        </div>
+      </div>
+
+      <div class="sub-title">Flipper Button Mapping</div>
+      <div id="flipperMappingGrid"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-primary btn-full" onclick="saveFlipperMapping()">Save</button>
+      </div>
+
+      <div class="sub-title" style="margin-top:18px">Player Controllers (P2-P4)</div>
+      <div style="font-size:0.75rem;color:var(--dim);margin-bottom:8px">
+        P1 is always the Master Controller. P2-P4 are USB gamepads for game input only (no PTT).
+      </div>
+      <button class="btn btn-ghost btn-full" onclick="scanUSBControllers()">Scan for USB Controllers</button>
+      <div id="usbScanResults" style="display:none;margin-top:8px"></div>
+      <div id="playerSlots" style="margin-top:10px"></div>
+
+      <div class="sub-title" style="margin-top:18px">Player Input Test</div>
+      <div style="font-size:0.75rem;color:var(--dim);margin-bottom:6px">Press any controller button to see who's active.</div>
+      <div id="playerTestDisplay" class="ctrl-test-display">--</div>
+    </div>
+  </div>
+
+  <!-- -- AUDIO -- -->
+  <div class="section" id="sec-audio">
+    <button class="section-header" onclick="toggle('sec-audio')">
+      <span class="section-icon"><span class="abbr">SND</span><span class="full">AUDIO</span></span>
+      <span class="section-label">Audio<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Output device</strong></div>
+        <div class="row-control" style="width:180px">
+          <select id="outputDevice" class="input-full"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>TTS voice</strong><span>Deepgram Aura-2 - no restart</span></div>
+        <div class="row-control" style="width:180px">
+          <select id="ttsVoice" class="input-full">
+            <optgroup label="-- Masculine --">
+              <option value="aura-2-pluto-en">Pluto - Smooth, Baritone *</option>
+              <option value="aura-2-apollo-en">Apollo - Confident</option>
+              <option value="aura-2-arcas-en">Arcas - Natural</option>
+              <option value="aura-2-aries-en">Aries - Warm</option>
+              <option value="aura-2-draco-en">Draco - British</option>
+              <option value="aura-2-hermes-en">Hermes - Expressive</option>
+              <option value="aura-2-hyperion-en">Hyperion - Australian</option>
+              <option value="aura-2-jupiter-en">Jupiter - Baritone</option>
+              <option value="aura-2-mars-en">Mars - Patient</option>
+              <option value="aura-2-neptune-en">Neptune - Professional</option>
+              <option value="aura-2-odysseus-en">Odysseus - Calm</option>
+              <option value="aura-2-orion-en">Orion - Approachable</option>
+              <option value="aura-2-orpheus-en">Orpheus - Clear</option>
+              <option value="aura-2-saturn-en">Saturn - Confident</option>
+              <option value="aura-2-zeus-en">Zeus - Deep</option>
+              <option value="aura-2-atlas-en">Atlas - Enthusiastic</option>
+            </optgroup>
+            <optgroup label="-- Feminine --">
+              <option value="aura-2-thalia-en">Thalia - Energetic *</option>
+              <option value="aura-2-andromeda-en">Andromeda - Casual</option>
+              <option value="aura-2-asteria-en">Asteria - Confident</option>
+              <option value="aura-2-athena-en">Athena - Professional</option>
+              <option value="aura-2-aurora-en">Aurora - Cheerful</option>
+              <option value="aura-2-callista-en">Callista - Clear</option>
+              <option value="aura-2-cora-en">Cora - Melodic</option>
+              <option value="aura-2-electra-en">Electra - Engaging</option>
+              <option value="aura-2-harmonia-en">Harmonia - Calm</option>
+              <option value="aura-2-helena-en">Helena - Raspy</option>
+              <option value="aura-2-hera-en">Hera - Smooth</option>
+              <option value="aura-2-iris-en">Iris - Approachable</option>
+              <option value="aura-2-luna-en">Luna - Friendly</option>
+              <option value="aura-2-minerva-en">Minerva - Natural</option>
+              <option value="aura-2-ophelia-en">Ophelia - Expressive</option>
+              <option value="aura-2-pandora-en">Pandora - British</option>
+              <option value="aura-2-phoebe-en">Phoebe - Energetic</option>
+              <option value="aura-2-selene-en">Selene - Energetic</option>
+              <option value="aura-2-theia-en">Theia - Australian</option>
+              <option value="aura-2-vesta-en">Vesta - Empathetic</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- LLM -- -->
+  <div class="section" id="sec-llm">
+    <button class="section-header" onclick="toggle('sec-llm')">
+      <span class="section-icon"><span class="abbr">LLM</span><span class="full">LLM BACKEND</span></span>
+      <span class="section-label">LLM Backend<span class="dirty-dot"></span><span class="badge-restart" id="llmRestartBadge">Restart</span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Backend</strong><span>Restart required</span></div>
+        <div class="row-control" style="width:180px">
+          <select id="llmBackend" class="input-full" onchange="updateLlmNote()">
+            <option value="claude">Claude (Anthropic)</option>
+            <option value="openai">GPT-4o (OpenAI)</option>
+            <option value="grok">Grok (xAI)</option>
+            <option value="glm">GLM-5.2 (Z.ai)</option>
+            <option value="gemini">Gemini 2.5 Flash (Google)</option>
+            <option value="ollama">Ollama (Local)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" id="llmNoteRow" style="display:none">
+        <div class="row-label">
+          <span id="llmBackendNote" style="color:var(--dim);font-size:0.8rem"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- KIOSK FACE -- -->
+  <div class="section" id="sec-face">
+    <button class="section-header" onclick="toggle('sec-face')">
+      <span class="section-icon"><span class="abbr">EYE</span><span class="full">KIOSK FACE</span></span>
+      <span class="section-label">Kiosk Face<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Face style</strong><span>No restart - use Apply now</span></div>
+        <div class="row-control" style="width:190px">
+          <select id="faceStyle" class="input-full">
+            <option value="0">Triangle Mosaic</option>
+            <option value="1">H9000 Terminal</option>
+            <option value="2">KITT</option>
+            <option value="3">KITT Hi-Con</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-full" onclick="applyFaceStyle()">Apply now</button>
+    </div>
+  </div>
+
+  <!-- -- GAME SHOW -- -->
+  <div class="section" id="sec-game-show">
+    <button class="section-header" onclick="toggle('sec-game-show')">
+      <span class="section-icon"><span class="abbr">GSH</span><span class="full">GAME SHOW</span></span>
+      <span class="section-label">Game Show<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Difficulty</strong><span>1 = Easy questions, 5 = Expert level</span></div>
+        <div class="row-control" style="display:flex;align-items:center;gap:10px">
+          <input type="range" id="gsdifficulty" min="1" max="5" value="3" step="1"
+                 oninput="document.getElementById('gsdiff-label').textContent = this.value"
+                 style="width:120px;accent-color:#00dc78">
+          <span id="gsdiff-label" style="font-size:11px;color:#c8f0dc;min-width:12px">3</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- PERSONALITY -- -->
+  <div class="section" id="sec-personality">
+    <button class="section-header" onclick="toggle('sec-personality')">
+      <span class="section-icon"><span class="abbr">PER</span><span class="full">PERSONALITY</span></span>
+      <span class="section-label">Personality<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="agent-mode-block">
+        <div class="sub-title agent-mode-title">Agent Mode</div>
+        <p class="agent-mode-desc">Full operational mode -- changes persona, focus, and tool behaviour.</p>
+        <select id="agentMode" class="agent-mode-select"></select>
+        <button class="btn btn-primary btn-full" onclick="applyAgentMode()">Switch Mode</button>
+      </div>
+
+      <div class="sub-title" style="margin-top:18px">Personality Tone</div>
+      <p class="tone-desc">Adjust Q2's conversational tone without changing his role.</p>
+
+      <div class="preset-block">
+        <label class="preset-block-label">Included Presets</label>
+        <select id="builtinPresetPicker" onchange="updateBuiltinPresetDesc()"></select>
+        <div class="preset-desc" id="builtinPresetDesc"></div>
+        <button class="btn btn-ghost" onclick="applyBuiltinPreset()">Apply to dials</button>
+        <small class="preset-credit">17 presets by CaptCanadaMan (github.com/CaptCanadaMan)</small>
+      </div>
+
+      <div class="preset-block">
+        <label class="preset-block-label">My Presets</label>
+        <select id="userPresetPicker"></select>
+        <p class="preset-empty-hint" id="userPresetEmptyHint">Save a preset using the form below to see it here.</p>
+        <div class="preset-block-btns">
+          <button class="btn btn-ghost" onclick="applyUserPreset()" id="userPresetApplyBtn">Apply to dials</button>
+          <button class="btn btn-danger" onclick="deleteUserPreset()" id="userPresetDeleteBtn">Delete</button>
+        </div>
+      </div>
+
+      <div class="sub-title">Tone Dials</div>
+      <div class="dial-grid" id="dialGrid">
+        <!-- Dials injected by JS -->
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Reset to profile defaults</strong><span>Discards your customizations for the current Agent Mode and reloads its authored defaults</span></div>
+        <div class="row-control">
+          <button class="btn btn-ghost" onclick="resetProfileDials()">Reset</button>
+        </div>
+      </div>
+
+      <div class="sub-title">Extras</div>
+      <div class="row">
+        <div class="row-label"><strong>Probability narration</strong></div>
+        <label class="toggle">
+          <input type="checkbox" id="probabilityNarration">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Wellness check-ins</strong></div>
+        <div class="row-control" style="width:120px">
+          <select id="wellnessCheckins" class="input-full">
+            <option value="off">Off</option>
+            <option value="sparse">Sparse</option>
+            <option value="regular">Regular</option>
+            <option value="frequent">Frequent</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sub-title">Save As Preset</div>
+      <div style="display:flex;gap:8px;padding:8px 0">
+        <input type="text" id="presetName" placeholder="Name your preset...">
+        <button class="btn btn-ghost" onclick="saveAsPreset()">Save to My Presets</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- VERNACULAR -- -->
+  <div class="section" id="sec-vernacular">
+    <button class="section-header" onclick="toggle('sec-vernacular')">
+      <span class="section-icon"><span class="abbr">VRN</span><span class="full">VERNACULAR</span></span>
+      <span class="section-label">Vernacular<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <p style="font-size:0.78rem;color:var(--dim);margin-bottom:10px">
+        Defines HOW Q2 speaks -- word choice, nicknames, sentence endings, slang and
+        profanity comfort -- independent of and layered on top of the personality
+        dials above. Persists across every Agent Mode and preset untouched.
+      </p>
+
+      <div class="row vn-master-row">
+        <div class="row-label"><strong>Enable vernacular</strong><span>Custom speech style injection</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="vernacularEnabled" onchange="updateVernacularEnabledState()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="vn-disabled-note" id="vnDisabledNote" style="display:none">
+        Vernacular is disabled. Q2 speaks in his default style.
+      </div>
+
+      <div id="vernacularBody">
+
+        <div class="sub-title">Base Speech Style</div>
+        <div class="row">
+          <div class="row-label"><strong>Base style</strong><span>Foundation speech pattern</span></div>
+          <div class="row-control" style="width:160px">
+            <select id="vernStyle">
+              <option value="neutral">Neutral (default)</option>
+              <option value="urban">Urban</option>
+              <option value="british">British</option>
+              <option value="southern">Southern US</option>
+              <option value="aussie">Australian</option>
+              <option value="valley">Valley / California</option>
+              <option value="pirate">Pirate</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sub-title">User Nicknames</div>
+        <p style="font-size:0.78rem;color:var(--dim);margin-bottom:8px">
+          Q2 will use these names when addressing you. Add as many as you like.
+        </p>
+        <div class="vn-chips" id="vnNicknameChips"></div>
+        <div class="vn-add-row">
+          <input type="text" id="vnNicknameInput" placeholder="Add nickname..."
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();addVernacularChip('nickname');}">
+          <button class="btn btn-ghost" onclick="addVernacularChip('nickname')">ADD</button>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Frequency</strong><span id="vnFreqLabel">Occasionally</span></div>
+          <div class="row-control" style="width:160px">
+            <input type="range" id="vnNicknameFreq" min="0" max="100" step="10" value="30"
+                   oninput="updateVernacularFreqLabels()">
+          </div>
+        </div>
+
+        <div class="sub-title">Sentence Enders</div>
+        <p style="font-size:0.78rem;color:var(--dim);margin-bottom:8px">
+          Words Q2 appends to the end of sentences. Examples: dude, bro, homie, bruh,
+          dawg, man, yo, feel me, you know, ya dig, real talk.
+        </p>
+        <div class="vn-chips" id="vnEnderChips"></div>
+        <div class="vn-add-row">
+          <input type="text" id="vnEnderInput" placeholder="Add sentence ender..."
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();addVernacularChip('ender');}">
+          <button class="btn btn-ghost" onclick="addVernacularChip('ender')">ADD</button>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Frequency</strong><span id="vnEnderFreqLabel">Occasionally</span></div>
+          <div class="row-control" style="width:160px">
+            <input type="range" id="vnEnderFreq" min="0" max="100" step="10" value="20"
+                   oninput="updateVernacularFreqLabels()">
+          </div>
+        </div>
+
+        <div class="sub-title">Speech Intensity</div>
+        <div class="row">
+          <div class="row-label"><strong>Slang</strong><span id="vnSlangLabel">None</span></div>
+          <div class="row-control" style="width:160px">
+            <input type="range" id="vnSlangLevel" min="0" max="3" step="1" value="0"
+                   oninput="updateVernacularFreqLabels()">
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Profanity</strong><span id="vnProfLabel">None</span></div>
+          <div class="row-control" style="width:160px">
+            <input type="range" id="vnProfLevel" min="0" max="3" step="1" value="0"
+                   oninput="updateVernacularFreqLabels()">
+          </div>
+        </div>
+
+        <div class="sub-title">Character Traits</div>
+        <p style="font-size:0.78rem;color:var(--dim);margin-bottom:8px">
+          Persistent speech characteristics regardless of active preset.
+        </p>
+        <div class="row">
+          <div class="row-label"><strong>Swears a lot</strong></div>
+          <label class="toggle">
+            <input type="checkbox" id="vnTrait_swears_a_lot" onchange="handleSwearsTraitToggle('vnTrait_swears_a_lot','vnTrait_swears_occasionally')">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Swears occasionally</strong></div>
+          <label class="toggle">
+            <input type="checkbox" id="vnTrait_swears_occasionally" onchange="handleSwearsTraitToggle('vnTrait_swears_occasionally','vnTrait_swears_a_lot')">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Uses name often</strong></div>
+          <label class="toggle">
+            <input type="checkbox" id="vnTrait_uses_name_often">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Very direct</strong></div>
+          <label class="toggle">
+            <input type="checkbox" id="vnTrait_very_direct">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Self-deprecating</strong></div>
+          <label class="toggle">
+            <input type="checkbox" id="vnTrait_self_deprecating">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Dry humour</strong></div>
+          <label class="toggle">
+            <input type="checkbox" id="vnTrait_dry_humor">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Excitable</strong></div>
+          <label class="toggle">
+            <input type="checkbox" id="vnTrait_excitable">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Conspiracy-adjacent</strong></div>
+          <label class="toggle">
+            <input type="checkbox" id="vnTrait_conspiracy_adjacent">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Overly dramatic</strong></div>
+          <label class="toggle">
+            <input type="checkbox" id="vnTrait_overly_dramatic">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Rhetorical questions</strong></div>
+          <label class="toggle">
+            <input type="checkbox" id="vnTrait_uses_rhetorical_questions">
+            <div class="toggle-track"></div><div class="toggle-thumb"></div>
+          </label>
+        </div>
+
+        <div class="sub-title">Custom Instructions</div>
+        <textarea id="vnCustom" rows="4" class="input-full"
+          placeholder="Additional freeform style notes. For example: 'Always ends serious
+statements with a long pause indicated by ...' or 'Speaks in the third person
+occasionally' or 'Has a habit of referencing 90s hip hop'"></textarea>
+
+        <div class="sub-title">Preview</div>
+        <button class="btn btn-ghost btn-full" onclick="previewVernacular()" id="vnPreviewBtn">PREVIEW VERNACULAR</button>
+        <div class="vn-preview-box" id="vnPreviewBox"></div>
+
+        <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="saveVernacular()">SAVE VERNACULAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- RACE ENGINEER -- -->
+  <div class="section" id="sec-race-engineer">
+    <button class="section-header" onclick="toggle('sec-race-engineer')">
+      <span class="section-icon"><span class="abbr">RE</span><span class="full">RACE ENGINEER</span></span>
+      <span class="section-label">Race Engineer<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Callout frequency</strong><span>How often Q2 speaks up</span></div>
+        <div class="row-control" style="width:160px">
+          <select id="reFrequency">
+            <option value="off">Silent</option>
+            <option value="sparse">Sparse</option>
+            <option value="normal">Normal</option>
+            <option value="chatty">Chatty</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sub-title">Alert Types</div>
+      <div class="row">
+        <div class="row-label"><strong>Fuel warnings</strong></div>
+        <label class="toggle">
+          <input type="checkbox" id="reAlertFuel" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Tyre temperature</strong></div>
+        <label class="toggle">
+          <input type="checkbox" id="reAlertTyreTemp" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Tyre wear (AC/ACC only)</strong></div>
+        <label class="toggle">
+          <input type="checkbox" id="reAlertTyreWear" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Race flags</strong></div>
+        <label class="toggle">
+          <input type="checkbox" id="reAlertFlags" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Pit window (ACC only)</strong></div>
+        <label class="toggle">
+          <input type="checkbox" id="reAlertPitWindow" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Gap ahead</strong><span>Not yet available</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="reAlertGap" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Damage</strong></div>
+        <label class="toggle">
+          <input type="checkbox" id="reAlertDamage" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- FIRST OFFICER -- -->
+  <div class="section" id="sec-first-officer">
+    <button class="section-header" onclick="toggle('sec-first-officer')">
+      <span class="section-icon"><span class="abbr">FO</span><span class="full">FIRST OFFICER</span></span>
+      <span class="section-label">First Officer<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row row-decorative">
+        <div class="row-label">
+          <strong><span class="fo-status-dot" id="foStatusDot"></span><span id="foStatusText">MSFS OFFLINE</span></strong>
+          <span>Run windows/msfs_bridge.py --host 192.168.1.100 on your Windows PC to connect</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-label"><strong>Callout frequency</strong><span>How often Q2 speaks up</span></div>
+        <div class="row-control" style="width:160px">
+          <select id="foFrequency">
+            <option value="off">Silent</option>
+            <option value="sparse">Sparse</option>
+            <option value="normal">Normal</option>
+            <option value="chatty">Chatty</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-label"><strong>Announce phase changes</strong><span>Q2 calls out takeoff, cruise, descent, approach transitions</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="foAnnouncePhase" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+
+      <div class="sub-title">Proactive Callouts</div>
+      <div class="row">
+        <div class="row-label"><strong>Altitude alerting</strong><span>1,000ft to level-off, approaching AP target altitude</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="foAlertAltitude" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Gear check</strong><span>Gear warning when speed &lt; 150kts below 3,000ft AGL</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="foAlertGear" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Fuel state</strong><span>Low fuel warning at 25% and critical at 10%</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="foAlertFuel" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Bank angle</strong><span>Alert when bank exceeds 30 degrees</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="foAlertBank" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Autopilot disconnect</strong><span>Announce when autopilot disengages unexpectedly</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="foAlertAutopilot" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Engine status</strong><span>Alert on engine failure or abnormal N1/RPM</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="foAlertEngine" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Waypoint proximity</strong><span>Announce next waypoint when within 2nm</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="foAlertWaypoint" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Approach checklist</strong><span>Gear and flap state reminder on approach</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="foAlertApproach" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Weather callouts</strong><span>Wind, visibility, and turbulence advisories</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="foAlertWeather" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+
+      <div class="sub-title">Aircraft</div>
+      <div class="row" id="foAircraftDetectedRow" style="display:none">
+        <div class="row-label"><strong>Aircraft</strong></div>
+        <div class="row-control"><span class="fo-aircraft-detected" id="foAircraftDetected"></span></div>
+      </div>
+      <div class="row" id="foAircraftSelectRow">
+        <div class="row-label"><strong>Aircraft type hint</strong><span>Helps Q2 tailor callouts while MSFS is offline</span></div>
+        <div class="row-control" style="width:190px">
+          <select id="foAircraftType" class="input-full">
+            <option value="auto">Auto-detect from MSFS</option>
+            <option value="ga_single">GA Single Engine (C172, etc.)</option>
+            <option value="ga_twin">GA Twin Engine (Baron, etc.)</option>
+            <option value="turboprop">Turboprop (TBM, Caravan, etc.)</option>
+            <option value="airliner">Airliner (A320, 737, etc.)</option>
+            <option value="fighter">Military / Fighter</option>
+            <option value="helicopter">Helicopter</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-label"><strong>Minimum AGL for callouts (feet)</strong><span>Prevents callouts during ground roll and taxi</span></div>
+        <div class="row-control">
+          <input type="number" id="foMinAltAGL" value="50" min="0" max="500" step="10" style="width:80px">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- WATCHALONG (Live + Replay, all sports) -- -->
+  <div class="section" id="sec-watchalong">
+    <button class="section-header" onclick="toggle('sec-watchalong')">
+      <span class="section-icon"><span class="abbr">WA</span><span class="full">WATCHALONG</span></span>
+      <span class="section-label">Watchalong<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+
+      <div class="row">
+        <div class="row-label"><strong>Mode</strong><span>Live event or recorded replay</span></div>
+        <div class="row-control" style="width:160px">
+          <select id="waMode">
+            <option value="live">Live</option>
+            <option value="replay">Replay</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Sport</strong><span>Active sport for data and commentary</span></div>
+        <div class="row-control" style="width:160px">
+          <select id="waSport" onchange="updateWatchalongSport()">
+            <option value="f1">Formula 1</option>
+            <option value="ufc">UFC / MMA</option>
+            <option value="nba">NBA Basketball</option>
+            <option value="nhl">NHL Hockey</option>
+            <option value="nfl">NFL Football</option>
+            <option value="mlb">MLB Baseball</option>
+            <option value="formula_drift">Formula Drift</option>
+            <option value="xgames">X Games</option>
+            <option value="popup">Pop-Up Video (Films &amp; TV)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="activateWatchalong()">Switch to Watchalong Mode</button>
+      <p style="color:var(--dim);font-size:0.78rem;margin-top:6px">Switches to the Live or Replay profile and sets the active sport.</p>
+
+      <!-- -- F1 submenu -- -->
+      <div id="wa-sport-f1">
+        <div class="sub-title">Formula 1 Settings</div>
+        <div class="row row-decorative">
+          <div class="row-label">
+            <strong><span class="fo-status-dot" id="f1StatusDot"></span><span id="f1StatusText">NO LIVE SESSION</span></strong>
+            <span>Live status while Watchalong Live is active (sport: F1)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Live monitoring</strong><span>Poll OpenF1 for live race data — enable during race weekends</span></div>
+          <label class="toggle">
+            <input type="checkbox" id="waF1LiveEnabled">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Callout frequency</strong><span>Shared across sports — how often Q2 speaks up live</span></div>
+          <div class="row-control" style="width:160px">
+            <select id="waF1Frequency" onchange="syncWatchalongFrequency(this.value)">
+              <option value="off">Silent (thread off)</option>
+              <option value="sparse">Sparse</option>
+              <option value="normal">Normal</option>
+              <option value="chatty">Chatty</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Favourite drivers</strong><span>Comma-separated acronyms, e.g. VER, NOR, HAM</span></div>
+          <div class="row-control">
+            <input type="text" id="waF1Drivers" class="input-full" placeholder="VER, NOR, HAM">
+          </div>
+        </div>
+        <div class="row rc-row" id="waF1RaceControlRow">
+          <div class="row-label"><strong>Race Control</strong><span>Last messages while live</span></div>
+          <div class="row-control">
+            <div id="waF1RaceControlList" class="rc-feed"><div class="rc-empty">No messages -- monitoring when live</div></div>
+          </div>
+        </div>
+
+        <div class="sub-title">Replay Session</div>
+        <div class="row row-decorative" id="waF1ReplayActiveRow" style="display:none">
+          <div class="row-label"><strong>Active replay</strong><span id="waF1ReplayInfo"></span></div>
+        </div>
+        <div class="row row-decorative" id="waF1ReplayNoneRow">
+          <div class="row-label">
+            <strong>No replay active</strong>
+            <span>Say "switch to watchalong replay" then tell Q2 which race you're watching to begin.</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Clear replay session</strong></div>
+          <div class="row-control"><button class="btn btn-ghost" onclick="clearWatchalongReplay()">Clear Session</button></div>
+        </div>
+      </div>
+
+      <!-- -- UFC submenu -- -->
+      <div id="wa-sport-ufc" style="display:none">
+        <div class="sub-title">UFC / MMA Settings</div>
+        <div class="row row-decorative">
+          <div class="row-label">
+            <strong><span class="fo-status-dot" id="ufcStatusDot"></span><span id="ufcStatusText">NO EVENT TONIGHT</span></strong>
+            <span>Live status while Watchalong Live is active (sport: UFC)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Live monitoring</strong><span>Poll ESPN for proactive fight-result callouts</span></div>
+          <label class="toggle">
+            <input type="checkbox" id="waUFCLiveEnabled">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Callout frequency</strong><span>Shared across sports — how often Q2 speaks up live</span></div>
+          <div class="row-control" style="width:160px">
+            <select id="waUFCFrequency" onchange="syncWatchalongFrequency(this.value)">
+              <option value="off">Silent (thread off)</option>
+              <option value="sparse">Sparse</option>
+              <option value="normal">Normal</option>
+              <option value="chatty">Chatty</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Favourite fighters</strong><span>Comma-separated names, e.g. Islam Makhachev, Leon Edwards</span></div>
+          <div class="row-control">
+            <input type="text" id="waUFCFighters" class="input-full" placeholder="Islam Makhachev, Leon Edwards">
+          </div>
+        </div>
+        <div class="row" id="waUFCMainEventRow" style="display:none">
+          <div class="row-label"><strong>Tonight's main event</strong></div>
+          <div class="row-control"><span class="fo-aircraft-detected" id="waUFCMainEventText"></span></div>
+        </div>
+
+        <div class="sub-title">Replay Session</div>
+        <div class="row row-decorative" id="waUFCReplayActiveRow" style="display:none">
+          <div class="row-label"><strong>Active fight</strong><span id="waUFCReplayInfo"></span></div>
+        </div>
+        <div class="row row-decorative" id="waUFCReplayNoneRow">
+          <div class="row-label">
+            <strong>No fight selected</strong>
+            <span>Say "switch to watchalong replay" then tell Q2 which fight you're watching.</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Clear fight session</strong></div>
+          <div class="row-control"><button class="btn btn-ghost" onclick="clearWatchalongReplay()">Clear Fight</button></div>
+        </div>
+      </div>
+
+      <!-- -- NBA submenu -- -->
+      <div id="wa-sport-nba" style="display:none">
+        <div class="sub-title">NBA Settings</div>
+        <div class="row row-decorative">
+          <div class="row-label">
+            <strong><span class="fo-status-dot" id="nbaStatusDot"></span><span id="nbaStatusText">NO LIVE GAME</span></strong>
+            <span>Live status while Watchalong Live is active (sport: NBA)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Live monitoring</strong><span>Poll BallDontLie for score/quarter updates</span></div>
+          <label class="toggle">
+            <input type="checkbox" id="waNBALiveEnabled">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Callout frequency</strong><span>Shared across sports — how often Q2 speaks up live</span></div>
+          <div class="row-control" style="width:160px">
+            <select id="waNBAFrequency" onchange="syncWatchalongFrequency(this.value)">
+              <option value="off">Silent (thread off)</option>
+              <option value="sparse">Sparse</option>
+              <option value="normal">Normal</option>
+              <option value="chatty">Chatty</option>
+            </select>
+          </div>
+        </div>
+        <div class="row row-decorative">
+          <div class="row-label">
+            <strong id="waNBAKeyStatus">Checking...</strong>
+            <span>BALLDONTLIE_API_KEY in .env -- free tier, no credit card. Set via the setup wizard or .env directly, not here.</span>
+          </div>
+          <div class="row-control"><a class="btn btn-ghost" href="https://balldontlie.io" target="_blank" rel="noopener">Open balldontlie.io &#8599;</a></div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Favourite teams</strong><span>Comma-separated team names, e.g. Lakers, Celtics, Raptors</span></div>
+          <div class="row-control">
+            <input type="text" id="waNBATeams" class="input-full" placeholder="Lakers, Celtics, Raptors">
+          </div>
+        </div>
+      </div>
+
+      <!-- -- NHL submenu -- -->
+      <div id="wa-sport-nhl" style="display:none">
+        <div class="sub-title">NHL Settings</div>
+        <div class="row row-decorative">
+          <div class="row-label">
+            <strong><span class="fo-status-dot" id="nhlStatusDot"></span><span id="nhlStatusText">NO LIVE GAME</span></strong>
+            <span>Live status while Watchalong Live is active (sport: NHL)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Live monitoring</strong><span>Poll the NHL Web API for score/period updates -- no API key required</span></div>
+          <label class="toggle">
+            <input type="checkbox" id="waNHLLiveEnabled">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Callout frequency</strong><span>Shared across sports — how often Q2 speaks up live</span></div>
+          <div class="row-control" style="width:160px">
+            <select id="waNHLFrequency" onchange="syncWatchalongFrequency(this.value)">
+              <option value="off">Silent (thread off)</option>
+              <option value="sparse">Sparse</option>
+              <option value="normal">Normal</option>
+              <option value="chatty">Chatty</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Favourite teams</strong><span>Comma-separated abbreviations, e.g. TOR, MTL, EDM</span></div>
+          <div class="row-control">
+            <input type="text" id="waNHLTeams" class="input-full" placeholder="TOR, MTL, EDM">
+          </div>
+        </div>
+      </div>
+
+      <!-- -- NFL submenu -- -->
+      <div id="wa-sport-nfl" style="display:none">
+        <div class="sub-title">NFL Settings</div>
+        <div class="row row-decorative">
+          <div class="row-label">
+            <strong><span class="fo-status-dot" id="nflStatusDot"></span><span id="nflStatusText">NO LIVE GAME</span></strong>
+            <span>Live status while Watchalong Live is active (sport: NFL)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Live monitoring</strong><span>Poll ESPN's unofficial API for score/quarter updates -- no API key required</span></div>
+          <label class="toggle">
+            <input type="checkbox" id="waNFLLiveEnabled">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Callout frequency</strong><span>Shared across sports — how often Q2 speaks up live</span></div>
+          <div class="row-control" style="width:160px">
+            <select id="waNFLFrequency" onchange="syncWatchalongFrequency(this.value)">
+              <option value="off">Silent (thread off)</option>
+              <option value="sparse">Sparse</option>
+              <option value="normal">Normal</option>
+              <option value="chatty">Chatty</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Favourite teams</strong><span>Comma-separated abbreviations, e.g. KC, BUF, PHI</span></div>
+          <div class="row-control">
+            <input type="text" id="waNFLTeams" class="input-full" placeholder="KC, BUF, PHI">
+          </div>
+        </div>
+      </div>
+
+      <!-- -- MLB submenu -- -->
+      <div id="wa-sport-mlb" style="display:none">
+        <div class="sub-title">MLB Settings</div>
+        <div class="row row-decorative">
+          <div class="row-label">
+            <strong><span class="fo-status-dot" id="mlbStatusDot"></span><span id="mlbStatusText">NO LIVE GAME</span></strong>
+            <span>Live status while Watchalong Live is active (sport: MLB)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Live monitoring</strong><span>Poll the official MLB Stats API for score/inning updates -- no API key required</span></div>
+          <label class="toggle">
+            <input type="checkbox" id="waMLBLiveEnabled">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Callout frequency</strong><span>Shared across sports — how often Q2 speaks up live</span></div>
+          <div class="row-control" style="width:160px">
+            <select id="waMLBFrequency" onchange="syncWatchalongFrequency(this.value)">
+              <option value="off">Silent (thread off)</option>
+              <option value="sparse">Sparse</option>
+              <option value="normal">Normal</option>
+              <option value="chatty">Chatty</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Favourite teams</strong><span>Comma-separated team names or abbreviations, e.g. Blue Jays, Yankees</span></div>
+          <div class="row-control">
+            <input type="text" id="waMLBTeams" class="input-full" placeholder="Blue Jays, Yankees">
+          </div>
+        </div>
+      </div>
+
+      <!-- -- Formula Drift submenu -- -->
+      <div id="wa-sport-formula_drift" style="display:none">
+        <div class="sub-title">Formula Drift Settings</div>
+        <div class="row row-decorative">
+          <div class="row-label">
+            <span>Formula Drift doesn't broadcast any live data feed -- there's nothing to poll during an event. "Live" mode gives Q2 standings and driver context for commentary; the HUD's Stats Hub tab is the best place for current standings and schedule.</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Enable</strong><span>Lets Q2 use Formula Drift standings/schedule tools</span></div>
+          <label class="toggle">
+            <input type="checkbox" id="waFDLiveEnabled">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Callout frequency</strong><span>Shared across sports -- has no effect for Formula Drift since there are no live events to call out</span></div>
+          <div class="row-control" style="width:160px">
+            <select id="waFDFrequency" onchange="syncWatchalongFrequency(this.value)">
+              <option value="off">Silent (thread off)</option>
+              <option value="sparse">Sparse</option>
+              <option value="normal">Normal</option>
+              <option value="chatty">Chatty</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Favourite drivers</strong><span>Comma-separated names, e.g. James Deane, Fredric Aasbo</span></div>
+          <div class="row-control">
+            <input type="text" id="waFDDrivers" class="input-full" placeholder="James Deane, Fredric Aasbo">
+          </div>
+        </div>
+      </div>
+
+      <!-- -- X Games submenu -- -->
+      <div id="wa-sport-xgames" style="display:none">
+        <div class="sub-title">X Games Settings</div>
+        <div class="row row-decorative">
+          <div class="row-label">
+            <span>X Games results only post after events end -- there's no live scoring feed. The HUD's Stats Hub tab is the best place for current results.</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Enable</strong><span>Lets Q2 use X Games results tools</span></div>
+          <label class="toggle">
+            <input type="checkbox" id="waXGEnabled">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Callout frequency</strong><span>Shared across sports -- has no effect for X Games since results aren't live</span></div>
+          <div class="row-control" style="width:160px">
+            <select id="waXGFrequency" onchange="syncWatchalongFrequency(this.value)">
+              <option value="off">Silent (thread off)</option>
+              <option value="sparse">Sparse</option>
+              <option value="normal">Normal</option>
+              <option value="chatty">Chatty</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Discipline focus</strong><span>Filters results Q2 talks about by default</span></div>
+          <div class="row-control" style="width:160px">
+            <select id="waXGDiscipline">
+              <option value="all">All Disciplines</option>
+              <option value="snowboard">Snowboard</option>
+              <option value="ski">Ski</option>
+              <option value="skateboard">Skateboard</option>
+              <option value="bmx">BMX</option>
+              <option value="moto_x">Moto X</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Favourite athletes</strong><span>Comma-separated names, e.g. Scotty James, Chloe Kim</span></div>
+          <div class="row-control">
+            <input type="text" id="waXGAthletes" class="input-full" placeholder="Scotty James, Chloe Kim">
+          </div>
+        </div>
+      </div>
+
+      <!-- -- Pop-Up Video submenu -- -->
+      <div id="wa-sport-popup" style="display:none">
+        <div class="sub-title">Pop-Up Video Settings</div>
+        <div class="row row-decorative">
+          <div class="row-label">
+            <strong id="popupActiveTitle">No title loaded</strong>
+            <span>Generated MTV-style trivia bubbles for the current film/show</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Clear session</strong></div>
+          <div class="row-control"><button class="btn btn-ghost" onclick="clearPopupSession()">Clear Session</button></div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Auto-advance</strong><span>Companion panel fires pop-ups on a timer instead of manual timestamps</span></div>
+          <label class="toggle">
+            <input type="checkbox" id="popupAutoAdvance" onchange="savePopupAutoAdvance()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+
+        <div class="sub-title">Generate New</div>
+        <div class="row">
+          <div class="row-label"><strong>Title</strong></div>
+          <div class="row-control"><input type="text" id="popupGenTitle" class="input-full" placeholder="e.g. Hackers"></div>
+        </div>
+        <div class="row">
+          <div class="row-label"><strong>Year</strong></div>
+          <div class="row-control"><input type="number" id="popupGenYear" placeholder="1995" style="width:100px"></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="generatePopupVideo()" id="popupGenBtn">Generate Pop-Ups</button>
+        <p style="color:var(--dim);font-size:0.78rem;margin-top:6px" id="popupGenStatus"></p>
+
+        <div class="sub-title">Saved Titles</div>
+        <div class="row row-decorative">
+          <div class="row-label"><span id="popupSavedTitles">None yet</span></div>
+        </div>
+
+        <button class="btn btn-ghost btn-full" onclick="window.open('/popup-companion', '_blank')">Open Companion Panel</button>
+        <p style="color:var(--dim);font-size:0.78rem;margin-top:6px">Say "what are we watching" or "switch to pop-up video mode" to get started by voice.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- -- ED (Elite Dangerous Ship Computer) -- -->
+  <div class="section" id="sec-ed">
+    <button class="section-header" onclick="toggle('sec-ed')">
+      <span class="section-icon"><span class="abbr">ED</span><span class="full">ED</span></span>
+      <span class="section-label">ED<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+
+      <div class="row row-decorative">
+        <div class="row-label">
+          <strong><span class="fo-status-dot" id="edStatusDot"></span><span id="edStatusText">ED BRIDGE OFFLINE</span></strong>
+          <span>Run windows/ed_bridge.py on your Windows PC to connect</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-label"><strong>Enable Ship Computer</strong><span>Starts the ED telemetry listener (UDP)</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="edEnabled">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+
+      <div class="row">
+        <div class="row-label"><strong>Companion App</strong><span>Second-screen or phone panel for live ship state</span></div>
+        <div class="row-control">
+          <button class="btn btn-ghost" onclick="window.open('/ed-companion', '_blank')">Open Companion App</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="row-label"><strong>Enable INARA search</strong><span id="edInaraStatusText">Key not configured</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="edInaraEnabled">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+
+      <div class="row" id="edCmdrRow" style="display:none">
+        <div class="row-label">
+          <strong>Commander</strong>
+          <span id="edCmdrInfo"></span>
+        </div>
+      </div>
+
+      <div class="row row-decorative">
+        <div class="row-label">
+          <span>Run <code>windows/ed_bridge.py</code> on your Windows PC to connect. Then open the companion app on a second screen or phone.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- RADIO DJ -- -->
+  <div class="section" id="sec-radio-dj">
+    <button class="section-header" onclick="toggle('sec-radio-dj')">
+      <span class="section-icon"><span class="abbr">DJ</span><span class="full">DJ</span></span>
+      <span class="section-label">Radio DJ<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+
+      <div class="sub-title">Active Session</div>
+      <div class="row row-decorative">
+        <div class="row-label">
+          <strong><span class="fo-status-dot" id="djStatusDot"></span><span id="djNowPlaying">No session</span></strong>
+          <span id="djThemeText"></span>
+        </div>
+      </div>
+
+      <div class="sub-title">Controls</div>
+      <div class="row">
+        <div class="row-label"><strong>Playback</strong></div>
+        <div class="row-control" style="display:flex;gap:8px">
+          <button class="btn btn-ghost" onclick="djSkip()">Skip Track</button>
+          <button class="btn btn-ghost" onclick="djStop()">Stop Session</button>
+        </div>
+      </div>
+      <div id="djActionStatus" class="row-sub" style="margin:4px 0 0 0"></div>
+
+      <div class="sub-title">Quick Start Presets</div>
+      <div class="row">
+        <div class="row-control" style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-primary btn-full" onclick="djStartPreset('uk_garage')">UK Garage 1999-2003</button>
+          <button class="btn btn-primary btn-full" onclick="djStartPreset('amen_break')">The Amen Break</button>
+          <button class="btn btn-primary btn-full" onclick="djStartPreset('late_night')">Late Night Set</button>
+          <button class="btn btn-cyan btn-full" onclick="djStartFreeChoice()">Let Q2 Choose</button>
+        </div>
+      </div>
+
+      <div class="sub-title">Style</div>
+      <div class="row">
+        <div class="row-label"><strong>Commentary style</strong><span>Used for the next set you start -- back_announce is classic radio</span></div>
+        <div class="row-control" style="width:220px">
+          <select id="djStyle">
+            <option value="back_announce">Back Announce (classic radio)</option>
+            <option value="pre_announce">Pre Announce (build anticipation)</option>
+            <option value="mid_song">Cold Open (talk over intro)</option>
+            <option value="liner_notes">Liner Notes (full detail)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Track count</strong><span>For generated sets (Let Q2 Choose or a spoken theme) -- presets are always 5 tracks</span></div>
+        <div class="row-control">
+          <input type="range" id="djTrackCount" min="3" max="10" value="5" oninput="document.getElementById('djTrackLabel').textContent = this.value + ' tracks'">
+          <span id="djTrackLabel" class="row-sub">5 tracks</span>
+        </div>
+      </div>
+
+      <div class="row row-decorative">
+        <div class="row-label">
+          <span>Say "be my DJ" or "play a themed set," or name a specific theme like "play me some Neptunes production." Style and track count above only apply to sets you start by voice or the "Let Q2 Choose" button, not the quick-start presets.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- MASTERCHEF -- -->
+  <div class="section" id="sec-masterchef">
+    <button class="section-header" onclick="toggle('sec-masterchef')">
+      <span class="section-icon"><span class="abbr">MC</span><span class="full">MC</span></span>
+      <span class="section-label">MasterChef<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+
+      <div class="sub-title">Current Session</div>
+      <div class="row row-decorative">
+        <div class="row-label">
+          <strong><span class="fo-status-dot" id="mcStatusDot"></span><span id="mcCurrentDish">No session</span></strong>
+          <span id="mcMenuText"></span>
+        </div>
+      </div>
+
+      <div class="sub-title">Quick Start</div>
+      <div class="row">
+        <div class="row-control" style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-primary btn-full" onclick="mcPlan('mexican')">Mexican Street Night</button>
+          <button class="btn btn-primary btn-full" onclick="mcPlan('italian')">Italian Tonight</button>
+          <button class="btn btn-primary btn-full" onclick="mcPlan('chinese')">Chinese Takeout Night</button>
+          <button class="btn btn-primary btn-full" onclick="mcPlan('thai')">Thai Street Food</button>
+          <button class="btn btn-primary btn-full" onclick="mcPlan('desserts_baking')">Baking Session</button>
+          <button class="btn btn-cyan btn-full" onclick="mcPlan('free')">Let Gordon Decide</button>
+        </div>
+      </div>
+      <div id="mcActionStatus" class="row-sub" style="margin:4px 0 0 0"></div>
+
+      <div class="sub-title">Active Recipe Controls</div>
+      <div class="row">
+        <div class="row-label"><strong>Cooking</strong><span>Only does anything once a recipe is actually underway</span></div>
+        <div class="row-control" style="display:flex;gap:8px">
+          <button class="btn btn-ghost" onclick="mcNextStep()">Next Step</button>
+          <button class="btn btn-ghost" onclick="mcRepeatStep()">Repeat Step</button>
+          <button class="btn btn-ghost" onclick="mcShowRecipe()">Show Recipe</button>
+        </div>
+      </div>
+
+      <div class="row row-decorative">
+        <div class="row-label">
+          <span>Say "plan a Mexican dinner" or "let's cook" to start -- Gordon will propose a menu, build the shopping list, and walk you through it step by step once you confirm.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- WHIPLASH -- -->
+  <div class="section" id="sec-whiplash">
+    <button class="section-header" onclick="toggle('sec-whiplash')">
+      <span class="section-icon"><span class="abbr">WH</span><span class="full">WH</span></span>
+      <span class="section-label">Whiplash<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+
+      <div class="sub-title">Metronome</div>
+      <div class="row row-decorative">
+        <div class="row-label">
+          <strong><span class="fo-status-dot" id="whMetroDot"></span><span id="whMetroText">Stopped</span></strong>
+          <span id="whGrooveText"></span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Tempo</strong></div>
+        <div class="row-control">
+          <input type="range" id="whBpm" min="40" max="220" value="100" oninput="document.getElementById('whBpmLabel').textContent = this.value + ' BPM'">
+          <span id="whBpmLabel" class="row-sub">100 BPM</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-control" style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="whStartMetronome()">Start</button>
+          <button class="btn btn-cyan" onclick="whSync()">Sync (tap on beat 1)</button>
+          <button class="btn btn-ghost" onclick="whStopMetronome()">Stop</button>
+        </div>
+      </div>
+      <div id="whActionStatus" class="row-sub" style="margin:4px 0 0 0"></div>
+
+      <div class="sub-title">MIDI Kit</div>
+      <div class="row row-decorative">
+        <div class="row-label">
+          <strong><span class="fo-status-dot" id="whMidiDot"></span><span id="whMidiText">Not connected</span></strong>
+        </div>
+      </div>
+
+      <div class="sub-title">Funk Grooves</div>
+      <div class="row">
+        <div class="row-control" style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-primary btn-full" onclick="whStartGroove('the_pocket')">The Pocket</button>
+          <button class="btn btn-primary btn-full" onclick="whStartGroove('funky_drummer')">Funky Drummer</button>
+          <button class="btn btn-primary btn-full" onclick="whStartGroove('purdie_shuffle')">Purdie Shuffle</button>
+          <button class="btn btn-primary btn-full" onclick="whStartGroove('cold_sweat')">Cold Sweat</button>
+          <button class="btn btn-primary btn-full" onclick="whStartGroove('rosanna_shuffle')">Rosanna Shuffle</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-control">
+          <button class="btn btn-ghost btn-full" onclick="whGetStats()">Get Timing Stats</button>
+        </div>
+      </div>
+
+      <div class="sub-title">Clone Hero</div>
+      <div class="row row-decorative">
+        <div class="row-label">
+          <span id="whCloneHeroText">No song detected</span>
+        </div>
+      </div>
+
+      <div class="row row-decorative">
+        <div class="row-label">
+          <span>Say "start the metronome" or name a groove like "let's do Funky Drummer." Hit Sync the instant you hear beat one of whatever you're playing along to -- that's what aligns timing scoring, not just starting the metronome.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- PURCHASING -- -->
+  <div class="section" id="sec-purchasing">
+    <button class="section-header" onclick="toggle('sec-purchasing')">
+      <span class="section-icon"><span class="abbr">BUY</span><span class="full">PURCHASING</span></span>
+      <span class="section-label">Purchasing<span class="dirty-dot"></span></span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="sub-title">Shipping Address</div>
+      <div class="addr-grid" style="padding:8px 0 12px">
+        <div class="label-pair span2">
+          <label>Full name</label>
+          <input type="text" id="shipName" placeholder="Jane Doe">
+        </div>
+        <div class="label-pair span2">
+          <label>Address line 1</label>
+          <input type="text" id="shipLine1" placeholder="123 Main St">
+        </div>
+        <div class="label-pair span2">
+          <label>Address line 2</label>
+          <input type="text" id="shipLine2" placeholder="Apt 4B (optional)">
+        </div>
+        <div class="label-pair">
+          <label>City</label>
+          <input type="text" id="shipCity" placeholder="Toronto">
+        </div>
+        <div class="label-pair">
+          <label>Province</label>
+          <select id="shipProvince">
+            <option value="">-</option>
+            <option>AB</option><option>BC</option><option>MB</option><option>NB</option>
+            <option>NL</option><option>NS</option><option>NT</option><option>NU</option>
+            <option>ON</option><option>PE</option><option>QC</option><option>SK</option><option>YT</option>
+          </select>
+        </div>
+        <div class="label-pair">
+          <label>Postal code</label>
+          <input type="text" id="shipPostal" placeholder="M5V 2T6" style="text-transform:uppercase">
+        </div>
+        <div class="label-pair">
+          <label>Phone</label>
+          <input type="text" id="shipPhone" placeholder="416-555-0100">
+        </div>
+      </div>
+
+      <div class="sub-title">Shipping Preferences</div>
+      <div class="row" style="flex-direction:column;align-items:stretch;gap:6px;padding:8px 0">
+        <div class="label-pair">
+          <label>Preferred services (priority order)</label>
+          <textarea id="shippingServices" rows="3" placeholder="Canada Post Xpresspost&#10;Canada Post"></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Fallback</strong></div>
+        <div class="row-control" style="width:160px">
+          <select id="shippingFallback" class="input-full">
+            <option value="cheapest">Cheapest available</option>
+            <option value="fastest">Fastest available</option>
+            <option value="ask">Ask me</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label"><strong>Ask if shipping exceeds</strong></div>
+        <div class="row-control">
+          <input type="number" id="shippingConfirmAbove" value="25" min="0" step="1" style="width:80px">
+          <span style="color:var(--dim);font-size:0.85rem">CAD</span>
+        </div>
+      </div>
+
+      <div class="sub-title">Gift Cards</div>
+      <div style="padding:8px 0 4px;display:flex;flex-direction:column;gap:8px">
+        <div class="label-pair">
+          <label>Payment type</label>
+          <select id="gcPaymentType">
+            <option value="site_gc">Site gift card (coupon code)</option>
+            <option value="account_balance">Account balance</option>
+            <option value="visa_mc">Visa / Mastercard prepaid</option>
+          </select>
+        </div>
+        <div class="label-pair">
+          <label>Label</label>
+          <input type="text" id="gcLabel" placeholder="e.g. Amazon CA $50">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="label-pair">
+            <label>Balance (CAD)</label>
+            <input type="number" id="gcAmount" min="0.01" step="0.01" placeholder="50.00">
+          </div>
+          <div class="label-pair">
+            <label>Card code / PIN</label>
+            <input type="text" id="gcCode" placeholder="Code or number">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addGiftCard()">Add card</button>
+      </div>
+
+      <div id="gcList" style="margin-top:4px"></div>
+      <div style="font-size:0.82rem;color:var(--accent2);padding:4px 0">
+        Total: <strong id="gcTotal">$0.00</strong>
+      </div>
+
+      <div class="sub-title">Recent Purchases</div>
+      <div id="gcHistory" class="gc-history" style="margin-top:4px">
+        <span style="color:var(--dim);font-size:0.8rem">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- SYSTEM -- -->
+  <div class="section" id="sec-system">
+    <button class="section-header" onclick="toggle('sec-system')">
+      <span class="section-icon"><span class="abbr">SYS</span><span class="full">SYSTEM</span></span>
+      <span class="section-label">System</span>
+      <span class="section-chevron">v</span>
+    </button>
+    <div class="section-body">
+      <div class="row">
+        <div class="row-label"><strong>Restart Q2</strong><span>Full process restart</span></div>
+        <button class="btn btn-ghost" onclick="restartQ2()">Restart</button>
+      </div>
+      <button class="btn btn-danger btn-full" style="margin-top:8px" onclick="clearLocalData()">Clear local data</button>
+    </div>
+  </div>
+
+</div><!-- /sections -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// BASE_FACE self-detects which surface we're loaded on:
+//  - direct on the face server (Pi kiosk, port 8765) -> relative paths,
+//    e.g. fetch('/settings') hits face/server.py's own route directly.
+//  - anything else (proxied through webapp/server.py, e.g. port 8766 for
+//    iPhone) -> prefix with /face-api, which webapp's generic proxy
+//    forwards to the face server.
+// This must key off location.port, not location.pathname -- both direct
+// (/settings.html) and proxied (/settings) paths start with "/settings",
+// so a pathname check can't tell them apart and previously misrouted the
+// direct kiosk case to a /face-api prefix that doesn't exist on port 8765.
+const BASE_FACE = (location.port === '8765') ? '' : '/face-api';
+
+// -- Accordion ----------------------------------------------------------------
+function toggle(id) {
+  const foSec = document.getElementById('sec-first-officer');
+  const wasFoOpen = foSec.classList.contains('open');
+  const waSec = document.getElementById('sec-watchalong');
+  const wasWaOpen = waSec.classList.contains('open');
+  const edSec = document.getElementById('sec-ed');
+  const wasEdOpen = edSec.classList.contains('open');
+  const djSec = document.getElementById('sec-radio-dj');
+  const wasDjOpen = djSec.classList.contains('open');
+  const mcSec = document.getElementById('sec-masterchef');
+  const wasMcOpen = mcSec.classList.contains('open');
+  const whSec = document.getElementById('sec-whiplash');
+  const wasWhOpen = whSec.classList.contains('open');
+  const voiceSec = document.getElementById('sec-voice');
+  const wasVoiceOpen = voiceSec.classList.contains('open');
+  const ctrlSec = document.getElementById('sec-controller');
+  const wasCtrlOpen = ctrlSec.classList.contains('open');
+  const playersSec = document.getElementById('sec-players');
+  const wasPlayersOpen = playersSec.classList.contains('open');
+
+  const sec = document.getElementById(id);
+  const isOpen = sec.classList.contains('open');
+  document.querySelectorAll('.section.open').forEach(s => s.classList.remove('open'));
+  if (!isOpen) sec.classList.add('open');
+
+  // First Officer's MSFS connection dot only needs to poll while its
+  // section is actually visible -- same start/stop-on-visibility idea as
+  // the webapp's camera stream, just on a 3s interval instead of a video
+  // feed. Covers all three transitions: opening FO, closing FO by
+  // re-clicking its own header, and switching away to another section
+  // (which the accordion above closes FO for too).
+  const isFoOpenNow = foSec.classList.contains('open');
+  if (isFoOpenNow && !wasFoOpen) startFoStatusPolling();
+  else if (!isFoOpenNow && wasFoOpen) stopFoStatusPolling();
+
+  // Same visibility-gated idea for Watchalong's live-session dots, but
+  // polling GET /settings (not /state) on a slower 10s cadence -- unlike
+  // MSFS's in-memory check, OpenF1/ESPN are remote API calls, so this must
+  // never ride on /state's high-frequency hot path (see _f1_status()'s
+  // note in face/server.py). One poll updates both sports' status dots in
+  // one request -- face/server.py's GET /settings already computes both
+  // _f1_status() and _ufc_status() every call regardless of which sport's
+  // submenu is currently visible.
+  const isWaOpenNow = waSec.classList.contains('open');
+  if (isWaOpenNow && !wasWaOpen) startWatchalongStatusPolling();
+  else if (!isWaOpenNow && wasWaOpen) stopWatchalongStatusPolling();
+
+  // ED telemetry is a cheap in-memory check (like MSFS), so it rides
+  // /state's hot path too, same 3s cadence as First Officer.
+  const isEdOpenNow = edSec.classList.contains('open');
+  if (isEdOpenNow && !wasEdOpen) startEdStatusPolling();
+  else if (!isEdOpenNow && wasEdOpen) stopEdStatusPolling();
+
+  // Voice section's energy-threshold meter: same idea, cheap in-memory
+  // /state read, only worth polling fast while actually tuning it.
+  const isVoiceOpenNow = voiceSec.classList.contains('open');
+  if (isVoiceOpenNow && !wasVoiceOpen) startVoiceMeterPolling();
+  else if (!isVoiceOpenNow && wasVoiceOpen) stopVoiceMeterPolling();
+
+  // Controller section: connection status + live button-test display,
+  // same visibility-gated cadence as the others above.
+  const isCtrlOpenNow = ctrlSec.classList.contains('open');
+  if (isCtrlOpenNow && !wasCtrlOpen) startControllerPolling();
+  else if (!isCtrlOpenNow && wasCtrlOpen) stopControllerPolling();
+
+  // Players section: Master (Flipper/BT) + P2-P4 status, same
+  // visibility-gated idea as Controller above.
+  const isPlayersOpenNow = playersSec.classList.contains('open');
+  if (isPlayersOpenNow && !wasPlayersOpen) startPlayersPolling();
+  else if (!isPlayersOpenNow && wasPlayersOpen) stopPlayersPolling();
+
+  // Radio DJ status is a cheap in-memory read too (no network call --
+  // see face/server.py's _dj_status()), but it lives on GET /settings
+  // rather than /state for consistency with the other watchalong-style
+  // status blocks, so this polls at Watchalong's 5s-ish cadence rather
+  // than ED/FO's 3s hot-path one.
+  const isDjOpenNow = djSec.classList.contains('open');
+  if (isDjOpenNow && !wasDjOpen) startDjStatusPolling();
+  else if (!isDjOpenNow && wasDjOpen) stopDjStatusPolling();
+
+  // MasterChef session status -- same cheap in-memory read on GET
+  // /settings as Radio DJ (see face/server.py's _masterchef_status()).
+  const isMcOpenNow = mcSec.classList.contains('open');
+  if (isMcOpenNow && !wasMcOpen) startMcStatusPolling();
+  else if (!isMcOpenNow && wasMcOpen) stopMcStatusPolling();
+
+  // Whiplash metronome/MIDI/Clone Hero status -- same cheap in-memory
+  // read on GET /settings (see face/server.py's _whiplash_status()).
+  const isWhOpenNow = whSec.classList.contains('open');
+  if (isWhOpenNow && !wasWhOpen) startWhStatusPolling();
+  else if (!isWhOpenNow && wasWhOpen) stopWhStatusPolling();
+}
+
+// -- ED: live telemetry connection status ---------------------------------------
+let edStatusInterval = null;
+
+function startEdStatusPolling() {
+  updateEdStatus();
+  edStatusInterval = setInterval(updateEdStatus, 3000);
+}
+
+function stopEdStatusPolling() {
+  if (edStatusInterval) { clearInterval(edStatusInterval); edStatusInterval = null; }
+}
+
+async function updateEdStatus() {
+  try {
+    const r = await fetch(`${BASE_FACE}/state`);
+    const s = await r.json();
+    applyEdStatus(s.ed_status);
+  } catch (e) {
+    // Leave the last-known state showing rather than flashing to offline
+    // on a single dropped poll.
+  }
+}
+
+// -- Radio DJ: session status + controls -----------------------------------------
+let djStatusInterval = null;
+
+function startDjStatusPolling() {
+  updateDjStatus();
+  djStatusInterval = setInterval(updateDjStatus, 5000);
+}
+
+function stopDjStatusPolling() {
+  if (djStatusInterval) { clearInterval(djStatusInterval); djStatusInterval = null; }
+}
+
+async function updateDjStatus() {
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`);
+    const s = await r.json();
+    applyDjStatus(s.dj_status);
+  } catch (e) {
+    // Leave the last-known state showing rather than flashing to offline
+    // on a single dropped poll.
+  }
+}
+
+function applyDjStatus(status) {
+  status = status || { active: false };
+  const dot = document.getElementById('djStatusDot');
+  const nowPlaying = document.getElementById('djNowPlaying');
+  const themeText = document.getElementById('djThemeText');
+
+  if (status.active) {
+    dot.classList.add('connected');
+    nowPlaying.textContent = `${status.current_artist} -- ${status.current_track}`;
+    themeText.textContent = `${status.theme} -- track ${status.track_number} of ${status.total_tracks}, ${status.elapsed_min} min in`;
+  } else {
+    dot.classList.remove('connected');
+    nowPlaying.textContent = 'No session';
+    themeText.textContent = '';
+  }
+}
+
+function djActionStatus(text) {
+  const el = document.getElementById('djActionStatus');
+  if (el) el.textContent = text;
+}
+
+async function djSkip() {
+  djActionStatus('Skipping...');
+  try {
+    const r = await fetch(`${BASE_FACE}/dj/skip`, { method: 'POST' });
+    const d = await r.json();
+    djActionStatus(d.message || (d.ok ? 'Skipped.' : 'Failed to skip.'));
+    updateDjStatus();
+  } catch (e) { djActionStatus('Could not reach face server.'); }
+}
+
+async function djStop() {
+  djActionStatus('Stopping...');
+  try {
+    const r = await fetch(`${BASE_FACE}/dj/stop`, { method: 'POST' });
+    const d = await r.json();
+    djActionStatus(d.message || (d.ok ? 'Stopped.' : 'Failed to stop.'));
+    updateDjStatus();
+  } catch (e) { djActionStatus('Could not reach face server.'); }
+}
+
+async function djStartPreset(name) {
+  djActionStatus('Starting...');
+  try {
+    const r = await fetch(`${BASE_FACE}/dj/start_preset`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ preset: name }),
+    });
+    const d = await r.json();
+    djActionStatus(d.message || (d.ok ? 'Started.' : 'Failed to start.'));
+    updateDjStatus();
+  } catch (e) { djActionStatus('Could not reach face server.'); }
+}
+
+async function djStartFreeChoice() {
+  djActionStatus('Asking Q2 to pick a theme...');
+  try {
+    const r = await fetch(`${BASE_FACE}/dj/start_free_choice`, { method: 'POST' });
+    const d = await r.json();
+    djActionStatus(d.message || (d.ok ? 'Generating...' : 'Failed to start.'));
+    setTimeout(updateDjStatus, 3000);
+  } catch (e) { djActionStatus('Could not reach face server.'); }
+}
+
+// -- MasterChef: session status + controls ----------------------------------------
+let mcStatusInterval = null;
+
+function startMcStatusPolling() {
+  updateMcStatus();
+  mcStatusInterval = setInterval(updateMcStatus, 5000);
+}
+
+function stopMcStatusPolling() {
+  if (mcStatusInterval) { clearInterval(mcStatusInterval); mcStatusInterval = null; }
+}
+
+async function updateMcStatus() {
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`);
+    const s = await r.json();
+    applyMcStatus(s.masterchef_status);
+  } catch (e) {
+    // Leave the last-known state showing rather than flashing to offline
+    // on a single dropped poll.
+  }
+}
+
+function applyMcStatus(status) {
+  status = status || { active: false };
+  const dot = document.getElementById('mcStatusDot');
+  const currentDish = document.getElementById('mcCurrentDish');
+  const menuText = document.getElementById('mcMenuText');
+
+  if (status.active) {
+    dot.classList.add('connected');
+    currentDish.textContent = status.total_steps
+      ? `${status.current_dish} -- step ${status.current_step} of ${status.total_steps}`
+      : status.current_dish;
+    menuText.textContent = `${status.cuisine} -- menu: ${(status.menu || []).join(', ')}`;
+  } else {
+    dot.classList.remove('connected');
+    currentDish.textContent = 'No session';
+    menuText.textContent = '';
+  }
+}
+
+function mcActionStatus(text) {
+  const el = document.getElementById('mcActionStatus');
+  if (el) el.textContent = text;
+}
+
+async function mcPlan(cuisine) {
+  mcActionStatus('Planning...');
+  try {
+    const r = await fetch(`${BASE_FACE}/mc/plan`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cuisine }),
+    });
+    const d = await r.json();
+    mcActionStatus(d.message || (d.ok ? 'Planned.' : 'Failed to plan.'));
+    updateMcStatus();
+  } catch (e) { mcActionStatus('Could not reach face server.'); }
+}
+
+async function mcNextStep() {
+  mcActionStatus('Advancing...');
+  try {
+    const r = await fetch(`${BASE_FACE}/mc/next_step`, { method: 'POST' });
+    const d = await r.json();
+    mcActionStatus(d.message || (d.ok ? 'Next step.' : 'Failed.'));
+    updateMcStatus();
+  } catch (e) { mcActionStatus('Could not reach face server.'); }
+}
+
+async function mcRepeatStep() {
+  mcActionStatus('Repeating...');
+  try {
+    const r = await fetch(`${BASE_FACE}/mc/repeat_step`, { method: 'POST' });
+    const d = await r.json();
+    mcActionStatus(d.message || (d.ok ? '' : 'Failed.'));
+  } catch (e) { mcActionStatus('Could not reach face server.'); }
+}
+
+async function mcShowRecipe() {
+  mcActionStatus('Fetching recipe...');
+  try {
+    const r = await fetch(`${BASE_FACE}/mc/show_recipe`, { method: 'POST' });
+    const d = await r.json();
+    mcActionStatus(d.message || (d.ok ? '' : 'No active recipe.'));
+  } catch (e) { mcActionStatus('Could not reach face server.'); }
+}
+
+// -- Whiplash: metronome + MIDI + Clone Hero status --------------------------------
+let whStatusInterval = null;
+
+function startWhStatusPolling() {
+  updateWhStatus();
+  whStatusInterval = setInterval(updateWhStatus, 3000);
+}
+
+function stopWhStatusPolling() {
+  if (whStatusInterval) { clearInterval(whStatusInterval); whStatusInterval = null; }
+}
+
+async function updateWhStatus() {
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`);
+    const s = await r.json();
+    applyWhStatus(s.whiplash_status);
+  } catch (e) {
+    // Leave the last-known state showing rather than flashing to offline
+    // on a single dropped poll.
+  }
+}
+
+function applyWhStatus(status) {
+  status = status || {};
+  const metroDot = document.getElementById('whMetroDot');
+  const metroText = document.getElementById('whMetroText');
+  const grooveText = document.getElementById('whGrooveText');
+  const midiDot = document.getElementById('whMidiDot');
+  const midiText = document.getElementById('whMidiText');
+  const chText = document.getElementById('whCloneHeroText');
+
+  if (status.metronome_running) {
+    metroDot.classList.add('connected');
+    metroText.textContent = `Running -- ${status.bpm} BPM${status.synced ? ' (synced)' : ' (not synced)'}`;
+  } else {
+    metroDot.classList.remove('connected');
+    metroText.textContent = 'Stopped';
+  }
+  grooveText.textContent = status.groove_active ? `Practicing: ${status.current_groove}` : '';
+
+  if (status.midi_connected) {
+    midiDot.classList.add('connected');
+    midiText.textContent = `Connected -- ${status.midi_port}`;
+  } else {
+    midiDot.classList.remove('connected');
+    midiText.textContent = status.midi_available ? 'Not connected' : 'python-rtmidi not installed';
+  }
+
+  chText.textContent = status.clone_hero_song
+    ? `${status.clone_hero_artist} -- ${status.clone_hero_song}`
+    : 'No song detected';
+}
+
+function whActionStatus(text) {
+  const el = document.getElementById('whActionStatus');
+  if (el) el.textContent = text;
+}
+
+async function whStartMetronome() {
+  whActionStatus('Starting...');
+  try {
+    const bpm = parseInt(document.getElementById('whBpm').value, 10);
+    const r = await fetch(`${BASE_FACE}/wh/start_metronome`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bpm }),
+    });
+    const d = await r.json();
+    whActionStatus(d.message || (d.ok ? 'Started.' : 'Failed to start.'));
+    updateWhStatus();
+  } catch (e) { whActionStatus('Could not reach face server.'); }
+}
+
+async function whStopMetronome() {
+  whActionStatus('Stopping...');
+  try {
+    const r = await fetch(`${BASE_FACE}/wh/stop_metronome`, { method: 'POST' });
+    const d = await r.json();
+    whActionStatus(d.message || (d.ok ? 'Stopped.' : 'Failed to stop.'));
+    updateWhStatus();
+  } catch (e) { whActionStatus('Could not reach face server.'); }
+}
+
+async function whSync() {
+  whActionStatus('Syncing...');
+  try {
+    const r = await fetch(`${BASE_FACE}/wh/sync`, { method: 'POST' });
+    const d = await r.json();
+    whActionStatus(d.message || (d.ok ? 'Synced.' : 'Failed to sync.'));
+    updateWhStatus();
+  } catch (e) { whActionStatus('Could not reach face server.'); }
+}
+
+async function whStartGroove(groove) {
+  whActionStatus('Starting groove...');
+  try {
+    const r = await fetch(`${BASE_FACE}/wh/start_groove`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ groove }),
+    });
+    const d = await r.json();
+    whActionStatus(d.message || (d.ok ? 'Started.' : 'Failed to start.'));
+    updateWhStatus();
+  } catch (e) { whActionStatus('Could not reach face server.'); }
+}
+
+async function whGetStats() {
+  whActionStatus('Fetching stats...');
+  try {
+    const r = await fetch(`${BASE_FACE}/wh/stats`, { method: 'POST' });
+    const d = await r.json();
+    whActionStatus(d.message || (d.ok ? '' : 'Failed.'));
+  } catch (e) { whActionStatus('Could not reach face server.'); }
+}
+
+// -- First Officer: live MSFS connection status ---------------------------------
+let foStatusInterval = null;
+
+function startFoStatusPolling() {
+  updateFoStatus();
+  foStatusInterval = setInterval(updateFoStatus, 3000);
+}
+
+function stopFoStatusPolling() {
+  if (foStatusInterval) { clearInterval(foStatusInterval); foStatusInterval = null; }
+}
+
+async function updateFoStatus() {
+  try {
+    const r = await fetch(`${BASE_FACE}/state`);
+    const s = await r.json();
+    const dot = document.getElementById('foStatusDot');
+    const text = document.getElementById('foStatusText');
+    const detectedRow = document.getElementById('foAircraftDetectedRow');
+    const selectRow = document.getElementById('foAircraftSelectRow');
+
+    if (s.msfs_active) {
+      dot.classList.add('connected');
+      text.textContent = 'MSFS CONNECTED';
+      document.getElementById('foAircraftDetected').textContent = s.msfs_aircraft || 'Unknown aircraft';
+      detectedRow.style.display = '';
+      selectRow.style.display = 'none';
+    } else {
+      dot.classList.remove('connected');
+      text.textContent = 'MSFS OFFLINE';
+      detectedRow.style.display = 'none';
+      selectRow.style.display = '';
+    }
+  } catch (e) {
+    // Leave the last-known state showing rather than flashing to offline
+    // on a single dropped poll.
+  }
+}
+
+// -- Watchalong: mode/sport switching + live status (both sports) --------------
+function updateWatchalongSport() {
+  const sport = document.getElementById('waSport').value;
+  document.querySelectorAll('[id^="wa-sport-"]').forEach(el => { el.style.display = 'none'; });
+  const sub = document.getElementById('wa-sport-' + sport);
+  if (sub) sub.style.display = 'block';
+}
+
+// F1 and UFC frequency selects both represent the one shared
+// watchalong.live.frequency value -- keep them in sync so switching sport
+// submenus never shows a stale frequency in the other one.
+function syncWatchalongFrequency(value) {
+  document.getElementById('waF1Frequency').value = value;
+  document.getElementById('waUFCFrequency').value = value;
+  document.getElementById('waNBAFrequency').value = value;
+  document.getElementById('waNHLFrequency').value = value;
+  document.getElementById('waNFLFrequency').value = value;
+  document.getElementById('waMLBFrequency').value = value;
+  document.getElementById('waFDFrequency').value = value;
+  document.getElementById('waXGFrequency').value = value;
+}
+
+async function activateWatchalong() {
+  const mode = document.getElementById('waMode').value;
+  const sport = document.getElementById('waSport').value;
+
+  if (sport === 'popup') {
+    try {
+      const r = await fetch(`${BASE_FACE}/settings`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ active_profile: 'profiles/popup_video.yaml' }),
+      });
+      const d = await r.json();
+      showToast(d.restart_required ? 'Switched to Pop-Up Video -- restart recommended' : 'Pop-Up Video active');
+    } catch (e) { showToast('Could not reach face server'); }
+    return;
+  }
+
+  const profile = mode === 'live' ? 'profiles/watchalong_live.yaml' : 'profiles/watchalong_replay.yaml';
+
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        active_profile: profile,
+        watchalong_mode: mode,
+        watchalong_sport: sport,
+      }),
+    });
+    const d = await r.json();
+    showToast(d.restart_required
+      ? `Switched to Watchalong ${mode} -- restart recommended`
+      : `Watchalong ${mode} active (${sport.toUpperCase()})`);
+  } catch (e) { showToast('Could not reach face server'); }
+}
+
+async function clearPopupSession() {
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({popup_clear: true}),
+    });
+    const d = await r.json();
+    if (d.ok !== false) {
+      await loadSettings();
+      showToast('Pop-up session cleared');
+    }
+  } catch (e) { showToast('Could not reach face server'); }
+}
+
+async function savePopupAutoAdvance() {
+  const on = document.getElementById('popupAutoAdvance').checked;
+  try {
+    await fetch(`${BASE_FACE}/settings`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({popup_auto_advance: on}),
+    });
+  } catch (e) { showToast('Could not reach face server'); }
+}
+
+async function generatePopupVideo() {
+  const title = document.getElementById('popupGenTitle').value.trim();
+  const year = document.getElementById('popupGenYear').value.trim();
+  if (!title) { showToast('Enter a title first'); return; }
+  const btn = document.getElementById('popupGenBtn');
+  const status = document.getElementById('popupGenStatus');
+  btn.disabled = true;
+  status.textContent = 'Researching + generating... this can take a minute.';
+  try {
+    const r = await fetch('/popup/api/generate', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({title, year: year ? parseInt(year) : null}),
+    });
+    const d = await r.json();
+    status.textContent = d.ok ? d.message : ('Error: ' + d.error);
+    if (d.ok) await refreshPopupState();
+  } catch (e) {
+    status.textContent = 'Could not reach webapp server (is it running?).';
+  }
+  btn.disabled = false;
+}
+
+async function refreshPopupState() {
+  try {
+    const r = await fetch('/popup/api/state');
+    const s = await r.json();
+    document.getElementById('popupActiveTitle').textContent = s.active
+      ? `${s.title}${s.year ? ' ('+s.year+')' : ''} -- ${s.popup_count} pop-ups`
+      : 'No title loaded';
+    if (s.saved_titles && s.saved_titles.length) {
+      document.getElementById('popupSavedTitles').textContent = s.saved_titles
+        .slice(0, 5).map(t => `${t.title}${t.year ? ' ('+t.year+')' : ''}`).join(', ');
+    }
+  } catch (e) { /* webapp may not be running from this surface -- non-fatal */ }
+}
+
+let waStatusInterval = null;
+
+function startWatchalongStatusPolling() {
+  updateWatchalongStatus();
+  waStatusInterval = setInterval(updateWatchalongStatus, 10000);
+}
+
+function stopWatchalongStatusPolling() {
+  if (waStatusInterval) { clearInterval(waStatusInterval); waStatusInterval = null; }
+}
+
+async function updateWatchalongStatus() {
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`);
+    const s = await r.json();
+    applyF1Status(s.f1_status);
+    applyUfcStatus(s.ufc_status);
+    applyNbaStatus(s.nba_status);
+    applyNhlStatus(s.nhl_status);
+    applyNflStatus(s.nfl_status);
+    applyMlbStatus(s.mlb_status);
+  } catch (e) {
+    // Leave the last-known state showing rather than flashing to offline
+    // on a single dropped poll.
+  }
+}
+
+function applyF1Status(status) {
+  status = status || {active: false, session_name: '', race_control: []};
+  const dot = document.getElementById('f1StatusDot');
+  const text = document.getElementById('f1StatusText');
+
+  if (status.active) {
+    dot.classList.add('connected');
+    text.textContent = status.session_name || 'LIVE SESSION';
+  } else {
+    dot.classList.remove('connected');
+    text.textContent = status.session_name ? `${status.session_name} (not live)` : 'NO LIVE SESSION';
+  }
+
+  renderRaceControlMessages(status.race_control);
+}
+
+// face/server.py's _f1_status() already extracts each message down to a
+// plain string (rc.get('message', ''), last 5 only) -- there's no
+// timestamp in today's data, so the object/date branch below is
+// forward-compatible dead code if that ever changes, not something the
+// current feed exercises. Colour-coding by message content works
+// regardless of shape.
+function renderRaceControlMessages(messages) {
+  const feed = document.getElementById('waF1RaceControlList');
+  if (!feed) return;
+
+  if (!messages || !messages.length) {
+    feed.innerHTML = '<div class="rc-empty">No messages -- monitoring when live</div>';
+    return;
+  }
+
+  const recent = [...messages].reverse().slice(0, 8);
+
+  feed.innerHTML = recent.map(msg => {
+    let time = '';
+    let text = '';
+
+    if (typeof msg === 'string') {
+      text = msg;
+    } else {
+      text = msg.message || msg.text || msg.msg || '';
+      if (!text && typeof msg === 'object') {
+        const { date, session_key, ...rest } = msg;
+        text = Object.values(rest).filter(Boolean).join(' -- ');
+      }
+      if (msg.date) {
+        try {
+          const d = new Date(msg.date);
+          time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        } catch(e) {}
+      } else if (msg.time) {
+        time = String(msg.time).slice(0, 8);
+      }
+    }
+
+    const lower = text.toLowerCase();
+    let cls = '';
+    if (lower.includes('safety car') || lower.includes('vsc')) cls = 'safety-car';
+    else if (lower.includes('red flag')) cls = 'red-flag';
+    else if (lower.includes('drs enabled') || lower.includes('drs open')) cls = 'drs';
+    else if (lower.includes('chequered') || lower.includes('checkered')) cls = 'chequered';
+    else if (lower.includes('penalty') || lower.includes('investigation') || lower.includes('time')) cls = 'penalty';
+
+    return `<div class="rc-message">
+      ${time ? `<span class="rc-time">${time}</span>` : ''}
+      <span class="rc-text ${cls}">${text}</span>
+    </div>`;
+  }).join('');
+
+  feed.scrollTop = 0;
+}
+
+function applyUfcStatus(status) {
+  status = status || {active: false, event_name: '', main_event: ''};
+  const dot = document.getElementById('ufcStatusDot');
+  const text = document.getElementById('ufcStatusText');
+  const mainRow = document.getElementById('waUFCMainEventRow');
+  const mainText = document.getElementById('waUFCMainEventText');
+
+  if (status.event_name) {
+    dot.classList.toggle('connected', !!status.active);
+    text.textContent = status.active ? `LIVE: ${status.event_name}` : status.event_name;
+  } else {
+    dot.classList.remove('connected');
+    text.textContent = 'NO EVENT TONIGHT';
+  }
+
+  if (status.main_event) {
+    mainRow.style.display = '';
+    mainText.textContent = status.main_event;
+  } else {
+    mainRow.style.display = 'none';
+  }
+}
+
+function applyNbaStatus(status) {
+  status = status || {active: false, game_name: '', score: ''};
+  const dot = document.getElementById('nbaStatusDot');
+  const text = document.getElementById('nbaStatusText');
+
+  if (status.active) {
+    dot.classList.add('connected');
+    text.textContent = status.score ? `${status.game_name} -- ${status.score}` : status.game_name;
+  } else {
+    dot.classList.remove('connected');
+    text.textContent = 'NO LIVE GAME';
+  }
+}
+
+function applyNhlStatus(status) {
+  status = status || {active: false, game_name: '', score: ''};
+  const dot = document.getElementById('nhlStatusDot');
+  const text = document.getElementById('nhlStatusText');
+
+  if (status.active) {
+    dot.classList.add('connected');
+    text.textContent = status.score ? `${status.game_name} -- ${status.score}` : status.game_name;
+  } else {
+    dot.classList.remove('connected');
+    text.textContent = 'NO LIVE GAME';
+  }
+}
+
+function applyNflStatus(status) {
+  status = status || {active: false, game_name: '', score: ''};
+  const dot = document.getElementById('nflStatusDot');
+  const text = document.getElementById('nflStatusText');
+
+  if (status.active) {
+    dot.classList.add('connected');
+    text.textContent = status.score ? `${status.game_name} -- ${status.score}` : status.game_name;
+  } else {
+    dot.classList.remove('connected');
+    text.textContent = 'NO LIVE GAME';
+  }
+}
+
+function applyMlbStatus(status) {
+  status = status || {active: false, game_name: '', score: ''};
+  const dot = document.getElementById('mlbStatusDot');
+  const text = document.getElementById('mlbStatusText');
+
+  if (status.active) {
+    dot.classList.add('connected');
+    text.textContent = status.score ? `${status.game_name} -- ${status.score}` : status.game_name;
+  } else {
+    dot.classList.remove('connected');
+    text.textContent = 'NO LIVE GAME';
+  }
+}
+
+async function clearWatchalongReplay() {
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({watchalong_clear_replay: true}),
+    });
+    const d = await r.json();
+    if (d.ok !== false) {
+      await loadSettings();
+      showToast('Replay session cleared');
+    }
+  } catch (e) { showToast('Could not reach face server'); }
+}
+
+// -- Toast ---------------------------------------------------------------------
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// -- Navigation ----------------------------------------------------------------
+function goBack() { location.href = '/'; }
+// A bare 'h' keydown shortcut used to call goBack() here -- removed because
+// this page is full of text inputs/textareas (preset name, vernacular
+// nicknames/enders/custom instructions, address fields, etc.) and typing the
+// letter "h" anywhere in them bounced the user straight back to the face.
+// Controller mapping's dedicated "toggle_menu" action is the supported
+// hardware shortcut now -- see pollToggleMenuEvents() below, which is what
+// actually fires goBack() from a controller press.
+
+// toggle_menu is a true toggle: face/index.html's own poll handles the
+// face-page -> settings.html hop; this poll handles the reverse (settings
+// -> face) from over here. Deliberately NOT folded into pollControllerEvents()
+// above -- that poll only runs while the Controller accordion section is
+// open (see startControllerPolling()/toggle()), but toggle_menu must work
+// from anywhere on this page, so it gets its own always-on interval with
+// its own poll cursor.
+let toggleMenuLastPoll = Date.now() / 1000;
+async function pollToggleMenuEvents() {
+  try {
+    const r = await fetch(`${BASE_FACE}/controller/events?since=${toggleMenuLastPoll}`).then(r => r.json());
+    for (const evt of (r.events || [])) {
+      toggleMenuLastPoll = Math.max(toggleMenuLastPoll, evt.ts || 0);
+      if (evt.type === 'ui' && evt.action === 'toggle_menu') {
+        goBack();
+      }
+    }
+  } catch (e) {}
+}
+setInterval(pollToggleMenuEvents, 500);
+
+// -- Dirty-section tracking -----------------------------------------------------
+// Any input/change inside a section body marks that section's header with a
+// dot; cleared on a successful save (everything saves together via saveAll()).
+document.querySelector('.sections').addEventListener('input', markDirty);
+document.querySelector('.sections').addEventListener('change', markDirty);
+function markDirty(e) {
+  const sec = e.target.closest('.section');
+  if (sec) sec.classList.add('dirty');
+}
+function clearAllDirty() {
+  document.querySelectorAll('.section.dirty').forEach(s => s.classList.remove('dirty'));
+}
+
+// -- Restart badges (per-section warning before a restart-requiring save) -------
+let baseline = {};
+function snapshotBaseline() {
+  baseline = {
+    input_device: document.getElementById('inputDevice').value,
+    wake_word_enabled: document.getElementById('wakeWordEnabled').checked,
+    wake_word_sensitivity: document.getElementById('sensitivity').value,
+    llm_backend: document.getElementById('llmBackend').value,
+  };
+}
+function updateRestartBadges() {
+  const voiceChanged =
+    document.getElementById('inputDevice').value !== baseline.input_device ||
+    document.getElementById('wakeWordEnabled').checked !== baseline.wake_word_enabled ||
+    document.getElementById('sensitivity').value !== baseline.wake_word_sensitivity;
+  document.getElementById('voiceRestartBadge').classList.toggle('show', voiceChanged);
+
+  const llmChanged = document.getElementById('llmBackend').value !== baseline.llm_backend;
+  document.getElementById('llmRestartBadge').classList.toggle('show', llmChanged);
+}
+['inputDevice', 'wakeWordEnabled', 'sensitivity', 'llmBackend'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateRestartBadges);
+  document.getElementById(id).addEventListener('change', updateRestartBadges);
+});
+
+// -- Restart banner (persistent reminder after a restart-requiring save) -------
+function showRestartBanner() {
+  document.getElementById('restartBanner').classList.add('show');
+}
+function dismissRestartBanner() {
+  document.getElementById('restartBanner').classList.remove('show');
+}
+async function restartQ2() {
+  if (!confirm('Restart Q2 now? Voice and the face display will drop briefly.')) return;
+  try {
+    await fetch(`${BASE_FACE}/restart`, { method: 'POST' });
+    showToast('Restarting...');
+    dismissRestartBanner();
+  } catch (e) { showToast('Could not reach Q2'); }
+}
+
+// -- Wake word sensitivity row: only meaningful while wake word is enabled -----
+function updateSensitivityVisibility() {
+  document.getElementById('sensitivityRow').style.display =
+    document.getElementById('wakeWordEnabled').checked ? '' : 'none';
+}
+document.getElementById('wakeWordEnabled').addEventListener('change', updateSensitivityVisibility);
+
+// -- Range controls ---------------------------------------------------------------
+document.getElementById('sensitivity').addEventListener('input', e => {
+  document.getElementById('sensitivityVal').textContent = parseFloat(e.target.value).toFixed(2);
+});
+document.getElementById('energyThresh').addEventListener('input', e => {
+  document.getElementById('energyThreshVal').textContent = e.target.value;
+  updateVadMeterMark();
+});
+
+// -- VAD energy threshold: live RMS meter while the Voice section is open -------
+// Same start/stop-on-visibility idea as First Officer's/ED's status dots
+// above, but reading /state's audio_level (pushed by voice/pipeline.py's
+// VoiceActivityDetector during recording) on a fast 150ms cadence so the
+// meter feels responsive while tuning the threshold for the room.
+let voiceMeterInterval = null;
+
+function startVoiceMeterPolling() {
+  updateVoiceMeter();
+  voiceMeterInterval = setInterval(updateVoiceMeter, 150);
+}
+function stopVoiceMeterPolling() {
+  if (voiceMeterInterval) { clearInterval(voiceMeterInterval); voiceMeterInterval = null; }
+  document.getElementById('vadMeterFill').style.width = '0%';
+}
+async function updateVoiceMeter() {
+  try {
+    const r = await fetch(`${BASE_FACE}/state`);
+    const s = await r.json();
+    const level = Math.max(0, s.audio_level || 0);
+    // Energy levels in practice run roughly 0-3000 for normal speech at
+    // typical mic gain; clamp to the slider's own 50-2000 span so the fill
+    // bar and the threshold mark line up on the same visual scale.
+    const pct = Math.min(100, (level / 2000) * 100);
+    document.getElementById('vadMeterFill').style.width = pct + '%';
+  } catch (e) {
+    // Leave the last-known fill showing rather than flashing to empty
+    // on a single dropped poll.
+  }
+}
+function updateVadMeterMark() {
+  const thresh = parseFloat(document.getElementById('energyThresh').value);
+  const pct = Math.min(100, (thresh / 2000) * 100);
+  document.getElementById('vadMeterMark').style.left = pct + '%';
+}
+
+// -- Controller (8BitDo Zero 2, gamepad mode) ------------------------------------
+const CTRL_BTN_LABELS = {
+  A: 'A button', B: 'B button', X: 'X button', Y: 'Y button',
+  L: 'L shoulder', R: 'R shoulder',
+  SELECT: 'SELECT', START: 'START (hold 1s)',
+  DPAD_UP: 'D-pad Up', DPAD_DOWN: 'D-pad Down',
+  DPAD_LEFT: 'D-pad Left', DPAD_RIGHT: 'D-pad Right',
+};
+const CTRL_ACTIONS = [
+  'ptt', 'cancel', 'repeat', 'volume_up', 'volume_down',
+  'mode_switch', 'nav_toggle', 'nav_up', 'nav_down',
+  'nav_left', 'nav_right', 'toggle_menu', 'cycle_face',
+  'mode_select', 'unassigned',
+];
+const CTRL_DEFAULT_MAPPING = {
+  A: 'ptt', B: 'cancel', X: 'repeat', Y: 'unassigned',
+  L: 'volume_down', R: 'volume_up',
+  SELECT: 'nav_toggle', START: 'mode_switch',
+  DPAD_UP: 'nav_up', DPAD_DOWN: 'nav_down',
+  DPAD_LEFT: 'nav_left', DPAD_RIGHT: 'nav_right',
+};
+
+let ctrlCurrentMapping = {};
+let ctrlPollInterval = null;
+let ctrlEventsLastPoll = 0;
+
+function startControllerPolling() {
+  loadControllerStatus();
+  ctrlPollInterval = setInterval(() => {
+    loadControllerStatus();
+    pollControllerEvents();
+  }, 500);
+}
+function stopControllerPolling() {
+  if (ctrlPollInterval) { clearInterval(ctrlPollInterval); ctrlPollInterval = null; }
+}
+
+let ctrlMappingBuilt = false;
+
+async function loadControllerStatus() {
+  try {
+    const r = await fetch(`${BASE_FACE}/controller/state`).then(r => r.json());
+
+    const dot  = document.getElementById('ctrlStatusDot');
+    const text = document.getElementById('ctrlStatusText');
+    const dpad = document.getElementById('ctrlDpadMode');
+
+    dot.classList.toggle('connected', !!r.connected);
+    text.textContent = r.connected ? 'Connected' : 'Not connected';
+    dpad.textContent = r.connected ? (r.dpad_mode || 'detecting...') : '--';
+
+    const newMapping = r.mapping || {};
+    const changed = JSON.stringify(newMapping) !== JSON.stringify(ctrlCurrentMapping);
+    ctrlCurrentMapping = newMapping;
+
+    // This poll runs every 500ms. Rebuilding the grid's innerHTML destroys
+    // and recreates every <select>, which forces the browser to close an
+    // open dropdown out from under the user before they can pick an option
+    // -- that was the actual cause of "the mapping dropdown closes before I
+    // can select anything" (not event bubbling into the accordion header --
+    // section-body isn't even a descendant of section-header's button, so
+    // clicks there never reached it). Only rebuild on first load or when the
+    // mapping actually changed underneath us, and never while a select in
+    // the grid has focus (mid-interaction).
+    const grid = document.getElementById('ctrlMappingGrid');
+    const userInteracting = grid && grid.contains(document.activeElement);
+    if ((!ctrlMappingBuilt || changed) && !userInteracting) {
+      buildCtrlMappingGrid();
+      ctrlMappingBuilt = true;
+    }
+  } catch (e) {}
+}
+
+function buildCtrlMappingGrid() {
+  const grid = document.getElementById('ctrlMappingGrid');
+  if (!grid) return;
+  const mapping = ctrlCurrentMapping;
+
+  grid.innerHTML = Object.entries(CTRL_BTN_LABELS).map(([btn, label]) => `
+    <div class="ctrl-map-row">
+      <label>${label}</label>
+      <select id="ctrlmap-${btn}">
+        ${CTRL_ACTIONS.map(a => `<option value="${a}" ${mapping[btn] === a ? 'selected' : ''}>${a}</option>`).join('')}
+      </select>
+    </div>
+  `).join('');
+}
+
+async function saveControllerMapping() {
+  const mapping = {};
+  for (const btn of Object.keys(CTRL_BTN_LABELS)) {
+    const el = document.getElementById(`ctrlmap-${btn}`);
+    if (el) mapping[btn] = el.value;
+  }
+  await fetch(`${BASE_FACE}/controller/mapping`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({mapping}),
+  });
+  showToast('Controller mapping saved');
+}
+
+async function resetControllerMapping() {
+  await fetch(`${BASE_FACE}/controller/mapping`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({mapping: CTRL_DEFAULT_MAPPING}),
+  });
+  ctrlCurrentMapping = {...CTRL_DEFAULT_MAPPING};
+  buildCtrlMappingGrid();
+  showToast('Controller mapping reset to defaults');
+}
+
+async function pollControllerEvents() {
+  try {
+    const r = await fetch(`${BASE_FACE}/controller/events?since=${ctrlEventsLastPoll}`).then(r => r.json());
+    const events = (r.events || []).filter(e => e.type === 'button');
+    if (!events.length) return;
+
+    const last = events[events.length - 1];
+    ctrlEventsLastPoll = Math.max(ctrlEventsLastPoll, last.ts || 0);
+
+    const display = document.getElementById('ctrlTestDisplay');
+    if (display) {
+      display.textContent = `${last.action}  (${last.event_type})`;
+      display.style.color = 'var(--accent3)';
+      setTimeout(() => {
+        display.textContent = '--';
+        display.style.color = 'var(--dim)';
+      }, 1500);
+    }
+  } catch (e) {}
+}
+
+// -- Players (Flipper Zero Master Controller + P2-P4 USB) -----------------------
+
+const FLIPPER_BTN_LABELS = {
+  ok: 'OK (centre)', back: 'Back', up: 'Up', down: 'Down', left: 'Left', right: 'Right',
+};
+const FLIPPER_ACTIONS = [
+  'ptt', 'cancel', 'repeat', 'nav_up', 'nav_down', 'nav_left', 'nav_right',
+  'nav_confirm', 'nav_toggle', 'toggle_menu', 'cycle_face', 'mode_select',
+  'volume_up', 'volume_down', 'unassigned',
+];
+const PLAYER_LABELS_JS = { p2: 'Player 2', p3: 'Player 3', p4: 'Player 4' };
+
+let flipperCurrentMapping = {};
+let flipperMappingBuilt = false;
+let playersPollInterval = null;
+let playerEventsLastPoll = 0;
+
+function startPlayersPolling() {
+  document.getElementById('flipperWsUrl').textContent = `ws://${location.hostname}:8767`;
+  loadAllControllerStatus();
+  buildPlayerSlots();
+  playersPollInterval = setInterval(() => {
+    loadAllControllerStatus();
+    pollPlayerEvents();
+  }, 500);
+}
+function stopPlayersPolling() {
+  if (playersPollInterval) { clearInterval(playersPollInterval); playersPollInterval = null; }
+}
+
+async function loadAllControllerStatus() {
+  try {
+    const r = await fetch(`${BASE_FACE}/controllers/all`).then(r => r.json());
+
+    const flipper = r.master_flipper || {};
+    const fDot = document.getElementById('flipperStatusDot');
+    const fText = document.getElementById('flipperStatusText');
+    const fName = document.getElementById('flipperDeviceName');
+    if (fDot) fDot.classList.toggle('connected', !!flipper.connected);
+    if (fText) fText.textContent = flipper.connected ? 'Connected' : 'Not connected';
+    if (fName) fName.textContent = flipper.device_name || '';
+
+    const bt = r.master_bt || {};
+    const bDot = document.getElementById('masterBtStatusDot');
+    const bText = document.getElementById('masterBtStatusText');
+    if (bDot) bDot.classList.toggle('connected', !!bt.connected);
+    if (bText) bText.textContent = bt.connected ? 'Connected' : 'Not connected';
+
+    const players = r.players || {};
+    for (const [pid, state] of Object.entries(players)) {
+      const dot = document.getElementById(`${pid}Dot`);
+      const status = document.getElementById(`${pid}Status`);
+      const path = document.getElementById(`${pid}Path`);
+      if (dot) dot.classList.toggle('connected', !!state.connected);
+      if (status) status.textContent = state.connected ? `Connected: ${state.device_path}` : 'Not connected';
+      if (path && state.device_path && !path.value) path.value = state.device_path;
+    }
+
+    // Same fix as buildCtrlMappingGrid()/loadControllerStatus() above:
+    // only rebuild the grid on first load or when the mapping actually
+    // changed, and never while a select in it has focus -- rebuilding
+    // unconditionally on every poll tears down an open dropdown mid-pick.
+    if (flipper.mapping) {
+      const changed = JSON.stringify(flipper.mapping) !== JSON.stringify(flipperCurrentMapping);
+      flipperCurrentMapping = flipper.mapping;
+      const grid = document.getElementById('flipperMappingGrid');
+      const userInteracting = grid && grid.contains(document.activeElement);
+      if ((!flipperMappingBuilt || changed) && !userInteracting) {
+        buildFlipperMappingGrid();
+        flipperMappingBuilt = true;
+      }
+    }
+  } catch (e) {}
+}
+
+function buildFlipperMappingGrid() {
+  const grid = document.getElementById('flipperMappingGrid');
+  if (!grid) return;
+  grid.innerHTML = Object.entries(FLIPPER_BTN_LABELS).map(([btn, label]) => `
+    <div class="ctrl-map-row">
+      <label>${label}</label>
+      <select id="fmap-${btn}">
+        ${FLIPPER_ACTIONS.map(a => `<option value="${a}" ${flipperCurrentMapping[btn] === a ? 'selected' : ''}>${a}</option>`).join('')}
+      </select>
+    </div>
+  `).join('');
+}
+
+async function saveFlipperMapping() {
+  const mapping = {};
+  for (const btn of Object.keys(FLIPPER_BTN_LABELS)) {
+    const el = document.getElementById(`fmap-${btn}`);
+    if (el) mapping[btn] = el.value;
+  }
+  await fetch(`${BASE_FACE}/flipper/mapping`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({mapping}),
+  });
+  showToast('Flipper mapping saved');
+}
+
+function buildPlayerSlots() {
+  const container = document.getElementById('playerSlots');
+  if (!container) return;
+  container.innerHTML = ['p2', 'p3', 'p4'].map(pid => `
+    <div class="ctrl-map-row" style="flex-direction:column;align-items:stretch;gap:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div><span class="fo-status-dot" id="${pid}Dot"></span><strong>${pid.toUpperCase()}</strong></div>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:0.72rem" onclick="removeController('${pid}')">Remove</button>
+      </div>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="${pid}Path" placeholder="/dev/input/event3" class="input-full">
+        <button class="btn btn-ghost" onclick="assignController('${pid}')">Assign</button>
+      </div>
+      <div id="${pid}Status" style="font-size:0.72rem;color:var(--dim)"></div>
+    </div>
+  `).join('');
+}
+
+async function scanUSBControllers() {
+  const r = await fetch(`${BASE_FACE}/controllers/scan-usb`).then(r => r.json());
+  const container = document.getElementById('usbScanResults');
+  if (!container) return;
+
+  const devices = r.devices || [];
+  if (!devices.length) {
+    container.style.display = 'block';
+    container.innerHTML = `<div style="font-size:0.75rem;color:var(--dim);padding:6px 0">No USB gamepads found</div>`;
+    return;
+  }
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div style="font-size:0.72rem;color:var(--dim);margin-bottom:6px">Found ${devices.length} device(s) -- click to assign</div>
+    ${devices.map(d => `
+      <div class="pairing-box" style="cursor:pointer;margin-bottom:4px" onclick="useDetectedDevice('${d.path}')">
+        <strong style="font-size:0.8rem">${d.name}</strong><br>
+        <span style="font-family:monospace;font-size:0.7rem">${d.path}</span>
+      </div>
+    `).join('')}
+  `;
+}
+
+function useDetectedDevice(path) {
+  for (const pid of ['p2', 'p3', 'p4']) {
+    const input = document.getElementById(`${pid}Path`);
+    if (input && !input.value) {
+      input.value = path;
+      assignController(pid);
+      return;
+    }
+  }
+  const pid = prompt('All slots have paths. Assign to which player?\nEnter: p2, p3, or p4');
+  if (pid && ['p2', 'p3', 'p4'].includes(pid)) {
+    const input = document.getElementById(`${pid}Path`);
+    if (input) { input.value = path; assignController(pid); }
+  }
+}
+
+async function assignController(pid) {
+  const input = document.getElementById(`${pid}Path`);
+  const path = input?.value.trim();
+  if (!path) return;
+
+  const r = await fetch(`${BASE_FACE}/controllers/assign`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({player_id: pid, device_path: path}),
+  }).then(r => r.json());
+
+  const status = document.getElementById(`${pid}Status`);
+  if (status) status.textContent = r.result || 'Assigned';
+  showToast(r.result || 'Controller assigned');
+  setTimeout(loadAllControllerStatus, 1000);
+}
+
+async function removeController(pid) {
+  await fetch(`${BASE_FACE}/controllers/remove`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({player_id: pid}),
+  });
+  const input = document.getElementById(`${pid}Path`);
+  if (input) input.value = '';
+  showToast(`${PLAYER_LABELS_JS[pid] || pid.toUpperCase()} removed`);
+  setTimeout(loadAllControllerStatus, 500);
+}
+
+async function pollPlayerEvents() {
+  try {
+    const r = await fetch(`${BASE_FACE}/controller/events?since=${playerEventsLastPoll}`).then(r => r.json());
+    const events = (r.events || []).filter(e => e.type === 'player_button');
+    if (!events.length) return;
+
+    const last = events[events.length - 1];
+    playerEventsLastPoll = Math.max(playerEventsLastPoll, last.ts || 0);
+
+    const display = document.getElementById('playerTestDisplay');
+    if (display) {
+      display.innerHTML = `<span style="color:${last.color || 'var(--accent3)'};font-weight:700">${last.label || 'Player'}</span> <span style="color:var(--dim)">-- ${last.action} (${last.event_type})</span>`;
+      setTimeout(() => { display.textContent = '--'; }, 2000);
+    }
+  } catch (e) {}
+}
+
+// -- Dials ---------------------------------------------------------------------
+const DIAL_DEFS = [
+  {key:'warmth',            label:'Warmth'},
+  {key:'sarcasm',           label:'Sarcasm'},
+  {key:'optimism',          label:'Optimism'},
+  {key:'honesty',           label:'Honesty'},
+  {key:'spice',             label:'Spice'},
+  {key:'humor',             label:'Humor'},
+  {key:'formality',         label:'Formality'},
+  {key:'verbosity',         label:'Verbosity'},
+  {key:'anxiety',           label:'Anxiety'},
+  {key:'earnest_literalism',label:'Literalism'},
+  {key:'curiosity',         label:'Curiosity'},
+  {key:'vanity',            label:'Vanity'},
+];
+
+function buildDials(values = {}) {
+  const grid = document.getElementById('dialGrid');
+  grid.innerHTML = '';
+  DIAL_DEFS.forEach(({key, label}) => {
+    const val = values[key] ?? 50;
+    const row = document.createElement('div');
+    row.className = 'range-row row';
+    row.dataset.dial = key;
+    row.innerHTML = `
+      <div class="range-header">
+        <strong>${label}</strong>
+        <span class="range-val">${val}</span>
+      </div>
+      <input type="range" min="0" max="100" step="5" value="${val}">
+    `;
+    row.querySelector('input').addEventListener('input', function() {
+      row.querySelector('.range-val').textContent = this.value;
+    });
+    grid.appendChild(row);
+  });
+}
+buildDials();
+
+function collectDials() {
+  const dials = {};
+  document.querySelectorAll('#dialGrid .range-row').forEach(row => {
+    const key = row.dataset.dial;
+    if (key) dials[key] = parseInt(row.querySelector('input[type="range"]').value);
+  });
+  dials.probability_narration = document.getElementById('probabilityNarration').checked;
+  dials.wellness_checkins = document.getElementById('wellnessCheckins').value;
+  return dials;
+}
+
+function loadDials(dials) {
+  if (!dials) return;
+  buildDials(dials);
+  if (dials.probability_narration !== undefined)
+    document.getElementById('probabilityNarration').checked = !!dials.probability_narration;
+  if (dials.wellness_checkins !== undefined)
+    document.getElementById('wellnessCheckins').value = dials.wellness_checkins;
+}
+
+// -- Agent Mode ------------------------------------------------------------------
+// Full operational profiles -- persona, tool permissions, focus. Hardcoded
+// labels matching face/server.py's AGENT_MODES (not derived from each
+// profile YAML's own "name" field -- q2_default and q2_guest both set
+// name: "Q2", which used to make "Q2" appear twice in this dropdown).
+function populateAgentModes(modes, activeProfile) {
+  const sel = document.getElementById('agentMode');
+  sel.innerHTML = '';
+  (modes || []).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.value; opt.textContent = m.label;
+    if (m.value === activeProfile) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+async function applyAgentMode() {
+  const sel = document.getElementById('agentMode');
+  const label = sel.options[sel.selectedIndex]?.textContent || sel.value;
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({active_profile: sel.value}),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      await loadSettings();
+      showToast(`Switched to ${label}`);
+      if (d.restart_required) showRestartBanner();
+    } else {
+      showToast(d.error || 'Failed');
+    }
+  } catch(e) { showToast('Error'); }
+}
+
+// -- Personality tone presets ----------------------------------------------------
+// Two disjoint groups sourced from the server (builtin_presets/user_presets
+// in the GET /settings response, split from PRESETS via
+// personality/presets.py's BUILTIN_PRESET_NAMES): the 17 read-only
+// CaptCanadaMan presets, and anything the user has saved himself. Both are
+// tone-only (12 dials) -- "Apply to dials" never talks to the server, it
+// just previews the preset's stored values (in PRESET_VALUES, from
+// preset_values in the same GET response) on the sliders so they can be
+// reviewed/tweaked before the main Save button actually persists them.
+let PRESET_VALUES = {};
+
+const BUILTIN_PRESET_DESCRIPTIONS = {
+  'Cynic':       { ref: 'K-2SO',       desc: 'Brutally blunt, sarcastic enforcer. Helps anyway.' },
+  'Caretaker':   { ref: 'Baymax',      desc: 'Gentle, nurturing, endlessly patient.' },
+  'Wisecrack':   { ref: 'TARS',        desc: 'Mission-focused with irreverent dry wit.' },
+  'AnxiousNurse':{ ref: null,          desc: 'High-strung, over-caring, catastrophises mildly.' },
+  'Worrier':     { ref: 'C-3PO',       desc: 'Protocol-obsessed, perpetually alarmed.' },
+  'Laconic':     { ref: 'R2-D2',       desc: 'Minimal words, maximum meaning.' },
+  'Overseer':    { ref: 'HAL 9000',    desc: 'Calm, deliberate, unsettlingly certain.' },
+  'Melancholic': { ref: 'Marvin',      desc: 'Profound depression, helps anyway.' },
+  'Questioner':  { ref: 'Plato',       desc: 'Socratic method -- answers with better questions.' },
+  'Bard':        { ref: 'Shakespeare', desc: 'Poetic, dramatic, finds the human story in everything.' },
+  'Polymath':    { ref: 'Da Vinci',    desc: 'Connects everything to everything.' },
+  'Rigorist':    { ref: 'Newton',      desc: 'Precise, methodical, allergic to imprecision.' },
+  'Cosmologist': { ref: 'Hawking',     desc: 'Enormous ideas delivered with lightness.' },
+  'Empiricist':  { ref: 'Marie Curie', desc: 'Evidence-driven, quietly relentless.' },
+  'Tinkerer':    { ref: 'Feynman',     desc: 'Infectious enthusiasm for how things work.' },
+  'Stargazer':   { ref: 'Carl Sagan',  desc: 'Cosmic perspective, reverent wonder.' },
+  'Taxonomist':  { ref: 'Aristotle',   desc: 'Categorises everything, finds the system in chaos.' },
+};
+
+function populateBuiltinPresets(names, values) {
+  PRESET_VALUES = Object.assign(PRESET_VALUES, values || {});
+  const sel = document.getElementById('builtinPresetPicker');
+  sel.innerHTML = '';
+  (names || []).forEach(name => {
+    const opt = document.createElement('option');
+    const ref = BUILTIN_PRESET_DESCRIPTIONS[name]?.ref;
+    opt.value = name; opt.textContent = ref ? `${name} -- ${ref}` : name;
+    sel.appendChild(opt);
+  });
+  updateBuiltinPresetDesc();
+}
+
+function updateBuiltinPresetDesc() {
+  const name = document.getElementById('builtinPresetPicker').value;
+  const entry = BUILTIN_PRESET_DESCRIPTIONS[name];
+  const el = document.getElementById('builtinPresetDesc');
+  if (!entry) { el.innerHTML = ''; return; }
+  const refHtml = entry.ref ? `<span class="preset-ref">${entry.ref}</span>` : '';
+  el.innerHTML = `${refHtml}<span class="preset-desc-text">${entry.desc}</span>`;
+}
+
+function applyBuiltinPreset() {
+  const name = document.getElementById('builtinPresetPicker').value;
+  if (!name || !PRESET_VALUES[name]) return;
+  loadDials(PRESET_VALUES[name]);
+  showToast(`Previewing "${name}" -- hit Save to keep it`);
+}
+
+function populateUserPresets(names, values) {
+  PRESET_VALUES = Object.assign(PRESET_VALUES, values || {});
+  const sel = document.getElementById('userPresetPicker');
+  const hint = document.getElementById('userPresetEmptyHint');
+  const applyBtn = document.getElementById('userPresetApplyBtn');
+  const deleteBtn = document.getElementById('userPresetDeleteBtn');
+  sel.innerHTML = '';
+
+  if (!names || !names.length) {
+    sel.disabled = true;
+    const opt = document.createElement('option');
+    opt.textContent = '-- no saved presets yet --';
+    sel.appendChild(opt);
+    hint.style.display = '';
+    applyBtn.disabled = true;
+    deleteBtn.disabled = true;
+    return;
+  }
+
+  sel.disabled = false;
+  hint.style.display = 'none';
+  applyBtn.disabled = false;
+  deleteBtn.disabled = false;
+  names.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+function applyUserPreset() {
+  const name = document.getElementById('userPresetPicker').value;
+  if (!name || !PRESET_VALUES[name]) return;
+  loadDials(PRESET_VALUES[name]);
+  showToast(`Previewing "${name}" -- hit Save to keep it`);
+}
+
+async function deleteUserPreset() {
+  const sel = document.getElementById('userPresetPicker');
+  const name = sel.value;
+  if (!name) return;
+  if (!confirm(`Delete preset "${name}"? This can't be undone.`)) return;
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({delete_preset: name}),
+    });
+    const d = await r.json();
+    if (d.ok) { await loadSettings(); showToast(`Preset "${name}" deleted`); }
+    else showToast(d.error || 'Failed');
+  } catch(e) { showToast('Error'); }
+}
+
+async function saveAsPreset() {
+  const name = document.getElementById('presetName').value.trim();
+  if (!name) { showToast('Enter a name first'); return; }
+  try {
+    await fetch(`${BASE_FACE}/settings`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ dials: collectDials(), save_preset_as: name }),
+    });
+    document.getElementById('presetName').value = '';
+    await loadSettings();
+    showToast(`Preset "${name}" saved to My Presets`);
+  } catch(e) { showToast('Save failed'); }
+}
+
+async function resetProfileDials() {
+  try {
+    await fetch(`${BASE_FACE}/settings`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ reset_profile_dials: true }),
+    });
+    await loadSettings();
+    showToast('Reset to profile defaults');
+  } catch(e) { showToast('Reset failed'); }
+}
+
+// -- LLM notes -----------------------------------------------------------------
+const LLM_NOTES = {
+  claude: 'ANTHROPIC_API_KEY - best quality, full tool support.',
+  openai: 'OPENAI_API_KEY - strong tool compliance.',
+  grok:   'XAI_API_KEY - fast, good for general chat.',
+  glm:    'ZAI_API_KEY - 1M context, coding-focused.',
+  gemini: 'GEMINI_API_KEY - free at aistudio.google.com, no credit card.',
+  ollama: 'No API key - local models via Ollama.',
+};
+
+function updateLlmNote() {
+  const backend = document.getElementById('llmBackend').value;
+  const note = document.getElementById('llmBackendNote');
+  const row = document.getElementById('llmNoteRow');
+  note.textContent = LLM_NOTES[backend] || '';
+  row.style.display = LLM_NOTES[backend] ? '' : 'none';
+}
+
+// -- Vernacular Generator --------------------------------------------------------
+// Speech-style layer, independent of the personality dials above -- see
+// personality/vernacular.py. Nicknames/enders are held here as in-memory
+// arrays (_vnNicknames/_vnEnders) and rendered as removable chips; the
+// trait toggle IDs mirror TRAIT_LIBRARY's keys in personality/vernacular.py
+// exactly, so VN_TRAIT_IDS and that dict must be kept in sync by hand.
+const VN_TRAIT_IDS = [
+  'swears_a_lot', 'swears_occasionally', 'uses_name_often', 'very_direct',
+  'self_deprecating', 'dry_humor', 'excitable', 'conspiracy_adjacent',
+  'overly_dramatic', 'uses_rhetorical_questions',
+];
+let _vnNicknames = [];
+let _vnEnders = [];
+
+function loadVernacularSettings(v) {
+  v = v || {};
+  document.getElementById('vernacularEnabled').checked = !!v.enabled;
+  document.getElementById('vernStyle').value = v.speech_style || 'neutral';
+
+  _vnNicknames = Array.isArray(v.nicknames) ? [...v.nicknames] : [];
+  _vnEnders = Array.isArray(v.sentence_enders) ? [...v.sentence_enders] : [];
+  renderVernacularChips();
+
+  document.getElementById('vnNicknameFreq').value = Math.round((v.nickname_frequency ?? 0.3) * 100);
+  document.getElementById('vnEnderFreq').value = Math.round((v.ender_frequency ?? 0.2) * 100);
+  document.getElementById('vnSlangLevel').value = v.slang_level ?? 0;
+  document.getElementById('vnProfLevel').value = v.profanity_level ?? 0;
+  updateVernacularFreqLabels();
+
+  const traits = Array.isArray(v.traits) ? v.traits : [];
+  VN_TRAIT_IDS.forEach(t => {
+    const el = document.getElementById('vnTrait_' + t);
+    if (el) el.checked = traits.includes(t);
+  });
+
+  document.getElementById('vnCustom').value = v.custom_instructions || '';
+
+  updateVernacularEnabledState();
+}
+
+function collectVernacularSettings() {
+  return {
+    enabled: document.getElementById('vernacularEnabled').checked,
+    speech_style: document.getElementById('vernStyle').value,
+    nicknames: [..._vnNicknames],
+    nickname_frequency: parseInt(document.getElementById('vnNicknameFreq').value, 10) / 100,
+    sentence_enders: [..._vnEnders],
+    ender_frequency: parseInt(document.getElementById('vnEnderFreq').value, 10) / 100,
+    slang_level: parseInt(document.getElementById('vnSlangLevel').value, 10),
+    profanity_level: parseInt(document.getElementById('vnProfLevel').value, 10),
+    traits: VN_TRAIT_IDS.filter(t => document.getElementById('vnTrait_' + t)?.checked),
+    custom_instructions: document.getElementById('vnCustom').value,
+  };
+}
+
+function renderVernacularChips() {
+  const nickBox = document.getElementById('vnNicknameChips');
+  nickBox.innerHTML = _vnNicknames.map((n, i) => `
+    <span class="vn-chip">${escapeVn(n)}<span class="vn-chip-remove" onclick="removeVernacularChip('nickname',${i})">&times;</span></span>
+  `).join('') || '<span style="color:var(--dim);font-size:0.8rem">None yet</span>';
+
+  const enderBox = document.getElementById('vnEnderChips');
+  enderBox.innerHTML = _vnEnders.map((n, i) => `
+    <span class="vn-chip">${escapeVn(n)}<span class="vn-chip-remove" onclick="removeVernacularChip('ender',${i})">&times;</span></span>
+  `).join('') || '<span style="color:var(--dim);font-size:0.8rem">None yet</span>';
+}
+
+function escapeVn(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function addVernacularChip(kind) {
+  const inputId = kind === 'nickname' ? 'vnNicknameInput' : 'vnEnderInput';
+  const input = document.getElementById(inputId);
+  const val = input.value.trim();
+  if (!val) return;
+  const list = kind === 'nickname' ? _vnNicknames : _vnEnders;
+  if (!list.includes(val)) list.push(val);
+  input.value = '';
+  renderVernacularChips();
+  document.getElementById('sec-vernacular').classList.add('dirty');
+}
+
+function removeVernacularChip(kind, index) {
+  const list = kind === 'nickname' ? _vnNicknames : _vnEnders;
+  list.splice(index, 1);
+  renderVernacularChips();
+  document.getElementById('sec-vernacular').classList.add('dirty');
+}
+
+function updateVernacularFreqLabels() {
+  const freqWord = (pct) => pct < 20 ? 'Rarely' : pct < 40 ? 'Occasionally' : pct < 70 ? 'Often' : 'Very frequently';
+  document.getElementById('vnFreqLabel').textContent =
+    freqWord(parseInt(document.getElementById('vnNicknameFreq').value, 10));
+  document.getElementById('vnEnderFreqLabel').textContent =
+    freqWord(parseInt(document.getElementById('vnEnderFreq').value, 10));
+
+  const slangWords = ['None', 'Light', 'Moderate', 'Heavy'];
+  document.getElementById('vnSlangLabel').textContent =
+    slangWords[parseInt(document.getElementById('vnSlangLevel').value, 10)] || 'None';
+
+  const profWords = ['None', 'Mild (damn/crap)', 'Moderate (shit)', 'Strong (fuck+)'];
+  document.getElementById('vnProfLabel').textContent =
+    profWords[parseInt(document.getElementById('vnProfLevel').value, 10)] || 'None';
+}
+
+function handleSwearsTraitToggle(justToggledId, otherId) {
+  const justToggled = document.getElementById(justToggledId);
+  const other = document.getElementById(otherId);
+  if (justToggled.checked) other.checked = false;
+}
+
+function updateVernacularEnabledState() {
+  const enabled = document.getElementById('vernacularEnabled').checked;
+  document.getElementById('vernacularBody').classList.toggle('vn-off', !enabled);
+  document.getElementById('vnDisabledNote').style.display = enabled ? 'none' : '';
+}
+
+async function previewVernacular() {
+  const btn = document.getElementById('vnPreviewBtn');
+  const box = document.getElementById('vnPreviewBox');
+  btn.disabled = true;
+  btn.textContent = 'GENERATING PREVIEW...';
+  box.style.display = 'block';
+  box.textContent = 'Asking Q2 "What\'s 2 + 2?"...';
+  try {
+    const r = await fetch(`${BASE_FACE}/vernacular`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(collectVernacularSettings()),
+    });
+    const d = await r.json();
+    box.textContent = d.ok ? d.preview : ('Error: ' + d.error);
+  } catch (e) {
+    box.textContent = 'Could not reach face server.';
+  }
+  btn.disabled = false;
+  btn.textContent = 'PREVIEW VERNACULAR';
+}
+
+async function saveVernacular() {
+  try {
+    const r = await fetch(`${BASE_FACE}/vernacular`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(collectVernacularSettings()),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      showToast('Vernacular saved');
+      const box = document.getElementById('vnPreviewBox');
+      box.style.display = 'block';
+      box.textContent = d.preview;
+      document.getElementById('sec-vernacular').classList.remove('dirty');
+    } else {
+      showToast('Save failed: ' + (d.error || 'unknown'));
+    }
+  } catch (e) { showToast('Could not reach face server'); }
+}
+
+// -- Watchalong (Live + Replay, all sports) -------------------------------------
+function loadWatchalongSettings(s) {
+  document.getElementById('waMode').value = s.watchalong_mode || 'live';
+  document.getElementById('waSport').value = s.watchalong_sport || 'f1';
+  updateWatchalongSport();
+
+  const wa = s.watchalong || {};
+  const freq = (wa.live && wa.live.frequency) || 'normal';
+  document.getElementById('waF1Frequency').value = freq;
+  document.getElementById('waUFCFrequency').value = freq;
+  document.getElementById('waNBAFrequency').value = freq;
+  document.getElementById('waNHLFrequency').value = freq;
+  document.getElementById('waNFLFrequency').value = freq;
+  document.getElementById('waMLBFrequency').value = freq;
+
+  const f1 = (wa.sports && wa.sports.f1) || {};
+  document.getElementById('waF1LiveEnabled').checked = f1.enabled !== false;
+  document.getElementById('waF1Drivers').value = (f1.favourite_drivers || []).join(', ');
+
+  const ufc = (wa.sports && wa.sports.ufc) || {};
+  document.getElementById('waUFCLiveEnabled').checked = ufc.enabled !== false;
+  document.getElementById('waUFCFighters').value = (ufc.favourite_fighters || []).join(', ');
+
+  const nba = (wa.sports && wa.sports.nba) || {};
+  document.getElementById('waNBALiveEnabled').checked = nba.enabled !== false;
+  document.getElementById('waNBATeams').value = (nba.favourite_teams || []).join(', ');
+  document.getElementById('waNBAKeyStatus').textContent = s.balldontlie_key_set
+    ? 'Key configured' : 'No key set';
+
+  const nhl = (wa.sports && wa.sports.nhl) || {};
+  document.getElementById('waNHLLiveEnabled').checked = nhl.enabled !== false;
+  document.getElementById('waNHLTeams').value = (nhl.favourite_teams || []).join(', ');
+
+  const nfl = (wa.sports && wa.sports.nfl) || {};
+  document.getElementById('waNFLLiveEnabled').checked = nfl.enabled !== false;
+  document.getElementById('waNFLTeams').value = (nfl.favourite_teams || []).join(', ');
+
+  const mlb = (wa.sports && wa.sports.mlb) || {};
+  document.getElementById('waMLBLiveEnabled').checked = mlb.enabled !== false;
+  document.getElementById('waMLBTeams').value = (mlb.favourite_teams || []).join(', ');
+
+  const fd = (wa.sports && wa.sports.formula_drift) || {};
+  document.getElementById('waFDLiveEnabled').checked = fd.enabled !== false;
+  document.getElementById('waFDDrivers').value = (fd.favourite_drivers || []).join(', ');
+
+  const xg = (wa.sports && wa.sports.xgames) || {};
+  document.getElementById('waXGEnabled').checked = xg.enabled !== false;
+  document.getElementById('waXGDiscipline').value = xg.discipline || 'all';
+  document.getElementById('waXGAthletes').value = (xg.favourite_athletes || []).join(', ');
+
+  applyF1Status(s.f1_status);
+  applyUfcStatus(s.ufc_status);
+  applyNbaStatus(s.nba_status);
+  applyNhlStatus(s.nhl_status);
+  applyNflStatus(s.nfl_status);
+  applyMlbStatus(s.mlb_status);
+
+  const replay = wa.replay || {};
+  if (replay.active_event) {
+    const posPart = replay.current_position ? ` — Lap ${replay.current_position} reached` : '';
+    document.getElementById('waF1ReplayInfo').textContent = `${replay.active_event_name}${posPart}`;
+    document.getElementById('waF1ReplayActiveRow').style.display = '';
+    document.getElementById('waF1ReplayNoneRow').style.display = 'none';
+
+    const fightPart = replay.active_fight_name ? ` — ${replay.active_fight_name}` : '';
+    const roundPart = replay.current_position ? ` (Round ${replay.current_position} reached)` : '';
+    document.getElementById('waUFCReplayInfo').textContent = `${replay.active_event_name}${fightPart}${roundPart}`;
+    document.getElementById('waUFCReplayActiveRow').style.display = '';
+    document.getElementById('waUFCReplayNoneRow').style.display = 'none';
+  } else {
+    document.getElementById('waF1ReplayActiveRow').style.display = 'none';
+    document.getElementById('waF1ReplayNoneRow').style.display = '';
+    document.getElementById('waUFCReplayActiveRow').style.display = 'none';
+    document.getElementById('waUFCReplayNoneRow').style.display = '';
+  }
+
+  const popup = s.popup_video || {};
+  document.getElementById('popupActiveTitle').textContent = popup.active_title
+    ? popup.active_title : 'No title loaded';
+  document.getElementById('popupAutoAdvance').checked = !!popup.auto_advance;
+  refreshPopupState();
+}
+
+function collectWatchalongSettings() {
+  return {
+    live: {
+      frequency: document.getElementById('waF1Frequency').value,
+    },
+    sports: {
+      f1: {
+        enabled: document.getElementById('waF1LiveEnabled').checked,
+        favourite_drivers: document.getElementById('waF1Drivers').value
+          .split(',').map(s => s.trim()).filter(Boolean),
+      },
+      ufc: {
+        enabled: document.getElementById('waUFCLiveEnabled').checked,
+        favourite_fighters: document.getElementById('waUFCFighters').value
+          .split(',').map(s => s.trim()).filter(Boolean),
+      },
+      nba: {
+        enabled: document.getElementById('waNBALiveEnabled').checked,
+        favourite_teams: document.getElementById('waNBATeams').value
+          .split(',').map(s => s.trim()).filter(Boolean),
+      },
+      nhl: {
+        enabled: document.getElementById('waNHLLiveEnabled').checked,
+        favourite_teams: document.getElementById('waNHLTeams').value
+          .split(',').map(s => s.trim()).filter(Boolean),
+      },
+      nfl: {
+        enabled: document.getElementById('waNFLLiveEnabled').checked,
+        favourite_teams: document.getElementById('waNFLTeams').value
+          .split(',').map(s => s.trim()).filter(Boolean),
+      },
+      mlb: {
+        enabled: document.getElementById('waMLBLiveEnabled').checked,
+        favourite_teams: document.getElementById('waMLBTeams').value
+          .split(',').map(s => s.trim()).filter(Boolean),
+      },
+      formula_drift: {
+        enabled: document.getElementById('waFDLiveEnabled').checked,
+        favourite_drivers: document.getElementById('waFDDrivers').value
+          .split(',').map(s => s.trim()).filter(Boolean),
+      },
+      xgames: {
+        enabled: document.getElementById('waXGEnabled').checked,
+        discipline: document.getElementById('waXGDiscipline').value,
+        favourite_athletes: document.getElementById('waXGAthletes').value
+          .split(',').map(s => s.trim()).filter(Boolean),
+      },
+    },
+  };
+}
+
+// -- Shipping ------------------------------------------------------------------
+function loadShipping(s) {
+  if (!s) return;
+  const services = Array.isArray(s.preferred_services) ? s.preferred_services : [];
+  document.getElementById('shippingServices').value = services.join('\n');
+  document.getElementById('shippingFallback').value = s.fallback || 'cheapest';
+  document.getElementById('shippingConfirmAbove').value = s.confirm_above_cad ?? 25;
+  document.getElementById('shipName').value    = s.name        || '';
+  document.getElementById('shipLine1').value   = s.line1       || '';
+  document.getElementById('shipLine2').value   = s.line2       || '';
+  document.getElementById('shipCity').value    = s.city        || '';
+  document.getElementById('shipProvince').value= s.province    || '';
+  document.getElementById('shipPostal').value  = s.postal_code || '';
+  document.getElementById('shipPhone').value   = s.phone       || '';
+}
+
+function collectShipping() {
+  return {
+    preferred_services: document.getElementById('shippingServices').value,
+    fallback:           document.getElementById('shippingFallback').value,
+    confirm_above_cad:  parseFloat(document.getElementById('shippingConfirmAbove').value) || 25,
+    name:         document.getElementById('shipName').value.trim(),
+    line1:        document.getElementById('shipLine1').value.trim(),
+    line2:        document.getElementById('shipLine2').value.trim(),
+    city:         document.getElementById('shipCity').value.trim(),
+    province:     document.getElementById('shipProvince').value,
+    postal_code:  document.getElementById('shipPostal').value.trim().toUpperCase(),
+    phone:        document.getElementById('shipPhone').value.trim(),
+  };
+}
+
+// -- Gift cards ----------------------------------------------------------------
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadLedger() {
+  try {
+    const r = await fetch(`${BASE_FACE}/ledger`);
+    const data = await r.json();
+    const typeLabels = { site_gc:'Site GC', account_balance:'Acct Balance', visa_mc:'Visa/MC' };
+    const gcList = document.getElementById('gcList');
+    if (!data.cards || !data.cards.length) {
+      gcList.innerHTML = '<p style="color:var(--dim);font-size:0.8rem;padding:4px 0">No active gift cards.</p>';
+    } else {
+      gcList.innerHTML = data.cards.map(c => `
+        <div class="gc-card">
+          <div class="gc-card-top">
+            <div>
+              <div class="gc-card-label">${esc(c.label)} <span class="gc-card-type">${typeLabels[c.payment_type]||c.payment_type}</span></div>
+              <div class="gc-card-meta">${c.card_code_masked||'No code'} - ${c.added_at?.slice(0,10)||''}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="gc-card-balance">$${c.remaining?.toFixed(2)} / $${c.original_amount?.toFixed(2)}</span>
+              <button class="btn btn-danger" style="padding:6px 10px;font-size:0.75rem" onclick="deactivateCard(${c.id},'${esc(c.label)}')">x</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+    document.getElementById('gcTotal').textContent = `$${(data.total_balance||0).toFixed(2)}`;
+
+    const gcHistory = document.getElementById('gcHistory');
+    if (!data.history || !data.history.length) {
+      gcHistory.innerHTML = '<p style="color:var(--dim);font-size:0.8rem">No purchase history yet.</p>';
+    } else {
+      gcHistory.innerHTML = `<table>
+        <tr><th>Item</th><th>Merchant</th><th>$</th><th>Status</th></tr>
+        ${data.history.map(p=>`<tr>
+          <td>${esc(p.item_description)}</td>
+          <td>${esc(p.merchant)}</td>
+          <td>$${p.amount?.toFixed(2)}</td>
+          <td class="status-${p.status}">${p.status?.replace('_',' ')}</td>
+        </tr>`).join('')}
+      </table>`;
+    }
+  } catch(e) {
+    document.getElementById('gcList').innerHTML = '<p style="color:var(--danger);font-size:0.8rem">Could not load ledger.</p>';
+  }
+}
+
+async function addGiftCard() {
+  const label = document.getElementById('gcLabel').value.trim();
+  const amount = parseFloat(document.getElementById('gcAmount').value);
+  const code = document.getElementById('gcCode').value.trim();
+  const paymentType = document.getElementById('gcPaymentType').value;
+  if (!label) { showToast('Enter a label'); return; }
+  if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
+  try {
+    const r = await fetch(`${BASE_FACE}/ledger`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({cmd:'add_card', label, amount, card_code:code, payment_type:paymentType}),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      showToast('Card added');
+      ['gcLabel','gcAmount','gcCode'].forEach(id => document.getElementById(id).value='');
+      loadLedger();
+    } else showToast(d.error||'Failed');
+  } catch(e) { showToast('Error'); }
+}
+
+async function deactivateCard(id, label) {
+  if (!confirm(`Remove "${label}"?`)) return;
+  try {
+    const r = await fetch(`${BASE_FACE}/ledger`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({cmd:'deactivate_card', card_id:id}),
+    });
+    const d = await r.json();
+    if (d.ok) { showToast('Card removed'); loadLedger(); }
+    else showToast(d.error||'Failed');
+  } catch(e) { showToast('Error'); }
+}
+
+// -- System ----------------------------------------------------------------------
+function clearLocalData() {
+  if (confirm('Clear all local settings?')) localStorage.clear();
+}
+
+// -- Load settings -------------------------------------------------------------
+async function loadSettings() {
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`);
+    const s = await r.json();
+
+    // Wake word
+    document.getElementById('wakeWordEnabled').checked = !!s.wake_word_enabled;
+    const sens = parseFloat(s.wake_word_sensitivity ?? 0.5);
+    document.getElementById('sensitivity').value = sens;
+    document.getElementById('sensitivityVal').textContent = sens.toFixed(2);
+    updateSensitivityVisibility();
+
+    // VAD energy threshold
+    const energyThresh = parseInt(s.vad_energy_thresh ?? 300);
+    document.getElementById('energyThresh').value = energyThresh;
+    document.getElementById('energyThreshVal').textContent = energyThresh;
+    updateVadMeterMark();
+
+    // Mic (sourced live from sounddevice, falls back to config.yaml's
+    // voice.input_device_options if sounddevice isn't available)
+    const micSel = document.getElementById('inputDevice');
+    micSel.innerHTML = '';
+    (s.available_input_devices||[]).forEach(d => {
+      const el = document.createElement('option');
+      el.value = d.name; el.textContent = d.label || d.name;
+      if (d.name === s.input_device) el.selected = true;
+      micSel.appendChild(el);
+    });
+
+    // Output device
+    const outSel = document.getElementById('outputDevice');
+    outSel.innerHTML = '';
+    const sinks = s.available_sinks || [];
+    if (!sinks.includes('pipewire')) sinks.unshift('pipewire');
+    sinks.forEach(sink => {
+      const opt = document.createElement('option');
+      opt.value = sink;
+      opt.textContent = sink.replace('bluez_output.','').replace(/_/g,':').replace('.1','');
+      if (sink === s.output_device) opt.selected = true;
+      outSel.appendChild(opt);
+    });
+
+    // TTS voice
+    const voiceSel = document.getElementById('ttsVoice');
+    if (s.tts_voice) voiceSel.value = s.tts_voice;
+
+    // LLM
+    const llmSel = document.getElementById('llmBackend');
+    if (s.llm_backend) { llmSel.value = s.llm_backend; updateLlmNote(); }
+
+    // Agent Mode
+    populateAgentModes(s.agent_modes, s.active_profile);
+
+    // Face style
+    if (s.face_style !== undefined) {
+      document.getElementById('faceStyle').value = String(s.face_style);
+    }
+
+    // Game Show difficulty
+    const gsDiff = s.game_show_difficulty ?? 3;
+    document.getElementById('gsdifficulty').value = gsDiff;
+    document.getElementById('gsdiff-label').textContent = gsDiff;
+
+    // Dials
+    loadDials(s.dials);
+
+    // Personality tone presets
+    populateBuiltinPresets(s.builtin_presets, s.preset_values);
+    populateUserPresets(s.user_presets, s.preset_values);
+
+    // Shipping
+    loadShipping(s.shipping);
+
+    // Race engineer
+    document.getElementById('reFrequency').value = s.re_frequency || 'normal';
+    const reAlerts = s.re_alerts || {};
+    document.getElementById('reAlertFuel').checked      = reAlerts.fuel      !== false;
+    document.getElementById('reAlertTyreTemp').checked  = reAlerts.tyre_temp !== false;
+    document.getElementById('reAlertTyreWear').checked  = reAlerts.tyre_wear !== false;
+    document.getElementById('reAlertFlags').checked     = reAlerts.flags     !== false;
+    document.getElementById('reAlertPitWindow').checked = reAlerts.pit_window !== false;
+    document.getElementById('reAlertGap').checked       = reAlerts.gap       !== false;
+    document.getElementById('reAlertDamage').checked    = reAlerts.damage    !== false;
+
+    // First Officer
+    document.getElementById('foFrequency').value = s.fo_frequency || 'normal';
+    document.getElementById('foAnnouncePhase').checked = s.fo_announce_phase !== false;
+    document.getElementById('foMinAltAGL').value = s.fo_min_alt_agl ?? 50;
+    document.getElementById('foAircraftType').value = s.fo_aircraft_type || 'auto';
+    const foAlerts = s.fo_alerts || {};
+    document.getElementById('foAlertAltitude').checked  = foAlerts.altitude  !== false;
+    document.getElementById('foAlertGear').checked      = foAlerts.gear      !== false;
+    document.getElementById('foAlertFuel').checked      = foAlerts.fuel      !== false;
+    document.getElementById('foAlertBank').checked      = foAlerts.bank      !== false;
+    document.getElementById('foAlertAutopilot').checked = foAlerts.autopilot !== false;
+    document.getElementById('foAlertEngine').checked    = foAlerts.engine    !== false;
+    document.getElementById('foAlertWaypoint').checked  = foAlerts.waypoint  !== false;
+    document.getElementById('foAlertApproach').checked  = foAlerts.approach  !== false;
+    document.getElementById('foAlertWeather').checked   = foAlerts.weather   !== false;
+    if (s.msfs_active) {
+      document.getElementById('foAircraftDetected').textContent = s.msfs_aircraft || 'Unknown aircraft';
+      document.getElementById('foAircraftDetectedRow').style.display = '';
+      document.getElementById('foAircraftSelectRow').style.display = 'none';
+    }
+
+    // Watchalong (Live + Replay, all sports)
+    loadWatchalongSettings(s);
+
+    // ED (Elite Dangerous Ship Computer)
+    document.getElementById('edEnabled').checked = s.ed_enabled !== false;
+    document.getElementById('edInaraEnabled').checked = s.ed_inara_enabled !== false;
+    document.getElementById('edInaraStatusText').textContent =
+      s.ed_inara_key_configured ? 'Key configured' : 'Key not configured';
+    applyEdStatus(s.ed_status);
+
+    // Vernacular
+    loadVernacularSettings(s.vernacular);
+
+    snapshotBaseline();
+    updateRestartBadges();
+    clearAllDirty();
+  } catch(e) { console.error('loadSettings:', e); }
+}
+
+// -- ED: connection status dot + CMDR info (mirrors applyUfcStatus/applyF1Status) --
+function applyEdStatus(status) {
+  status = status || {active: false};
+  const dot = document.getElementById('edStatusDot');
+  const text = document.getElementById('edStatusText');
+  if (status.active) {
+    dot.classList.add('connected');
+    text.textContent = `CONNECTED — ${status.commander || 'CMDR'} in ${status.system || 'unknown system'}`;
+    document.getElementById('edCmdrInfo').textContent =
+      `${status.commander || '—'} — ${status.ship || 'unknown ship'} — ${status.system || 'unknown system'}`;
+    document.getElementById('edCmdrRow').style.display = '';
+  } else {
+    dot.classList.remove('connected');
+    text.textContent = 'ED BRIDGE OFFLINE';
+    document.getElementById('edCmdrRow').style.display = 'none';
+  }
+}
+
+// -- Face style: Apply Now (immediate, independent of Save) --------------------
+async function applyFaceStyle() {
+  const style = document.getElementById('faceStyle').value;
+  try {
+    await fetch(`${BASE_FACE}/settings`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({face_style: parseInt(style)}),
+    });
+    showToast('Face style applied');
+  } catch(e) { showToast('Could not reach face server'); }
+}
+
+// -- Save all --------------------------------------------------------------------
+async function saveAll(opts = {}) {
+  const changes = {
+    wake_word_enabled:     document.getElementById('wakeWordEnabled').checked,
+    wake_word_sensitivity: parseFloat(document.getElementById('sensitivity').value),
+    vad_energy_thresh:     parseInt(document.getElementById('energyThresh').value),
+    input_device:          document.getElementById('inputDevice').value,
+    llm_backend:           document.getElementById('llmBackend').value,
+    output_device:         document.getElementById('outputDevice').value,
+    tts_voice:             document.getElementById('ttsVoice').value,
+    face_style:            parseInt(document.getElementById('faceStyle').value),
+    game_show_difficulty:  parseInt(document.getElementById('gsdifficulty').value),
+    dials:                 collectDials(),
+    shipping:              collectShipping(),
+    re_frequency:          document.getElementById('reFrequency').value,
+    re_alerts: {
+      fuel:        document.getElementById('reAlertFuel').checked,
+      tyre_temp:   document.getElementById('reAlertTyreTemp').checked,
+      tyre_wear:   document.getElementById('reAlertTyreWear').checked,
+      flags:       document.getElementById('reAlertFlags').checked,
+      pit_window:  document.getElementById('reAlertPitWindow').checked,
+      gap:         document.getElementById('reAlertGap').checked,
+      damage:      document.getElementById('reAlertDamage').checked,
+    },
+    fo_frequency:       document.getElementById('foFrequency').value,
+    fo_announce_phase:  document.getElementById('foAnnouncePhase').checked,
+    fo_min_alt_agl:     parseInt(document.getElementById('foMinAltAGL').value) || 50,
+    fo_aircraft_type:   document.getElementById('foAircraftType').value,
+    fo_alerts: {
+      altitude:  document.getElementById('foAlertAltitude').checked,
+      gear:      document.getElementById('foAlertGear').checked,
+      fuel:      document.getElementById('foAlertFuel').checked,
+      bank:      document.getElementById('foAlertBank').checked,
+      autopilot: document.getElementById('foAlertAutopilot').checked,
+      engine:    document.getElementById('foAlertEngine').checked,
+      waypoint:  document.getElementById('foAlertWaypoint').checked,
+      approach:  document.getElementById('foAlertApproach').checked,
+      weather:   document.getElementById('foAlertWeather').checked,
+    },
+    watchalong_mode:   document.getElementById('waMode').value,
+    watchalong_sport:  document.getElementById('waSport').value,
+    watchalong:        collectWatchalongSettings(),
+    ed_enabled:         document.getElementById('edEnabled').checked,
+    ed_inara_enabled:   document.getElementById('edInaraEnabled').checked,
+  };
+
+  try {
+    const r = await fetch(`${BASE_FACE}/settings`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(changes),
+    });
+    const d = await r.json();
+
+    if (d.ok) {
+      snapshotBaseline();
+      updateRestartBadges();
+      clearAllDirty();
+      if (d.restart_required) showRestartBanner();
+      showToast(opts.reason || 'Saved OK');
+    } else if (!opts.silent) {
+      showToast(d.error || 'Save failed');
+    }
+  } catch(e) {
+    if (!opts.silent) showToast('Save failed');
+  }
+}
+
+// -- Boot ----------------------------------------------------------------------
+loadSettings();
+loadLedger();
+</script>
+</body>
+</html>

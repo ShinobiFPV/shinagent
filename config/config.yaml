@@ -1,0 +1,817 @@
+acc_setups:
+  acc_setups_folder: null
+  companion_host: 192.168.1.101
+  companion_port: 8092
+  enabled: true
+agent:
+  active_profile: profiles/default.yaml
+  call_name: Q2
+  name: IMQ2
+beavis_butthead:
+  enabled: true
+circuit_builder:
+  enabled: true
+controller:
+  auto_detect: true
+  device_path: ''
+  dpad_threshold: 0.5
+  enabled: true
+  hold_ms: 1000
+  mapping:
+    A: ptt
+    B: cancel
+    DPAD_DOWN: nav_down
+    DPAD_LEFT: nav_left
+    DPAD_RIGHT: nav_right
+    DPAD_UP: nav_up
+    L: volume_down
+    R: volume_up
+    SELECT: nav_toggle
+    START: mode_switch
+    X: repeat
+    Y: unassigned
+controllers:
+  p2:
+    device_path: ''
+  p3:
+    device_path: ''
+  p4:
+    device_path: ''
+ed:
+  cmdr_name: ''
+  home_system: ''
+  inara_api_key: ''
+  inara_enabled: true
+face:
+  port: 8765
+  style: 1
+first_officer:
+  aircraft_type: auto
+  alerts:
+    altitude: true
+    approach: true
+    autopilot: true
+    bank: true
+    engine: true
+    fuel: true
+    gear: true
+    waypoint: true
+    weather: true
+  announce_phase: true
+  frequency: normal
+  min_alt_agl: 50
+flipper:
+  enabled: true
+  mapping:
+    back: cancel
+    down: nav_down
+    left: nav_left
+    ok: ptt
+    right: nav_right
+    up: nav_up
+  port: 8767
+game_companion:
+  enabled: true
+  spoiler_default: ask
+game_show:
+  difficulty: 3
+hardware:
+  platform: dev_machine
+integrations:
+  ac_telemetry:
+    enabled: true
+    port: 8001
+  ed_telemetry:
+    enabled: true
+    port: 8003
+  forza_telemetry:
+    enabled: true
+    openworld:
+      drift_commentary: true
+      enabled: true
+      location_announcements: true
+      min_drift_score: nice
+      speed_milestones: true
+    port: 8000
+    race:
+      announce_final_lap: true
+      announce_overtakes: true
+      announce_position_lost: true
+      announce_start: true
+      fuel_warning_threshold: 0.1
+      position_update_interval: 30
+      suppress_gear_alerts: true
+      suppress_tyre_alerts: false
+  msfs_telemetry:
+    bridge_host: 192.168.1.101
+    bridge_port: 8091
+    enabled: true
+    port: 8002
+  shinlink_os:
+    bridge_host: 127.0.0.1
+    bridge_port: 8095
+    bridge_timeout_s: 3
+    config_path: /home/your-pi/config.json
+    telemetry_timeout_s: 12
+llm:
+  backend: gemini
+  claude:
+    max_tokens: 1024
+    model: claude-sonnet-4-6
+    temperature: 0.7
+  gemini:
+    max_tokens: 1024
+    model: gemini-2.5-flash
+    temperature: 0.7
+  glm:
+    max_tokens: 1024
+    model: glm-5.2
+    temperature: 0.7
+  grok:
+    max_tokens: 1024
+    model: grok-3-mini
+    temperature: 0.7
+  ollama:
+    host: http://localhost:11434
+    max_tokens: 1024
+    model: llama3
+  openai:
+    max_tokens: 1024
+    model: gpt-4o
+    temperature: 0.7
+logging:
+  console: true
+  file: logs/imq2.log
+  level: INFO
+masterchef:
+  default_cuisine: let Q2 decide
+  enabled: true
+  gordon_intensity: 8
+  youtube_techniques: true
+memory:
+  backend: chroma
+  chroma:
+    collection: imq2_memory
+    persist_directory: memory/db/chroma
+  episodic_cap: 5000
+  fact_extraction:
+    enabled: true
+    model: claude-haiku-4-5-20251001
+  prune_check_interval: 50
+  retrieval_top_k: 5
+  short_term_turns: 20
+  sqlite:
+    path: memory/db/imq2.db
+  stale_after_days: 180
+popup_video:
+  active_title: null
+  active_title_slug: null
+  auto_advance: false
+  enabled: true
+purchasing:
+  body_control:
+    enabled: true
+    interface: ros2
+    permission: none
+  capture_image:
+    enabled: true
+    permission: granted
+  google_calendar:
+    enabled: true
+    permission: granted
+  google_docs:
+    enabled: true
+    permission: granted
+  google_drive:
+    enabled: true
+    permission: granted
+  google_sheets:
+    enabled: true
+    permission: granted
+  payment_method: gift_card_only
+  per_purchase_cap: 50.0
+  read_email:
+    enabled: true
+    permission: granted
+  require_confirmation: true
+  send_email:
+    enabled: true
+    permission: granted
+  shipping:
+    address:
+      city: ''
+      country: ''
+      line1: ''
+      line2: ''
+      name: ''
+      phone: ''
+      postal_code: ''
+      province: ''
+    confirm_above_cad: 25.0
+    fallback: cheapest
+    preferred_services:
+    - Canada Post Xpresspost
+    - Canada Post
+  youtube_music:
+    enabled: true
+    permission: granted
+race_engineer:
+  alerts:
+    damage: true
+    flags: true
+    fuel: true
+    gap: true
+    pit_window: true
+    tyre_temp: true
+    tyre_wear: true
+  frequency: normal
+radio_dj:
+  announce_delay_s: 1.5
+  default_mood: journey
+  default_style: back_announce
+  default_track_count: 5
+  enabled: true
+  mid_song_delay_s: 20
+  pre_announce_delay_s: 2.0
+tools:
+  ac_race_engineer_status:
+    enabled: true
+    permission: granted
+  analyze_photo:
+    enabled: true
+    permission: granted
+  answer_question:
+    enabled: true
+    permission: granted
+  apply_acc_setup:
+    enabled: true
+    permission: granted
+  bb_session_summary:
+    enabled: true
+    permission: granted
+  bb_user_comment:
+    enabled: true
+    permission: granted
+  bb_video_end:
+    enabled: true
+    permission: granted
+  body_control:
+    enabled: true
+    permission: none
+  build_shopping_list:
+    enabled: true
+    permission: granted
+  capture_image:
+    enabled: true
+    permission: granted
+  check_circuit_compatibility:
+    enabled: true
+    permission: granted
+  clear_popup_session:
+    enabled: true
+    permission: granted
+  control_aircraft:
+    enabled: true
+    permission: none
+  create_project_from_json:
+    enabled: true
+    permission: granted
+  define_word:
+    enabled: true
+    permission: granted
+  delete_acc_setup:
+    enabled: true
+    permission: granted
+  design_circuit:
+    enabled: true
+    permission: granted
+  dj_skip:
+    enabled: true
+    permission: granted
+  dj_status:
+    enabled: true
+    permission: granted
+  dj_stop:
+    enabled: true
+    permission: granted
+  dj_track_info:
+    enabled: true
+    permission: granted
+  ed_alert:
+    enabled: true
+    permission: granted
+  emergency_squawk:
+    enabled: true
+    permission: none
+  end_game_session:
+    enabled: true
+    permission: granted
+  engage_autopilot:
+    enabled: true
+    permission: none
+  execute_purchase:
+    enabled: true
+    permission: granted
+  explain_build_steps:
+    enabled: true
+    permission: granted
+  export_personal_map:
+    enabled: true
+    permission: granted
+  f1_race_alert:
+    enabled: true
+    permission: granted
+  find_product:
+    enabled: true
+    permission: granted
+  first_officer_status:
+    enabled: true
+    permission: granted
+  fletcher_critique:
+    enabled: true
+    permission: granted
+  generate_acc_setup:
+    enabled: true
+    permission: granted
+  generate_bb_candidates:
+    enabled: true
+    permission: granted
+  generate_dj_set:
+    enabled: true
+    permission: granted
+  generate_game:
+    enabled: true
+    permission: granted
+  generate_popups:
+    enabled: true
+    permission: granted
+  get_ac_telemetry:
+    enabled: true
+    permission: granted
+  get_bb_replay_list:
+    enabled: true
+    permission: granted
+  get_boss_help:
+    enabled: true
+    permission: granted
+  get_build_advice:
+    enabled: true
+    permission: granted
+  get_circuit_bom:
+    enabled: true
+    permission: granted
+  get_component_detail:
+    enabled: true
+    permission: granted
+  get_current_step:
+    enabled: true
+    permission: granted
+  get_drift_stats:
+    enabled: true
+    permission: granted
+  get_driving_vibe:
+    enabled: true
+    permission: granted
+  get_ed_status:
+    enabled: true
+    permission: granted
+  get_f1_driver:
+    enabled: true
+    permission: granted
+  get_f1_status:
+    enabled: true
+    permission: granted
+  get_fd_round:
+    enabled: true
+    permission: granted
+  get_fd_standings:
+    enabled: true
+    permission: granted
+  get_flight_status:
+    enabled: true
+    permission: granted
+  get_full_recipe:
+    enabled: true
+    permission: granted
+  get_game_info:
+    enabled: true
+    permission: granted
+  get_game_session:
+    enabled: true
+    permission: granted
+  get_game_show_state:
+    enabled: true
+    permission: granted
+  get_groove_info:
+    enabled: true
+    permission: granted
+  get_location_callout_info:
+    enabled: true
+    permission: granted
+  get_midi_status:
+    enabled: true
+    permission: granted
+  get_mlb_replay_inning:
+    enabled: true
+    permission: granted
+  get_mlb_status:
+    enabled: true
+    permission: granted
+  get_nba_replay_period:
+    enabled: true
+    permission: granted
+  get_nba_status:
+    enabled: true
+    permission: granted
+  get_next_popups:
+    enabled: true
+    permission: granted
+  get_nfl_replay_quarter:
+    enabled: true
+    permission: granted
+  get_nfl_status:
+    enabled: true
+    permission: granted
+  get_nhl_replay_period:
+    enabled: true
+    permission: granted
+  get_nhl_status:
+    enabled: true
+    permission: granted
+  get_popup:
+    enabled: true
+    permission: granted
+  get_progression_hint:
+    enabled: true
+    permission: granted
+  get_project_code:
+    enabled: true
+    permission: granted
+  get_race_status:
+    enabled: true
+    permission: granted
+  get_race_telemetry:
+    enabled: true
+    permission: granted
+  get_rc_telemetry:
+    enabled: true
+    permission: granted
+  get_replay_lap:
+    enabled: true
+    permission: granted
+  get_replay_status:
+    enabled: true
+    permission: granted
+  get_shinlink_network_status:
+    enabled: true
+    permission: granted
+  get_technique_video:
+    enabled: true
+    permission: granted
+  get_timing_stats:
+    enabled: true
+    permission: granted
+  get_token_stats:
+    enabled: true
+    permission: granted
+  get_ufc_fight:
+    enabled: true
+    permission: granted
+  get_ufc_round:
+    enabled: true
+    permission: granted
+  get_ufc_scorecard:
+    enabled: true
+    permission: granted
+  get_ufc_status:
+    enabled: true
+    permission: granted
+  get_weather:
+    enabled: true
+    permission: granted
+  get_xgames_results:
+    enabled: true
+    permission: granted
+  git_push:
+    enabled: true
+    permission: granted
+  google_calendar:
+    enabled: true
+    permission: granted
+  google_docs:
+    enabled: true
+    permission: granted
+  google_drive:
+    enabled: true
+    permission: granted
+  google_sheets:
+    enabled: true
+    permission: granted
+  gordon_critique:
+    enabled: true
+    permission: granted
+  import_location_map:
+    enabled: true
+    permission: granted
+  list_acc_setups:
+    enabled: true
+    permission: granted
+  list_circuit_projects:
+    enabled: true
+    permission: granted
+  list_dishes:
+    enabled: true
+    permission: granted
+  list_dj_presets:
+    enabled: true
+    permission: granted
+  list_f1_races:
+    enabled: true
+    permission: granted
+  list_grooves:
+    enabled: true
+    permission: granted
+  list_locations:
+    enabled: true
+    permission: granted
+  list_nearby_landmarks:
+    enabled: true
+    permission: granted
+  list_popup_titles:
+    enabled: true
+    permission: granted
+  list_recent_games:
+    enabled: true
+    permission: granted
+  list_ufc_events:
+    enabled: true
+    permission: granted
+  load_circuit_project:
+    enabled: true
+    permission: granted
+  mark_location:
+    enabled: true
+    permission: granted
+  mlb_game_alert:
+    enabled: true
+    permission: granted
+  nba_game_alert:
+    enabled: true
+    permission: granted
+  next_bb_video:
+    enabled: true
+    permission: granted
+  next_step:
+    enabled: true
+    permission: granted
+  nfl_game_alert:
+    enabled: true
+    permission: granted
+  nhl_game_alert:
+    enabled: true
+    permission: granted
+  open_settings:
+    enabled: true
+    permission: granted
+  plan_meal:
+    enabled: true
+    permission: granted
+  populate_ufc_event:
+    enabled: true
+    permission: granted
+  process_ed_paste:
+    enabled: true
+    permission: granted
+  race_engineer_status:
+    enabled: true
+    permission: granted
+  react_to_bb_video:
+    enabled: true
+    permission: granted
+  read_email:
+    enabled: true
+    permission: granted
+  remove_location:
+    enabled: true
+    permission: granted
+  run_approach_checklist:
+    enabled: true
+    permission: none
+  search_components:
+    enabled: true
+    permission: granted
+  search_galaxy:
+    enabled: true
+    permission: granted
+  search_game_knowledge:
+    enabled: true
+    permission: granted
+  search_ufc_event:
+    enabled: true
+    permission: granted
+  select_bb_videos:
+    enabled: true
+    permission: granted
+  send_email:
+    enabled: true
+    permission: granted
+  set_bb_replay:
+    enabled: true
+    permission: granted
+  set_popup_title:
+    enabled: true
+    permission: granted
+  set_tempo:
+    enabled: true
+    permission: granted
+  shinlink_control:
+    enabled: true
+    permission: none
+  show_on_display:
+    enabled: true
+    permission: granted
+  show_photo:
+    enabled: true
+    permission: granted
+  start_bb_video:
+    enabled: true
+    permission: granted
+  start_dj_preset:
+    enabled: true
+    permission: granted
+  start_f1_replay_session:
+    enabled: true
+    permission: granted
+  start_game:
+    enabled: true
+    permission: granted
+  start_game_session:
+    enabled: true
+    permission: granted
+  start_groove_practice:
+    enabled: true
+    permission: granted
+  start_metronome:
+    enabled: true
+    permission: granted
+  start_recipe:
+    enabled: true
+    permission: granted
+  start_ufc_replay_fight:
+    enabled: true
+    permission: granted
+  stop_metronome:
+    enabled: true
+    permission: granted
+  swap_bb_characters:
+    enabled: true
+    permission: granted
+  switch_agent_mode:
+    enabled: true
+    permission: granted
+  sync_metronome:
+    enabled: true
+    permission: granted
+  toggle_bb_nice_guy:
+    enabled: true
+    permission: granted
+  translate_text:
+    enabled: true
+    permission: granted
+  ufc_prefight_brief:
+    enabled: true
+    permission: granted
+  update_game_session:
+    enabled: true
+    permission: granted
+  use_lifeline:
+    enabled: true
+    permission: granted
+  walk_away_game_show:
+    enabled: true
+    permission: granted
+  web_search:
+    backend: tavily
+    enabled: true
+    permission: granted
+  where_are_we:
+    enabled: true
+    permission: granted
+  youtube_music:
+    enabled: true
+    permission: granted
+voice:
+  deepgram:
+    language: en-US
+    model: nova-3
+  deepgram_tts:
+    model: aura-2-zeus-en
+  elevenlabs:
+    model: eleven_turbo_v2
+    similarity_boost: 0.75
+    stability: 0.5
+    voice_id: ''
+  faster_whisper:
+    device: cpu
+    model_size: small
+  input_device: HD Pro Webcam C920
+  input_device_options:
+  - label: DW20 Desk Mic
+    name: 7Ryms_iRay DW20
+    sample_rate: 48000
+  - label: C920 Webcam Mic
+    name: HD Pro Webcam C920
+    sample_rate: 16000
+  openai_tts:
+    model: tts-1
+    voice: onyx
+  output_device: pipewire
+  piper:
+    model_path: models/piper/en_US-lessac-medium.onnx
+    speaker_id: 0
+  playback_preroll_s: 0.35
+  sample_rate: 16000
+  stt_backend: deepgram
+  talk_button:
+    enabled: true
+  tts_backend: deepgram_tts
+  vad:
+    adaptive: true
+    chunk_ms: 30
+    enabled: true
+    energy_thresh: 300
+    max_duration_s: 30.0
+    min_speech_ms: 300
+    mode: 3
+    pre_roll_ms: 100
+    silence_ms: 900
+  wake_word:
+    access_key: YOUR_PICOVOICE_KEY
+    enabled: false
+    ppn_path: wake_words/Hey-Dude_en_raspberry-pi_v4_0_0.ppn
+    sensitivity: 0.5
+  whisper_cloud:
+    model: whisper-1
+watchalong:
+  active_sport: f1
+  live:
+    frequency: normal
+  mode: live
+  replay:
+    active_event: null
+    active_event_name: ''
+    active_fight_id: null
+    active_fight_name: ''
+    current_position: 0
+  sports:
+    f1:
+      enabled: true
+      favourite_drivers:
+      - VER
+      - NOR
+      - HAM
+    formula_drift:
+      enabled: true
+      favourite_drivers:
+      - James Deane
+      - Fredric Aasbo
+    mlb:
+      enabled: true
+      favourite_teams:
+      - Toronto Blue Jays
+    nba:
+      enabled: true
+      favourite_teams:
+      - Toronto Raptors
+    nfl:
+      enabled: true
+      favourite_teams:
+      - KC
+      - BUF
+    nhl:
+      enabled: true
+      favourite_teams:
+      - TOR
+      - MTL
+    ufc:
+      enabled: true
+      favourite_fighters:
+      - Islam Makhachev
+      - Leon Edwards
+    xgames:
+      discipline: all
+      enabled: true
+      favourite_athletes:
+      - Scotty James
+      - Chloe Kim
+webapp:
+  port: 8766
+whiplash:
+  clone_hero:
+    enabled: false
+    poll_interval_s: 0.5
+    songfile_path: ''
+  default_bpm: 100
+  enabled: true
+  fletcher_intensity: 8
+  midi_port: auto

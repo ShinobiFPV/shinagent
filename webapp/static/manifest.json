@@ -1,0 +1,27 @@
+{
+  "name": "Q2 — IMQ2",
+  "short_name": "Q2",
+  "description": "Q2 voice-first AI companion by ShinTech Electronics",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#00080a",
+  "theme_color": "#00080a",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "permissions": ["camera", "microphone"],
+  "categories": ["utilities", "productivity"],
+  "lang": "en-CA"
+}

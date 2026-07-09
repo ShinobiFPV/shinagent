@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ShinAgent HUD</title>
+  <link rel="stylesheet" href="/static/hud.css">
+  <link rel="stylesheet" href="/static/stats_hub.css">
+</head>
+
+<body>
+
+  <!-- Demo mode banner -- shown via JS when /api/state returns demo_mode:true -->
+  <div id="demo-banner" style="display:none;
+       position:fixed;top:0;left:0;right:0;z-index:10000;
+       background:rgba(255,180,0,0.15);
+       border-bottom:1px solid rgba(255,180,0,0.3);
+       padding:4px 12px;font-size:10px;
+       color:#ffb400;text-align:center;
+       font-family:'Courier New',monospace;letter-spacing:0.1em">
+    DEMO MODE -- [<span id="demo-module-label">race_engineer</span>]
+    -- Spoofed data only -- Q2 not connected
+    &nbsp;&nbsp;
+    <span id="demo-module-switcher" style="cursor:pointer;
+          text-decoration:underline;color:#00c8ff"
+          onclick="showDemoSwitcher()">Switch module</span>
+  </div>
+
+  <!-- ── TOOLBAR ──────────────────────────────────── -->
+  <div id="toolbar">
+    <span id="toolbar-toggle" onclick="toggleToolbar()" title="Hide toolbar">&#8801;</span>
+
+    <canvas id="module-indicator" width="28" height="28"></canvas>
+
+    <span id="q2-label">Q2</span>
+    <span id="module-name">connecting...</span>
+
+    <span id="llm-badge">--</span>
+
+    <div style="flex:1"></div>
+
+    <button class="win-btn" id="ontop-btn"
+            onclick="toggleOnTop()" title="Always on top">&#8853;</button>
+    <button class="win-btn" onclick="toggleBorderless()"
+            title="Borderless mode">&#11036;</button>
+    <button class="win-btn" onclick="pywebview.api.minimize()"
+            title="Minimize">&minus;</button>
+    <button class="win-btn"
+            onclick="pywebview.api.close()" title="Close">&times;</button>
+  </div>
+
+  <!-- ── NAV TABS ──────────────────────────────────── -->
+  <div id="nav">
+    <div class="nav-tab active" onclick="showTab('status')"
+         id="tab-status">Status</div>
+    <div class="nav-tab" onclick="showTab('telemetry')"
+         id="tab-telemetry">Telemetry</div>
+    <div class="nav-tab" onclick="showTab('acc')"
+         id="tab-acc">ACC Setups</div>
+    <div class="nav-tab" onclick="showTab('ed')"
+         id="tab-ed">Ship Computer</div>
+    <div class="nav-tab" onclick="showTab('popup')"
+         id="tab-popup">Pop-Up Video</div>
+    <div class="nav-tab" onclick="showTab('whiplash')"
+         id="tab-whiplash">Whiplash</div>
+    <div class="nav-tab" onclick="showTab('bb')"
+         id="tab-bb">B&amp;B</div>
+    <div class="nav-tab" onclick="showTab('circuit')"
+         id="tab-circuit">Circuit</div>
+    <div class="nav-tab" onclick="showTab('game')"
+         id="tab-game">Game</div>
+    <div class="nav-tab" onclick="showTab('retro')"
+         id="tab-retro">Retro</div>
+    <div class="nav-tab" onclick="showTab('stats')"
+         id="tab-stats">Stats</div>
+    <div class="nav-tab" onclick="showTab('bridges')"
+         id="tab-bridges">Bridges</div>
+    <div class="nav-tab" onclick="showTab('web')"
+         id="tab-web">Web</div>
+  </div>
+
+  <!-- ── CONTENT AREA ──────────────────────────────── -->
+  <div id="content">
+
+    <!-- STATUS TAB -->
+    <div id="pane-status" class="pane">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+        <div class="panel">
+          <div class="panel-title">Q2 Status</div>
+          <div class="data-row">
+            <span class="data-label">State</span>
+            <span class="data-value" id="s-q2state">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Profile</span>
+            <span class="data-value" id="s-profile">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Backend</span>
+            <span class="data-value" id="s-backend">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Connected</span>
+            <span class="data-value" id="s-connected">--</span>
+          </div>
+        </div>
+        <div class="panel" id="status-game-panel">
+          <div class="panel-title">Detected Games</div>
+          <div id="s-games">Scanning...</div>
+        </div>
+        <div class="panel" style="grid-column:1/-1">
+          <div class="panel-title">Watchalong</div>
+          <div id="watchalong-f1">
+            <div class="watchalong-row">
+              <span class="watchalong-dot" id="wa-f1-dot"></span>
+              <span style="width:30px;color:rgba(0,200,255,0.5)">F1</span>
+              <span id="wa-f1-text">--</span>
+            </div>
+          </div>
+          <div id="watchalong-ufc">
+            <div class="watchalong-row">
+              <span class="watchalong-dot" id="wa-ufc-dot"></span>
+              <span style="width:30px;color:rgba(0,200,255,0.5)">UFC</span>
+              <span id="wa-ufc-text">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELEMETRY TAB -->
+    <div id="pane-telemetry" class="pane" style="display:none">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px">
+
+        <!-- Core telemetry -->
+        <div class="panel">
+          <div class="panel-title">Core</div>
+          <div class="data-row">
+            <span class="data-label">Speed</span>
+            <span class="data-value" id="t-speed">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Gear</span>
+            <span class="data-value" id="t-gear">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">RPM</span>
+            <span class="data-value" id="t-rpm">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Fuel</span>
+            <span class="data-value" id="t-fuel">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Position</span>
+            <span class="data-value" id="t-pos">--</span>
+          </div>
+        </div>
+
+        <!-- Lap times -->
+        <div class="panel">
+          <div class="panel-title">Lap Times</div>
+          <div class="data-row">
+            <span class="data-label">Current</span>
+            <span class="data-value" id="t-cur">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Last</span>
+            <span class="data-value" id="t-last">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Best</span>
+            <span class="data-value good" id="t-best">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Flag</span>
+            <span class="data-value" id="t-flag">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Lap</span>
+            <span class="data-value" id="t-lap">--</span>
+          </div>
+        </div>
+
+        <!-- Tyres -->
+        <div class="panel">
+          <div class="panel-title">Tyres</div>
+          <div id="t-compound" style="font-size:11px;color:rgba(0,200,120,0.6);
+               margin-bottom:8px"></div>
+          <div class="tyre-grid" id="t-tyre-grid">
+            <div class="tyre-cell">
+              <div class="tyre-label">FL</div>
+              <div class="tyre-temp" id="t-fl">--</div>
+              <div class="tyre-wear" id="t-fl-wear"></div>
+            </div>
+            <div class="tyre-cell">
+              <div class="tyre-label">FR</div>
+              <div class="tyre-temp" id="t-fr">--</div>
+              <div class="tyre-wear" id="t-fr-wear"></div>
+            </div>
+            <div class="tyre-cell">
+              <div class="tyre-label">RL</div>
+              <div class="tyre-temp" id="t-rl">--</div>
+              <div class="tyre-wear" id="t-rl-wear"></div>
+            </div>
+            <div class="tyre-cell">
+              <div class="tyre-label">RR</div>
+              <div class="tyre-temp" id="t-rr">--</div>
+              <div class="tyre-wear" id="t-rr-wear"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- First Officer / MSFS (populated by modules/first_officer.js) -->
+        <div class="panel" id="fo-panel" style="grid-column:1/-1;display:none">
+          <div class="panel-title">First Officer -- Flight Data</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px" id="fo-fields">
+          </div>
+        </div>
+
+        <!-- Forza open world (populated by modules/forza_openworld.js) -->
+        <div class="panel" id="ow-panel" style="grid-column:1/-1;display:none">
+          <div class="panel-title">Open World</div>
+          <div class="data-row">
+            <span class="data-label">Mode</span>
+            <span class="data-value" id="ow-mode">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Drifting</span>
+            <span class="data-value" id="ow-drifting">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Drift Angle</span>
+            <span class="data-value" id="ow-angle">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Yaw Rate</span>
+            <span class="data-value" id="ow-yaw">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Airborne</span>
+            <span class="data-value" id="ow-air">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Location</span>
+            <span class="data-value" id="ow-location">--</span>
+          </div>
+        </div>
+
+        <!-- FH6 Location Browser (populated by modules/forza_locations.js,
+             shown alongside ow-panel while Forza is live and freeroam) -->
+        <div class="panel" id="fh6-locations-panel" style="grid-column:1/-1;display:none">
+          <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center">
+            <span>FH6 LOCATIONS</span>
+            <div style="display:flex;gap:6px">
+              <button onclick="importLocationMap()"
+                      style="padding:4px 10px;background:rgba(0,220,120,0.1);
+                      border:1px solid rgba(0,220,120,0.3);color:#00dc78;
+                      border-radius:3px;cursor:pointer;font-family:inherit;
+                      font-size:10px">IMPORT</button>
+              <button onclick="exportPersonalMap()"
+                      style="padding:4px 10px;background:rgba(0,220,120,0.1);
+                      border:1px solid rgba(0,220,120,0.3);color:#00dc78;
+                      border-radius:3px;cursor:pointer;font-family:inherit;
+                      font-size:10px">EXPORT</button>
+              <button onclick="loadNearbyLocations()"
+                      style="padding:4px 10px;background:rgba(0,220,120,0.1);
+                      border:1px solid rgba(0,220,120,0.3);color:#00dc78;
+                      border-radius:3px;cursor:pointer;font-family:inherit;
+                      font-size:10px">NEARBY</button>
+            </div>
+          </div>
+
+          <div id="fh6-loc-summary" style="margin-bottom:8px;font-size:9px;color:rgba(0,200,80,0.5)"></div>
+
+          <input id="fh6-loc-search"
+                 placeholder="Search landmarks..."
+                 oninput="searchLocations(this.value)"
+                 style="width:100%;background:rgba(0,8,0,0.8);
+                 border:1px solid rgba(0,220,120,0.15);
+                 color:#c8f0dc;padding:5px 8px;border-radius:3px;
+                 font-family:inherit;font-size:10px;margin-bottom:6px;
+                 box-sizing:border-box">
+
+          <div id="fh6-loc-region-filters" style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap">
+          </div>
+
+          <div id="fh6-loc-list" style="max-height:250px;overflow-y:auto">Loading...</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ACC SETUPS TAB -->
+    <div id="pane-acc" class="pane" style="display:none">
+      <div style="display:grid; grid-template-columns:2fr 1fr; gap:10px">
+        <div class="panel">
+          <div class="panel-title">Saved Setups</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <input id="acc-filter-car" placeholder="Car..."
+                   style="flex:1;background:rgba(0,8,10,0.8);border:1px solid
+                   rgba(0,220,120,0.15);color:#c8f0dc;padding:5px 8px;
+                   border-radius:3px;font-family:inherit;font-size:11px">
+            <input id="acc-filter-track" placeholder="Track..."
+                   style="flex:1;background:rgba(0,8,10,0.8);border:1px solid
+                   rgba(0,220,120,0.15);color:#c8f0dc;padding:5px 8px;
+                   border-radius:3px;font-family:inherit;font-size:11px">
+            <button onclick="loadACCSetups()"
+                    style="padding:5px 12px;background:rgba(0,220,120,0.1);
+                    border:1px solid rgba(0,220,120,0.3);color:#00dc78;
+                    border-radius:3px;cursor:pointer;font-family:inherit;
+                    font-size:11px">Filter</button>
+          </div>
+          <div id="acc-setup-list">Loading setups...</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Generate Setup</div>
+          <input id="gen-car" placeholder="Car (e.g. ferrari_296_gt3)"
+                 style="width:100%;background:rgba(0,8,10,0.8);border:1px solid
+                 rgba(0,220,120,0.15);color:#c8f0dc;padding:5px 8px;
+                 border-radius:3px;font-family:inherit;font-size:11px;
+                 margin-bottom:6px">
+          <input id="gen-track" placeholder="Track (e.g. spa)"
+                 style="width:100%;background:rgba(0,8,10,0.8);border:1px solid
+                 rgba(0,220,120,0.15);color:#c8f0dc;padding:5px 8px;
+                 border-radius:3px;font-family:inherit;font-size:11px;
+                 margin-bottom:6px">
+          <select id="gen-session" style="width:100%;background:rgba(0,8,10,0.8);
+                  border:1px solid rgba(0,220,120,0.15);color:#c8f0dc;
+                  padding:5px 8px;border-radius:3px;font-family:inherit;
+                  font-size:11px;margin-bottom:6px">
+            <option value="sprint">Sprint</option>
+            <option value="endurance">Endurance</option>
+            <option value="qualifying">Qualifying</option>
+          </select>
+          <select id="gen-weather" style="width:100%;background:rgba(0,8,10,0.8);
+                  border:1px solid rgba(0,220,120,0.15);color:#c8f0dc;
+                  padding:5px 8px;border-radius:3px;font-family:inherit;
+                  font-size:11px;margin-bottom:10px">
+            <option value="dry">Dry</option>
+            <option value="wet">Wet</option>
+            <option value="mixed">Mixed</option>
+          </select>
+          <button onclick="generateSetup()" id="gen-btn"
+                  style="width:100%;padding:8px;background:rgba(232,0,42,0.15);
+                  border:1px solid rgba(232,0,42,0.4);color:#ff3c3c;
+                  border-radius:3px;cursor:pointer;font-family:inherit;
+                  font-size:12px;font-weight:700">GENERATE SETUP</button>
+          <div id="gen-status" style="margin-top:8px;font-size:11px;
+               color:rgba(0,200,120,0.6)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHIP COMPUTER TAB (ED) -->
+    <div id="pane-ed" class="pane" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="panel">
+          <div class="panel-title">Ship Status</div>
+          <div class="data-row">
+            <span class="data-label">Commander</span>
+            <span class="data-value" id="ed-cmdr">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Ship</span>
+            <span class="data-value" id="ed-ship">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">System</span>
+            <span class="data-value" id="ed-system">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Location</span>
+            <span class="data-value" id="ed-location">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Fuel</span>
+            <span class="data-value" id="ed-fuel">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Legal</span>
+            <span class="data-value" id="ed-legal">--</span>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Recent Events</div>
+          <div class="ed-event-log" id="ed-events">
+            <div style="color:rgba(0,200,120,0.3);font-size:11px">
+              No events yet...
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="grid-column:1/-1">
+          <div class="panel-title">Paste from Game</div>
+          <textarea class="paste-area" id="ed-paste-input"
+            placeholder="Paste system name, station name, mission text,
+scan results..."></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button onclick="sendEDPaste()"
+                    style="flex:1;padding:7px;background:rgba(255,140,0,0.1);
+                    border:1px solid rgba(255,140,0,0.3);color:#ff8c00;
+                    border-radius:3px;cursor:pointer;font-family:inherit;
+                    font-size:11px">SEND TO Q2</button>
+            <button onclick="openINARA()"
+                    style="flex:1;padding:7px;background:rgba(0,200,255,0.08);
+                    border:1px solid rgba(0,200,255,0.2);color:#00c8ff;
+                    border-radius:3px;cursor:pointer;font-family:inherit;
+                    font-size:11px">OPEN INARA</button>
+            <button onclick="openEDSM()"
+                    style="flex:1;padding:7px;background:rgba(0,200,255,0.08);
+                    border:1px solid rgba(0,200,255,0.2);color:#00c8ff;
+                    border-radius:3px;cursor:pointer;font-family:inherit;
+                    font-size:11px">OPEN EDSM</button>
+          </div>
+          <div id="ed-paste-response" style="margin-top:8px;font-size:11px;
+               color:#c8f0dc;display:none;padding:8px;background:rgba(0,8,10,0.6);
+               border:1px solid rgba(0,220,120,0.1);border-radius:3px"></div>
+        </div>
+        <div class="panel" style="grid-column:1/-1">
+          <div class="panel-title">Galaxy Search</div>
+          <div style="display:flex;gap:8px">
+            <input id="ed-search-input" placeholder="System, station, or commodity..."
+                   style="flex:1;background:rgba(0,8,10,0.8);border:1px solid
+                   rgba(0,220,120,0.15);color:#c8f0dc;padding:6px 8px;
+                   border-radius:3px;font-family:inherit;font-size:12px">
+            <button onclick="searchGalaxy()"
+                    style="padding:6px 16px;background:rgba(0,200,255,0.08);
+                    border:1px solid rgba(0,200,255,0.25);color:#00c8ff;
+                    border-radius:3px;cursor:pointer;font-family:inherit;
+                    font-size:11px">SEARCH</button>
+          </div>
+          <div id="ed-search-results" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POP-UP VIDEO TAB -->
+    <div id="pane-popup" class="pane" style="display:none">
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+        <div class="panel">
+          <div class="panel-title">Now Showing</div>
+          <div id="popup-title" style="font-size:16px;font-weight:700;
+               color:#c8f0dc;margin-bottom:4px">No title loaded</div>
+          <div id="popup-count" style="font-size:11px;
+               color:rgba(0,200,120,0.5);margin-bottom:12px"></div>
+          <div id="popup-bubble-area">
+            <div style="color:rgba(0,200,120,0.2);font-size:11px;
+                 font-style:italic">
+              Pop-ups appear here...
+            </div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <input id="popup-ts" placeholder="7:23"
+                   style="flex:1;background:rgba(0,8,10,0.8);border:1px solid
+                   rgba(0,220,120,0.15);color:#c8f0dc;padding:6px 8px;
+                   border-radius:3px;font-family:inherit;font-size:13px">
+            <button onclick="getPopup()"
+                    style="padding:6px 16px;background:rgba(0,220,120,0.1);
+                    border:1px solid rgba(0,220,120,0.3);color:#00dc78;
+                    border-radius:3px;cursor:pointer;font-family:inherit;
+                    font-size:12px">GET POP-UP</button>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;margin-top:10px;
+                 font-size:11px;color:rgba(0,200,120,0.5)">
+            <input type="checkbox" id="popup-auto-advance" onchange="toggleAutoAdvance()">
+            Auto-advance (fires pop-ups on a timer from playback start)
+          </label>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Coming Up</div>
+          <div id="popup-upcoming" style="font-size:11px">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WHIPLASH TAB -->
+    <div id="pane-whiplash" class="pane" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="panel">
+          <div class="panel-title">Metronome</div>
+          <div id="wh-bpm" style="font-size:32px;font-weight:700;color:#c8f0dc">--</div>
+          <div id="wh-groove" style="font-size:12px;color:rgba(0,200,120,0.6);margin-top:4px">No groove active</div>
+          <div id="wh-synced" style="font-size:11px;color:rgba(0,200,120,0.5);margin-top:4px">--</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">MIDI Kit</div>
+          <div id="wh-midi-status" style="font-size:13px;color:#c8f0dc">--</div>
+          <div id="wh-recent-hits" style="font-size:11px;margin-top:8px;color:rgba(0,200,120,0.7)">--</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Timing Stats</div>
+          <div id="wh-pocket-pct" style="font-size:28px;font-weight:700;color:#c8f0dc">--</div>
+          <div id="wh-timing-detail" style="font-size:11px;margin-top:6px;color:rgba(0,200,120,0.6)">--</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Clone Hero</div>
+          <div id="wh-clone-hero" style="font-size:13px;color:#c8f0dc">No song detected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEAVIS AND BUTTHEAD TAB -->
+    <div id="pane-bb" class="pane" style="display:none;
+         background:#111;padding:0;overflow:hidden">
+      <!-- Built by initBB() -->
+    </div>
+
+    <!-- CIRCUIT BUILDER TAB -->
+    <div id="pane-circuit" class="pane" style="display:none;padding:0">
+      <!-- Built by initCircuitBuilder() -->
+    </div>
+
+    <!-- GAME COMPANION TAB -->
+    <div id="pane-game" class="pane" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="panel">
+          <div class="panel-title">Session</div>
+          <div class="data-row">
+            <span class="data-label">Game</span>
+            <span class="data-value" id="game-name">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Genre</span>
+            <span class="data-value" id="game-genre">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Character / Build</span>
+            <span class="data-value" id="game-char-info">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Current Area</span>
+            <span class="data-value" id="game-area">--</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Stuck On</span>
+            <span class="data-value warn" id="game-stuck-on">--</span>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Progress Notes</div>
+          <div id="game-progress-list" style="font-size:11px;color:rgba(0,200,120,0.7)">
+            No active game session.
+          </div>
+        </div>
+        <div class="panel" style="grid-column:1/-1">
+          <div class="panel-title">Quick Ask Q2</div>
+          <div id="game-quick-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+          <div style="display:flex;gap:8px">
+            <input id="game-question-input" placeholder="Ask Q2 about the game..."
+                   style="flex:1;background:rgba(0,8,10,0.8);border:1px solid
+                   rgba(0,220,120,0.15);color:#c8f0dc;padding:6px 8px;
+                   border-radius:3px;font-family:inherit;font-size:12px"
+                   onkeydown="if(event.key==='Enter')gameAsk()">
+            <button onclick="gameAsk()"
+                    style="padding:6px 16px;background:rgba(0,200,255,0.08);
+                    border:1px solid rgba(0,200,255,0.25);color:#00c8ff;
+                    border-radius:3px;cursor:pointer;font-family:inherit;
+                    font-size:11px">ASK</button>
+          </div>
+          <div id="game-ask-response" style="margin-top:8px;font-size:11px;
+               color:#c8f0dc;display:none;padding:8px;background:rgba(0,8,10,0.6);
+               border:1px solid rgba(0,220,120,0.1);border-radius:3px;white-space:pre-wrap"></div>
+        </div>
+        <div class="panel" style="grid-column:1/-1">
+          <div class="panel-title">Recent Games</div>
+          <div id="game-history-list" style="font-size:11px;color:rgba(0,200,120,0.6)">
+            Loading...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RETRO GAMING TAB -->
+    <div id="pane-retro" class="pane" style="display:none">
+
+      <!-- Platform warning -->
+      <div id="retro-platform-warn" style="display:none" class="platform-warn">
+        Retro gaming requires Windows, RetroArch, and the ViGEmBus driver.
+        <a href="#" onclick="openExternal('https://www.retroarch.com')"
+           style="color:#ffb400">Download RetroArch</a>
+      </div>
+
+      <div id="retro-content">
+        <p class="retro-disclaimer">
+          ShinAgent HUD scans for ROMs but does not distribute them. You are
+          responsible for ROM legality in your jurisdiction.
+        </p>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+
+          <!-- Game browser -->
+          <div class="panel">
+            <div class="panel-title">Game Library</div>
+
+            <!-- System filter -->
+            <div style="display:flex;gap:6px;margin-bottom:10px">
+              <button class="system-btn active" onclick="filterSystem('')"
+                      data-system="">ALL</button>
+              <button class="system-btn" onclick="filterSystem('nes')"
+                      data-system="nes">NES</button>
+              <button class="system-btn" onclick="filterSystem('snes')"
+                      data-system="snes">SNES</button>
+              <button class="system-btn" onclick="filterSystem('genesis')"
+                      data-system="genesis">GENESIS</button>
+            </div>
+
+            <!-- Search -->
+            <input id="retro-search" placeholder="Search games..."
+                   oninput="filterGames()"
+                   style="width:100%;background:rgba(0,8,10,0.8);
+                   border:1px solid rgba(0,220,120,0.15);color:#c8f0dc;
+                   padding:6px 8px;border-radius:3px;font-family:inherit;
+                   font-size:11px;margin-bottom:10px">
+
+            <!-- Game list -->
+            <div id="retro-game-list"
+                 style="max-height:300px;overflow-y:auto">
+              Loading...
+            </div>
+
+            <!-- RetroArch status -->
+            <div style="margin-top:10px;padding-top:10px;
+                 border-top:1px solid rgba(0,220,120,0.08)">
+              <div class="data-row">
+                <span class="data-label">RetroArch</span>
+                <span class="data-value" id="ra-status">--</span>
+              </div>
+              <div class="data-row">
+                <span class="data-label">Now Playing</span>
+                <span class="data-value" id="ra-game">--</span>
+              </div>
+              <div class="data-row">
+                <span class="data-label">Virtual P2</span>
+                <span class="data-value" id="ra-p2">--</span>
+              </div>
+            </div>
+
+            <!-- Controls -->
+            <div style="display:flex;gap:6px;margin-top:10px">
+              <button onclick="sendRA('PAUSE_TOGGLE')"
+                      style="flex:1;padding:6px;background:rgba(0,220,120,0.08);
+                      border:1px solid rgba(0,220,120,0.2);color:#00dc78;
+                      border-radius:3px;cursor:pointer;font-family:inherit;
+                      font-size:11px">PAUSE</button>
+              <button onclick="sendRA('SAVE_STATE')"
+                      style="flex:1;padding:6px;background:rgba(0,200,255,0.08);
+                      border:1px solid rgba(0,200,255,0.2);color:#00c8ff;
+                      border-radius:3px;cursor:pointer;font-family:inherit;
+                      font-size:11px">SAVE</button>
+              <button onclick="sendRA('LOAD_STATE')"
+                      style="flex:1;padding:6px;background:rgba(0,200,255,0.08);
+                      border:1px solid rgba(0,200,255,0.2);color:#00c8ff;
+                      border-radius:3px;cursor:pointer;font-family:inherit;
+                      font-size:11px">LOAD</button>
+              <button onclick="sendRA('RESET')"
+                      style="flex:1;padding:6px;background:rgba(255,60,60,0.08);
+                      border:1px solid rgba(255,60,60,0.2);color:#ff3c3c;
+                      border-radius:3px;cursor:pointer;font-family:inherit;
+                      font-size:11px">RESET</button>
+            </div>
+          </div>
+
+          <!-- AI Control panel -->
+          <div style="display:flex;flex-direction:column;gap:10px">
+
+            <div class="panel">
+              <div class="panel-title">Q2 Player 2 AI</div>
+
+              <!-- AI Mode -->
+              <div class="data-row" style="margin-bottom:8px">
+                <span class="data-label">Mode</span>
+                <select id="ai-mode" onchange="updateAIConfig()"
+                        style="background:rgba(0,8,10,0.8);border:1px solid
+                        rgba(0,220,120,0.15);color:#c8f0dc;padding:3px 6px;
+                        border-radius:3px;font-family:inherit;font-size:11px">
+                  <option value="hybrid">Hybrid</option>
+                  <option value="rules">Rules only</option>
+                  <option value="llm">LLM only</option>
+                  <option value="idle">Idle (watch)</option>
+                </select>
+              </div>
+
+              <!-- Aggression -->
+              <div class="data-row">
+                <span class="data-label">Aggression</span>
+                <span class="data-value" id="aggression-val">50%</span>
+              </div>
+              <input type="range" id="ai-aggression"
+                     min="0" max="100" value="50" step="10"
+                     oninput="updateAggression(this.value)"
+                     style="width:100%;margin:6px 0 10px 0;
+                     accent-color:#ff3c3c">
+
+              <!-- Start/Stop AI -->
+              <button id="ai-toggle-btn" onclick="toggleAI()"
+                      style="width:100%;padding:8px;
+                      background:rgba(0,220,120,0.1);
+                      border:1px solid rgba(0,220,120,0.3);
+                      color:#00dc78;border-radius:3px;cursor:pointer;
+                      font-family:inherit;font-size:12px;font-weight:700">
+                ENABLE Q2 P2
+              </button>
+
+              <!-- AI status -->
+              <div id="ai-status" style="margin-top:8px;font-size:10px;
+                   color:rgba(0,200,120,0.5);text-align:center">
+                Q2 standing by
+              </div>
+            </div>
+
+            <!-- Manual P2 controls -->
+            <div class="panel">
+              <div class="panel-title">Manual P2</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
+                   gap:4px">
+                <div></div>
+                <button class="p2-btn"
+                        onmousedown="p2Hold('UP')"
+                        onmouseup="p2Release('UP')">&#9650;</button>
+                <div></div>
+                <button class="p2-btn"
+                        onmousedown="p2Hold('LEFT')"
+                        onmouseup="p2Release('LEFT')">&#9664;</button>
+                <div></div>
+                <button class="p2-btn"
+                        onmousedown="p2Hold('RIGHT')"
+                        onmouseup="p2Release('RIGHT')">&#9654;</button>
+                <div></div>
+                <button class="p2-btn"
+                        onmousedown="p2Hold('DOWN')"
+                        onmouseup="p2Release('DOWN')">&#9660;</button>
+                <div></div>
+              </div>
+              <div style="display:flex;gap:4px;margin-top:6px;
+                   justify-content:center">
+                <button class="p2-btn p2-action" onclick="p2Press('B')">B</button>
+                <button class="p2-btn p2-action" onclick="p2Press('A')">A</button>
+                <button class="p2-btn p2-action" onclick="p2Press('Y')">Y</button>
+                <button class="p2-btn p2-action" onclick="p2Press('X')">X</button>
+              </div>
+              <div style="display:flex;gap:4px;margin-top:4px;
+                   justify-content:center">
+                <button class="p2-btn p2-small" onclick="p2Press('SELECT')">SEL</button>
+                <button class="p2-btn p2-small" onclick="p2Press('START')">STA</button>
+                <button class="p2-btn p2-small" onclick="p2Press('L')">L</button>
+                <button class="p2-btn p2-small" onclick="p2Press('R')">R</button>
+              </div>
+            </div>
+
+            <!-- Q2 Commentary -->
+            <div class="panel">
+              <div class="panel-title">Q2 Commentary</div>
+              <div id="ai-commentary"
+                   style="font-size:11px;color:#c8f0dc;
+                   min-height:60px;line-height:1.5">
+                Waiting for game...
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS HUB TAB -->
+    <div id="pane-stats" class="pane" style="display:none">
+      <div id="stats-hub-container" class="stats-hub theme-formula-drift" style="height:100%;display:flex;flex-direction:column">
+        <div class="sport-selector" id="stats-sport-selector"><!-- Built by JS --></div>
+        <div class="stats-content" id="stats-content-area">
+          <div style="color:rgba(200,200,200,0.2);font-size:11px;padding:30px 0;text-align:center">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRIDGES TAB -->
+    <div id="pane-bridges" class="pane" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="panel">
+          <div class="panel-title">Bridge Status</div>
+          <div id="bridge-list">Loading...</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Detected Games</div>
+          <div id="bridge-games">Scanning...</div>
+          <div style="margin-top:12px">
+            <button onclick="autoStartBridges()"
+                    style="width:100%;padding:8px;background:rgba(0,220,120,0.08);
+                    border:1px solid rgba(0,220,120,0.25);color:#00dc78;
+                    border-radius:3px;cursor:pointer;font-family:inherit;
+                    font-size:12px">AUTO-START FOR DETECTED GAMES</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEB TAB -->
+    <div id="pane-web" class="pane" style="display:none">
+      <div class="panel">
+        <div class="panel-title">Quick Links</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <button onclick="openExternal('https://inara.cz')"
+                  class="web-link-btn" style="background:rgba(255,140,0,0.08);
+                  border:1px solid rgba(255,140,0,0.2);color:#ff8c00">
+            INARA</button>
+          <button onclick="openExternal('https://www.edsm.net')"
+                  class="web-link-btn" style="background:rgba(0,200,255,0.08);
+                  border:1px solid rgba(0,200,255,0.2);color:#00c8ff">
+            EDSM</button>
+          <button onclick="openExternal('https://openf1.org')"
+                  class="web-link-btn" style="background:rgba(200,60,60,0.08);
+                  border:1px solid rgba(200,60,60,0.2);color:#ff6060">
+            OpenF1</button>
+          <button onclick="openExternal('https://www.ufcstats.com')"
+                  class="web-link-btn" style="background:rgba(200,60,60,0.08);
+                  border:1px solid rgba(200,60,60,0.2);color:#ff6060">
+            UFCStats</button>
+          <button onclick="openQ2WebApp()"
+                  class="web-link-btn" style="background:rgba(0,220,120,0.08);
+                  border:1px solid rgba(0,220,120,0.2);color:#00dc78">
+            Q2 Web App</button>
+          <button onclick="openExternal('https://simracingsetup.com/setups/acc-setups/')"
+                  class="web-link-btn" style="background:rgba(232,0,42,0.08);
+                  border:1px solid rgba(232,0,42,0.2);color:#ff3c3c">
+            ACC Setups</button>
+          <button onclick="openExternal('https://www.racedepartment.com/forums/assetto-corsa-competizione-setups.65/')"
+                  class="web-link-btn" style="background:rgba(232,0,42,0.08);
+                  border:1px solid rgba(232,0,42,0.2);color:#ff3c3c">
+            RD Setups</button>
+        </div>
+        <div class="panel-title" style="margin-top:12px">
+          Open URL in Browser
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="web-url" placeholder="https://..."
+                 style="flex:1;background:rgba(0,8,10,0.8);border:1px solid
+                 rgba(0,220,120,0.15);color:#c8f0dc;padding:6px 8px;
+                 border-radius:3px;font-family:inherit;font-size:12px">
+          <button onclick="openCustomURL()"
+                  style="padding:6px 14px;background:rgba(0,220,120,0.1);
+                  border:1px solid rgba(0,220,120,0.3);color:#00dc78;
+                  border-radius:3px;cursor:pointer;font-family:inherit;
+                  font-size:12px">OPEN</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end #content -->
+
+  <script src="/static/hud.js"></script>
+  <script src="/static/modules/race_engineer.js"></script>
+  <script src="/static/modules/forza_openworld.js"></script>
+  <script src="/static/modules/forza_locations.js"></script>
+  <script src="/static/modules/first_officer.js"></script>
+  <script src="/static/modules/acc_setups.js"></script>
+  <script src="/static/modules/ship_computer.js"></script>
+  <script src="/static/modules/f1_watchalong.js"></script>
+  <script src="/static/modules/ufc_watchalong.js"></script>
+  <script src="/static/modules/popup_video.js"></script>
+  <script src="/static/modules/whiplash.js"></script>
+  <script src="/static/modules/beavis_butthead.js"></script>
+  <script src="/static/modules/circuit_builder.js"></script>
+  <script src="/static/modules/game_companion.js"></script>
+  <script src="/static/modules/retro.js"></script>
+  <script src="/static/modules/stats_hub.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "source": "initial_d_fan_map",
+  "game": "fh6",
+  "version": "1.0",
+  "description": "Initial D inspired locations in FH6 Japan -- example community map, see FORMAT.md",
+  "landmarks": [
+    {
+      "name": "Mt. Haruna (Akina) - Community",
+      "x": -1520.0, "z": 7020.0, "y": 800.0,
+      "region": "Hokubu",
+      "type": "mountain",
+      "tags": ["initial_d", "touge", "drift", "akina"],
+      "notes": "The mountain that inspired Akina in Initial D. Fujiwara Takumi's home course. The real Mt. Haruna in Gunma has the same tight hairpin section.",
+      "callout": "Mt. Haruna. Akina. This is where it all started.",
+      "radius": 400.0
+    },
+    {
+      "name": "Tofu Shop Starting Point",
+      "x": -1480.0, "z": 6800.0, "y": 750.0,
+      "region": "Hokubu",
+      "type": "landmark",
+      "tags": ["initial_d", "tofu", "iconic"],
+      "notes": "The infamous Fujiwara Tofu Shop. Takumi's father Bunta ran it. Every night Takumi would deliver tofu down Mt. Akina, developing his skills without knowing it.",
+      "callout": "The tofu shop. Every delivery run made him faster.",
+      "radius": 100.0
+    },
+    {
+      "name": "Akagi Downhill (Myogi) - Community",
+      "x": -2220.0, "z": 7520.0, "y": 900.0,
+      "region": "Hokubu",
+      "type": "mountain",
+      "tags": ["initial_d", "akagi", "touge"],
+      "notes": "Inspired by Mt. Akagi, another Initial D location. The Akagi RedSuns were Takumi's rivals in the early series.",
+      "callout": "Akagi territory. RedSuns country.",
+      "radius": 350.0
+    }
+  ]
+}

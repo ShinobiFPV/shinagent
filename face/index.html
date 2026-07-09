@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Q2</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    background: #000;
+    overflow: hidden;
+    cursor: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas { display: block; }
+
+  .mode-menu-item {
+    transition: background 0.08s, border-color 0.08s;
+  }
+  .mode-menu-item:hover {
+    background: rgba(0,220,120,0.04) !important;
+  }
+  .mode-menu-item.selected {
+    background: rgba(0,220,120,0.07) !important;
+    border-left-color: #00dc78 !important;
+  }
+
+  /* -- Game Show ("Who Wants a Hundred Bucks?") -- */
+  .gs-answer-btn {
+    background: rgba(0, 30, 100, 0.6);
+    border: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 8px;
+    padding: 16px 20px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(200, 220, 255, 0.9);
+    text-align: left;
+    transition: all 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 64px;
+  }
+  .gs-answer-btn .gs-letter {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFD700;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .gs-answer-btn:hover,
+  .gs-answer-btn.selected {
+    background: rgba(255, 215, 0, 0.12);
+    border-color: rgba(255, 215, 0, 0.7);
+    color: #FFD700;
+  }
+  .gs-answer-btn.selected .gs-letter { background: rgba(255, 215, 0, 0.3); }
+  .gs-answer-btn.locked {
+    border-color: rgba(255, 150, 0, 0.9);
+    background: rgba(255, 150, 0, 0.15);
+    color: #ff9900;
+    animation: gsPulse 0.8s ease-in-out 3;
+  }
+  .gs-answer-btn.correct {
+    border-color: #00dc78;
+    background: rgba(0, 220, 120, 0.15);
+    color: #00dc78;
+  }
+  .gs-answer-btn.wrong {
+    border-color: #ff3c3c;
+    background: rgba(255, 60, 60, 0.15);
+    color: #ff3c3c;
+  }
+  .gs-answer-btn.eliminated { opacity: 0.2; pointer-events: none; }
+  @keyframes gsPulse {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.02); box-shadow: 0 0 20px rgba(255,150,0,0.4); }
+  }
+
+  .gs-lifeline {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,215,0,0.5);
+    background: rgba(255,215,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    color: #FFD700;
+    transition: all 0.15s;
+  }
+  .gs-lifeline:hover { background: rgba(255,215,0,0.18); border-color: #FFD700; }
+  .gs-lifeline.used {
+    opacity: 0.2;
+    pointer-events: none;
+    border-color: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.2);
+  }
+
+  .gs-rung {
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .gs-rung.current {
+    background: rgba(255,215,0,0.1);
+    border-left-color: #FFD700;
+    color: #FFD700;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .gs-rung.won    { color: rgba(0,220,120,0.7); }
+  .gs-rung.safe   { color: rgba(255,180,0,0.8); }
+  .gs-rung.future { color: rgba(255,255,255,0.25); }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="mode-menu-overlay" style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0,0,0,0.85);
+    font-family: 'Courier New', monospace;
+    cursor: none;
+">
+  <div style="
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+          0deg, transparent, transparent 3px,
+          rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px);
+      pointer-events: none;
+  "></div>
+
+  <div id="mode-menu-panel" style="
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 58%;
+      background: rgba(0,6,0,0.97);
+      border-right: 1px solid rgba(0,220,120,0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+  ">
+    <div style="padding: 24px 32px 16px; border-bottom: 1px solid rgba(0,220,120,0.15); flex-shrink: 0;">
+      <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.25em; color: rgba(0,200,80,0.5); margin-bottom: 6px;">Q2 MODE SELECT</div>
+      <div id="mode-menu-current" style="font-size: 11px; color: rgba(0,200,80,0.3); letter-spacing: 0.1em;">Current: --</div>
+    </div>
+
+    <div id="mode-menu-breadcrumb" style="
+        display: none;
+        padding: 10px 32px;
+        font-size: 11px;
+        color: rgba(0,200,80,0.4);
+        letter-spacing: 0.08em;
+        border-bottom: 1px solid rgba(0,220,120,0.08);
+        flex-shrink: 0;
+    "></div>
+
+    <div id="mode-menu-list" style="flex: 1; overflow-y: auto; padding: 8px 0; scrollbar-width: none;"></div>
+
+    <div style="padding: 14px 32px; border-top: 1px solid rgba(0,220,120,0.1); flex-shrink: 0; display: flex; gap: 24px; font-size: 10px; color: rgba(0,200,80,0.3); letter-spacing: 0.06em;">
+      <span>&#9650;&#9660; Navigate</span>
+      <span>A  Select</span>
+      <span>B  Back / Close</span>
+    </div>
+  </div>
+
+  <div id="mode-menu-info" style="
+      position: absolute;
+      top: 0; right: 0; bottom: 0; left: 58%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 40px;
+  ">
+    <div id="mode-info-icon" style="font-size: 48px; margin-bottom: 16px; opacity: 0.6;"></div>
+    <div id="mode-info-name" style="font-size: 22px; font-weight: 700; color: #00dc78; margin-bottom: 10px; letter-spacing: 0.05em;"></div>
+    <div id="mode-info-desc" style="font-size: 12px; color: rgba(0,200,80,0.5); line-height: 1.7; max-width: 280px;"></div>
+  </div>
+</div>
+
+<div id="game-show" style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: #000818;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    cursor: none;
+">
+  <canvas id="gs-bg-canvas" style="position: absolute; inset: 0; opacity: 0.4;"></canvas>
+
+  <div style="
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,215,0,0.2);
+      background: rgba(0,4,20,0.9);
+      z-index: 10;
+  ">
+    <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.2em; color: rgba(255,215,0,0.7);">WHO WANTS A HUNDRED BUCKS?</div>
+
+    <div style="display:flex; gap:16px;" id="gs-lifelines">
+      <div class="gs-lifeline" id="gs-ll-fifty" onclick="gsUseFiftyFifty()"><span>50/50</span></div>
+      <div class="gs-lifeline" id="gs-ll-phone" onclick="gsUsePhone()"><span>&#128222;</span></div>
+      <div class="gs-lifeline" id="gs-ll-audience" onclick="gsUseAudience()"><span>&#128101;</span></div>
+    </div>
+
+    <div style="font-size: 11px; color: rgba(255,215,0,0.5); letter-spacing: 0.08em;" id="gs-question-num">Q1 / 15</div>
+  </div>
+
+  <div style="
+      position: absolute;
+      top: 60px; bottom: 120px;
+      left: 0; right: 280px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 32px 48px;
+      z-index: 10;
+  ">
+    <div id="gs-category" style="font-size: 11px; letter-spacing: 0.2em; color: rgba(255,215,0,0.5); margin-bottom: 20px; text-transform: uppercase;"></div>
+    <div id="gs-question" style="font-size: 26px; font-weight: 700; color: #ffffff; line-height: 1.4; margin-bottom: 40px; text-shadow: 0 0 30px rgba(100,150,255,0.3);"></div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;" id="gs-answers"></div>
+    <div id="gs-lifeline-result" style="display: none; margin-top: 24px; padding: 16px 20px; background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; font-size: 14px; color: #FFD700; line-height: 1.5;"></div>
+  </div>
+
+  <div style="
+      position: absolute;
+      top: 60px; bottom: 0;
+      right: 0; width: 260px;
+      background: rgba(0,4,20,0.95);
+      border-left: 1px solid rgba(255,215,0,0.15);
+      overflow-y: auto;
+      z-index: 10;
+      padding: 12px 0;
+      scrollbar-width: none;
+  " id="gs-ladder"></div>
+
+  <div style="
+      position: absolute;
+      bottom: 0; left: 0; right: 260px;
+      height: 120px;
+      background: rgba(0,4,20,0.9);
+      border-top: 1px solid rgba(255,215,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      z-index: 10;
+  ">
+    <button onclick="gsWalkAway()" style="
+        background: rgba(255,100,0,0.1);
+        border: 1px solid rgba(255,100,0,0.4);
+        color: rgba(255,150,0,0.8);
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+    ">WALK AWAY</button>
+
+    <div style="font-size: 10px; color: rgba(255,215,0,0.3); letter-spacing: 0.06em; text-align: center; line-height: 1.8;">
+      &#9650;&#9660;&#9668;&#9658; Navigate &nbsp;|&nbsp;
+      A Lock In &nbsp;|&nbsp;
+      L/R/Y Lifelines &nbsp;|&nbsp;
+      B Walk Away
+    </div>
+
+    <div style="text-align:right">
+      <div style="font-size: 10px; color: rgba(255,215,0,0.4); letter-spacing: 0.1em;">PLAYING FOR</div>
+      <div id="gs-current-value" style="font-size: 28px; font-weight: 900; color: #FFD700; letter-spacing: 0.05em;">$1</div>
+    </div>
+  </div>
+
+  <div id="gs-result-overlay" style="
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: rgba(0,0,0,0.75);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+  ">
+    <div id="gs-result-icon" style="font-size: 80px; margin-bottom: 20px;"></div>
+    <div id="gs-result-text" style="font-size: 36px; font-weight: 900; color: #FFD700; letter-spacing: 0.1em; text-align: center; margin-bottom: 12px;"></div>
+    <div id="gs-result-sub" style="font-size: 16px; color: rgba(255,255,255,0.6); text-align: center; max-width: 500px; line-height: 1.6;"></div>
+  </div>
+</div>
+
+<script>
+// ===========================================================================
+// Q2 Face — visualizer
+// Open settings / cycle face styles via the controller's mapped buttons
+// (toggle_menu / cycle_face) -- see pollFaceControllerEvents() below.
+// Styles: 0=Triangle Mosaic  1=H9000 Terminal  2=KITT  3=KITT Hi-Con
+// All styles share the same speaking/listening/thinking state from the
+// face server; each style owns its own colour palette.
+// ===========================================================================
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+const IW = 720, IH = 1280;
+canvas.width = IW; canvas.height = IH;
+
+// Hidden until the correct face style loads from the Pi — avoids a brief
+// flash of the localStorage/default style on startup (see bootstrap fetch
+// at the bottom of this script, which fades the canvas back in once the
+// real style is known).
+canvas.style.opacity = '0';
+canvas.style.transition = 'opacity 0.3s';
+
+function fit() {
+  const wr = window.innerWidth / window.innerHeight;
+  const cr = IW / IH;
+  if (wr > cr) { canvas.style.height = '100vh'; canvas.style.width = 'auto'; }
+  else          { canvas.style.width  = '100vw'; canvas.style.height = 'auto'; }
+}
+window.addEventListener('resize', fit);
+fit();
+
+// --- Palette --- (Triangle Mosaic's colours; H9000 Terminal also reads
+// COL1/COL2 for its eye tint — both predefined faces own these values
+// directly now, no longer overridable from settings)
+const BG   = '#000000';
+const COL1 = '#ff3c3c';
+const COL2 = '#f5f5ff';
+
+// --- State ---
+let state = { speaking:false, envelope:[], duration_s:0, started_at:0,
+              listening:false, thinking:false };
+
+let kittTelemetry = null;  // null when no race telemetry is active
+
+async function poll() {
+  try {
+    const d = await (await fetch('http://127.0.0.1:8765/state',{cache:'no-store'})).json();
+    state = d;
+    kittTelemetry = d.telemetry || null;
+  } catch(e) {}
+}
+setInterval(poll, 120);
+
+// --- Style cycling ---
+let currentStyle = parseInt(localStorage.getItem('q2-face-style') || '1');
+// Sync style from face server — poll every 2s so settings changes apply live
+let _lastFaceStyle = currentStyle;
+function syncFaceStyle() {
+  if (document.hidden) return; // no-op while this page isn't the visible one
+  fetch('/state').then(r=>r.json()).then(s=>{
+    if (s && s.face_style !== undefined && s.face_style !== _lastFaceStyle) {
+      _lastFaceStyle = s.face_style;
+      currentStyle = s.face_style;
+      localStorage.setItem('q2-face-style', currentStyle);
+      initStyle(currentStyle);
+    }
+  }).catch(()=>{});
+}
+syncFaceStyle();
+setInterval(syncFaceStyle, 2000);
+const STYLE_NAMES = ['Triangle Mosaic', 'H9000 Terminal', 'KITT', 'KITT Hi-Con'];
+const NUM_STYLES  = STYLE_NAMES.length;
+
+function cycleStyle() {
+  currentStyle = (currentStyle + 1) % NUM_STYLES;
+  localStorage.setItem('q2-face-style', currentStyle);
+  // Reset per-style state
+  initStyle(currentStyle);
+  showStyleLabel();
+}
+
+function showStyleLabel() {
+  // Flash the style name briefly — use canvas text
+  styleLabel = STYLE_NAMES[currentStyle];
+  styleLabelAlpha = 1.0;
+}
+
+let styleLabel = '';
+let styleLabelAlpha = 0;
+
+// Bare 'h'/'i' keydown shortcuts (open settings / cycle face style) used to
+// live here -- removed as unmodified single-key bindings that a physical
+// keyboard could fire unintentionally. Both actions now have dedicated
+// controller mappings ("toggle_menu", "cycle_face" in
+// face/settings.html's Button Mapping) delivered via pollFaceControllerEvents()
+// below, which is the supported way to trigger them on the kiosk now.
+
+// --- Controller events (toggle_menu / cycle_face) ---
+// Same buffer webapp/index.html's pollControllerNavEvents() reads from
+// face/server.py's emit_controller_event(), just fetched directly (relative
+// path) instead of through webapp's /face-api proxy, since this page is
+// served from face/server.py's own port 8765.
+let faceCtrlLastPoll = Date.now() / 1000;
+
+async function pollFaceControllerEvents() {
+  try {
+    const r = await fetch(`/controller/events?since=${faceCtrlLastPoll}`).then(r => r.json());
+    for (const evt of (r.events || [])) {
+      faceCtrlLastPoll = Math.max(faceCtrlLastPoll, evt.ts || 0);
+
+      // Game Show takes over the controller entirely while active -- higher
+      // z-index than the mode menu (2000 vs 1000), and interrupting mid-game
+      // with toggle_menu/cycle_face/mode_select would be a worse experience
+      // than just ignoring them until the game ends.
+      if (gsState && gsState.active) {
+        if (evt.type === 'nav') {
+          if (evt.event_type !== 'press') continue;
+          const dpad = evt.dpad || {};
+          if (evt.action === 'nav_up'    || dpad.y === -1) gsNavController('up');
+          if (evt.action === 'nav_down'  || dpad.y === 1)  gsNavController('down');
+          if (evt.action === 'nav_left'  || dpad.x === -1) gsNavController('left');
+          if (evt.action === 'nav_right' || dpad.x === 1)  gsNavController('right');
+          if (evt.action === 'nav_confirm') gsLockInAnswer();
+          if (evt.action === 'nav_back')    gsWalkAway();
+        } else if (evt.type === 'button' && evt.event_type === 'press') {
+          // L/R/X repurposed as lifeline shortcuts while playing. These
+          // still also fire their normal volume/repeat side effects
+          // (there's no nav_mode-style suppression for them) -- a known,
+          // minor rough edge, not worth a parallel controller-state flag
+          // just to silence a volume nudge or a TTS replay during a game.
+          if (evt.action === 'volume_down') gsUseFiftyFifty();
+          if (evt.action === 'volume_up')   gsUseAudience();
+          if (evt.action === 'repeat')      gsUsePhone();
+        }
+        continue;
+      }
+
+      if (evt.type === 'ui') {
+        if (evt.action === 'toggle_menu') {
+          window.location.href = '/settings.html';
+        } else if (evt.action === 'cycle_face' && evt.style !== undefined) {
+          currentStyle = evt.style;
+          localStorage.setItem('q2-face-style', currentStyle);
+          initStyle(currentStyle);
+          showStyleLabel();
+        } else if (evt.action === 'mode_select') {
+          if (modeMenuOpen) closeModeMenu(); else openModeMenu();
+        }
+      } else if (evt.type === 'nav' && modeMenuOpen) {
+        // event_type === 'press' guards against also reacting to the
+        // release edge -- see voice/talk_button.py's _nav_event(), which
+        // now emits both action and event_type per event.
+        if (evt.event_type !== 'press') continue;
+        const dpad = evt.dpad || {};
+        if (evt.action === 'nav_up' || dpad.y === -1)  modeMenuNavUp();
+        if (evt.action === 'nav_down' || dpad.y === 1) modeMenuNavDown();
+        if (evt.action === 'nav_confirm') modeMenuConfirm();
+        if (evt.action === 'nav_back')    modeMenuBack();
+      }
+    }
+  } catch (e) {}
+}
+setInterval(pollFaceControllerEvents, 500);
+
+// --- Mode Select overlay ---------------------------------------------------
+// Controller "mode_select" action (Settings > Controller > Button Mapping,
+// unassigned by default) opens a D-pad-navigated overlay for switching
+// Agent Mode / watchalong sport without leaving the kiosk face. Reuses the
+// same POST /settings machinery face/settings.html's applyAgentMode() and
+// updateWatchalongSport() already use -- no separate set-mode/set-sport
+// endpoints. See voice/controller.py's set_nav_mode() for why open/close
+// explicitly sets nav_mode rather than relying on the SELECT-button toggle.
+const MODE_MENU = [
+  { id: 'q2_default',   label: 'Default',       profile: 'profiles/q2_default.yaml' },
+  { id: 'guest',         label: 'Guest',          profile: 'profiles/q2_guest.yaml' },
+  { id: 'race_engineer', label: 'Race Engineer',  profile: 'profiles/race_engineer.yaml' },
+  { id: 'first_officer', label: 'First Officer',  profile: 'profiles/first_officer.yaml' },
+  {
+    id: 'watchalong_live', label: 'Watchalong Live', profile: 'profiles/watchalong_live.yaml',
+    submenu: [
+      { id: 'wa_f1',  label: 'F1',            sport: 'f1' },
+      { id: 'wa_ufc', label: 'UFC',           sport: 'ufc' },
+      { id: 'wa_nba', label: 'NBA',           sport: 'nba' },
+      { id: 'wa_nhl', label: 'NHL',           sport: 'nhl' },
+      { id: 'wa_nfl', label: 'NFL',           sport: 'nfl' },
+      { id: 'wa_mlb', label: 'MLB',           sport: 'mlb' },
+      { id: 'wa_fd',  label: 'Formula Drift', sport: 'formula_drift' },
+      { id: 'wa_xg',  label: 'X Games',       sport: 'xgames' },
+    ],
+  },
+  {
+    id: 'watchalong_replay', label: 'Watchalong Replay', profile: 'profiles/watchalong_replay.yaml',
+    submenu: [
+      { id: 'war_f1',  label: 'F1',  sport: 'f1' },
+      { id: 'war_ufc', label: 'UFC', sport: 'ufc' },
+      { id: 'war_nba', label: 'NBA', sport: 'nba' },
+      { id: 'war_nhl', label: 'NHL', sport: 'nhl' },
+      { id: 'war_nfl', label: 'NFL', sport: 'nfl' },
+      { id: 'war_mlb', label: 'MLB', sport: 'mlb' },
+    ],
+  },
+  { id: 'ship_computer',   label: 'Ship Computer',     profile: 'profiles/ship_computer.yaml' },
+  { id: 'popup_video',     label: 'Pop-Up Video',      profile: 'profiles/popup_video.yaml' },
+  { id: 'radio_dj',        label: 'Radio DJ',          profile: 'profiles/radio_dj.yaml' },
+  { id: 'masterchef',      label: 'MasterChef',        profile: 'profiles/masterchef.yaml' },
+  { id: 'whiplash',        label: 'Whiplash',          profile: 'profiles/whiplash.yaml' },
+  { id: 'beavis_butthead', label: 'Beavis & Butthead', profile: 'profiles/beavis_butthead.yaml' },
+  { id: 'circuit_builder', label: 'Circuit Builder',   profile: 'profiles/circuit_builder.yaml' },
+  { id: 'game_companion',  label: 'Game Companion',    profile: 'profiles/game_companion.yaml' },
+  { id: 'game_show',       label: 'Game Show Host',    profile: 'profiles/game_show.yaml' },
+];
+
+const MODE_DESCRIPTIONS = {
+  q2_default:        { icon: '\u{1F916}', desc: 'Primary companion. Full tools, full personality.' },
+  guest:              { icon: '\u{1F464}', desc: 'Neutral mode. Minimal personal context.' },
+  race_engineer:      { icon: '\u{1F3CE}', desc: 'Sim racing coach. Live telemetry, lap analysis, tyre strategy.' },
+  first_officer:      { icon: '✈️', desc: 'MSFS co-pilot. Monitors flight, calls checklist, flies the aircraft.' },
+  watchalong_live:    { icon: '\u{1F4FA}', desc: 'Live sport analyst. Real-time commentary and stats.' },
+  watchalong_replay:  { icon: '\u{1F4FC}', desc: 'Replay mode. Spoiler-protected historical data.' },
+  ship_computer:      { icon: '\u{1F680}', desc: 'Elite Dangerous COVAS. Journal monitoring, galaxy search.' },
+  popup_video:        { icon: '\u{1F3AC}', desc: 'MTV Pop-Up Video style film trivia for any movie.' },
+  radio_dj:           { icon: '\u{1F3A7}', desc: 'Themed DJ sets via YouTube Music with expert commentary.' },
+  masterchef:         { icon: '\u{1F373}', desc: 'Gordon Ramsay cooking companion. Menu, shopping, step-by-step.' },
+  whiplash:           { icon: '\u{1F941}', desc: 'Fletcher-voiced drum practice. MIDI timing, metronome, grooves.' },
+  beavis_butthead:    { icon: '\u{1F4FA}', desc: 'Music video commentary. 20 candidates, you pick 5.' },
+  circuit_builder:    { icon: '⚡',    desc: 'Electronics project assistant. Wiring diagrams and code.' },
+  game_companion:     { icon: '\u{1F3AE}', desc: 'Co-op partner for any game. Builds, strategies, boss help.' },
+  game_show:          { icon: '\u{1F4B0}', desc: 'Who Wants a Hundred Bucks? -- 15-question trivia game show, Regis-style hosting.' },
+  f1:            { icon: '\u{1F3C1}', desc: 'Formula 1 — race control, gaps, tyre strategy.' },
+  ufc:           { icon: '\u{1F94A}', desc: 'UFC/MMA — fight breakdowns, round analysis.' },
+  nba:           { icon: '\u{1F3C0}', desc: 'NBA Basketball — live scoring, quarter updates.' },
+  nhl:           { icon: '\u{1F3D2}', desc: 'NHL Hockey — goals, periods, shots.' },
+  nfl:           { icon: '\u{1F3C8}', desc: 'NFL Football — touchdowns, down/distance.' },
+  mlb:           { icon: '⚾',    desc: 'MLB Baseball — innings, count, home runs.' },
+  formula_drift: { icon: '\u{1F697}', desc: 'Formula Drift — standings and results.' },
+  xgames:        { icon: '\u{1F3C2}', desc: 'X Games — results across all disciplines.' },
+};
+
+let modeMenuOpen           = false;
+let modeMenuIdx             = 0;
+let modeMenuInSub           = false;
+let modeMenuParent          = null;
+let modeMenuSubIdx           = 0;
+let modeMenuCurrentProfile  = '';
+let modeMenuCurrentSport    = '';
+
+function modeMenuSubItems() {
+  return [{ id: '__back__', label: 'Back', isBack: true }, ...(modeMenuParent ? modeMenuParent.submenu : [])];
+}
+function modeMenuActiveItems() {
+  return modeMenuInSub ? modeMenuSubItems() : MODE_MENU;
+}
+
+function openModeMenu() {
+  modeMenuOpen   = true;
+  modeMenuIdx    = 0;
+  modeMenuInSub  = false;
+  modeMenuParent = null;
+  modeMenuSubIdx = 0;
+
+  const overlay = document.getElementById('mode-menu-overlay');
+  overlay.style.transition = 'opacity 0.15s';
+  overlay.style.display = 'block';
+  overlay.style.opacity = '0';
+  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+
+  // Explicit set (not the SELECT-button toggle) -- see set_nav_mode() in
+  // voice/controller.py. Fire-and-forget: opening shouldn't wait on it.
+  fetch('/nav-mode', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ enabled: true }),
+  }).catch(() => {});
+
+  renderModeMenu();
+  updateModeMenuInfo();
+  refreshModeMenuCurrent();
+}
+
+function closeModeMenu() {
+  modeMenuOpen = false;
+  const overlay = document.getElementById('mode-menu-overlay');
+  overlay.style.opacity = '0';
+  setTimeout(() => { overlay.style.display = 'none'; }, 150);
+
+  fetch('/nav-mode', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ enabled: false }),
+  }).catch(() => {});
+}
+
+async function refreshModeMenuCurrent() {
+  try {
+    const s = await fetch('/settings').then(r => r.json());
+    modeMenuCurrentProfile = s.active_profile || '';
+    modeMenuCurrentSport   = s.watchalong_sport || '';
+    const isWatchalong = modeMenuCurrentProfile === 'profiles/watchalong_live.yaml'
+                       || modeMenuCurrentProfile === 'profiles/watchalong_replay.yaml';
+    document.getElementById('mode-menu-current').textContent =
+      'Current: ' + getModeLabel(modeMenuCurrentProfile, isWatchalong ? modeMenuCurrentSport : null);
+  } catch (e) {}
+}
+
+function renderModeMenu() {
+  const list   = document.getElementById('mode-menu-list');
+  const crumb  = document.getElementById('mode-menu-breadcrumb');
+  const items  = modeMenuActiveItems();
+  const selIdx = modeMenuInSub ? modeMenuSubIdx : modeMenuIdx;
+
+  if (modeMenuInSub && modeMenuParent) {
+    crumb.style.display = 'block';
+    crumb.textContent   = '◄ ' + modeMenuParent.label.toUpperCase();
+  } else {
+    crumb.style.display = 'none';
+  }
+
+  list.innerHTML = items.map((item, i) => {
+    const isSelected = i === selIdx;
+    const hasSub      = !!item.submenu;
+    const isBack      = !!item.isBack;
+    return `
+      <div class="mode-menu-item ${isSelected ? 'selected' : ''}" id="mmi-${i}"
+           style="display:flex;align-items:center;padding:0 32px;height:52px;cursor:pointer;
+                  border-left:4px solid ${isSelected ? '#00dc78' : 'transparent'};
+                  background:${isSelected ? 'rgba(0,220,120,0.07)' : 'transparent'};"
+           onclick="modeMenuClick(${i})">
+        ${isBack ? `<span style="margin-right:10px;color:rgba(0,200,80,0.6);font-size:18px">◄</span>` : ''}
+        <span style="flex:1;font-size:22px;font-weight:${isSelected ? '700' : '400'};
+                     color:${isSelected ? '#00dc78' : 'rgba(0,200,80,0.5)'};
+                     letter-spacing:0.03em">${item.label}</span>
+        ${hasSub ? `<span style="color:rgba(0,200,80,0.4);font-size:16px">►</span>` : ''}
+      </div>`;
+  }).join('');
+
+  const selectedEl = document.getElementById(`mmi-${selIdx}`);
+  if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function updateModeMenuInfo() {
+  const items  = modeMenuActiveItems();
+  const selIdx = modeMenuInSub ? modeMenuSubIdx : modeMenuIdx;
+  const item   = items[selIdx];
+
+  const iconEl = document.getElementById('mode-info-icon');
+  const nameEl = document.getElementById('mode-info-name');
+  const descEl = document.getElementById('mode-info-desc');
+
+  if (!item || item.isBack) {
+    iconEl.textContent = ''; nameEl.textContent = ''; descEl.textContent = '';
+    return;
+  }
+  const key  = item.sport || item.id;
+  const info = MODE_DESCRIPTIONS[key] || {};
+  iconEl.textContent = info.icon || '●';
+  nameEl.textContent = item.label;
+  descEl.textContent = info.desc || '';
+}
+
+function modeMenuNavUp() {
+  if (!modeMenuOpen) return;
+  const count = modeMenuActiveItems().length;
+  if (modeMenuInSub) modeMenuSubIdx = (modeMenuSubIdx - 1 + count) % count;
+  else               modeMenuIdx    = (modeMenuIdx - 1 + count) % count;
+  renderModeMenu(); updateModeMenuInfo();
+}
+
+function modeMenuNavDown() {
+  if (!modeMenuOpen) return;
+  const count = modeMenuActiveItems().length;
+  if (modeMenuInSub) modeMenuSubIdx = (modeMenuSubIdx + 1) % count;
+  else               modeMenuIdx    = (modeMenuIdx + 1) % count;
+  renderModeMenu(); updateModeMenuInfo();
+}
+
+function modeMenuConfirm() {
+  if (!modeMenuOpen) return;
+
+  if (modeMenuInSub) {
+    const item = modeMenuSubItems()[modeMenuSubIdx];
+    if (!item) return;
+    if (item.isBack) {
+      modeMenuInSub = false; modeMenuParent = null; modeMenuSubIdx = 0;
+      renderModeMenu(); updateModeMenuInfo();
+      return;
+    }
+    applyMode(modeMenuParent.profile, item.sport);
+  } else {
+    const item = MODE_MENU[modeMenuIdx];
+    if (!item) return;
+    if (item.submenu) {
+      modeMenuInSub = true; modeMenuParent = item; modeMenuSubIdx = 1;
+      renderModeMenu(); updateModeMenuInfo();
+    } else {
+      applyMode(item.profile, null);
+    }
+  }
+}
+
+function modeMenuBack() {
+  if (!modeMenuOpen) return;
+  if (modeMenuInSub) {
+    modeMenuInSub = false; modeMenuParent = null; modeMenuSubIdx = 0;
+    renderModeMenu(); updateModeMenuInfo();
+  } else {
+    closeModeMenu();
+  }
+}
+
+function modeMenuClick(idx) {
+  if (modeMenuInSub) modeMenuSubIdx = idx;
+  else               modeMenuIdx    = idx;
+  renderModeMenu(); updateModeMenuInfo();
+  setTimeout(modeMenuConfirm, 80);
+}
+
+async function applyMode(profile, sport) {
+  try {
+    const body = { active_profile: profile };
+    if (sport) body.watchalong_sport = sport;
+    await fetch('/settings', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+
+    document.getElementById('mode-menu-current').textContent =
+      'Current: ' + getModeLabel(profile, sport);
+
+    const list = document.getElementById('mode-menu-list');
+    list.style.transition = 'opacity 0.15s';
+    list.style.opacity = '0.3';
+    setTimeout(() => { list.style.opacity = '1'; closeModeMenu(); }, 300);
+  } catch (e) {
+    closeModeMenu();
+  }
+}
+
+function getModeLabel(profile, sport) {
+  const item = MODE_MENU.find(m => m.profile === profile);
+  if (!item) return profile || '--';
+  if (sport) {
+    const sub = (item.submenu || []).find(s => s.sport === sport);
+    return item.label + (sub ? ' · ' + sub.label : '');
+  }
+  return item.label;
+}
+
+// Keyboard fallback for dev/testing without a physical controller.
+document.addEventListener('keydown', (e) => {
+  if (gsState && gsState.active) {
+    if (e.key === 'ArrowUp')    { e.preventDefault(); gsNavController('up'); }
+    if (e.key === 'ArrowDown')  { e.preventDefault(); gsNavController('down'); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); gsNavController('left'); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); gsNavController('right'); }
+    if (e.key === 'Enter')      { e.preventDefault(); gsLockInAnswer(); }
+    if (e.key === 'Escape')     { e.preventDefault(); gsWalkAway(); }
+    return;
+  }
+  if (!modeMenuOpen) return;
+  if (e.key === 'ArrowUp')   { e.preventDefault(); modeMenuNavUp(); }
+  if (e.key === 'ArrowDown') { e.preventDefault(); modeMenuNavDown(); }
+  if (e.key === 'Enter')     { e.preventDefault(); modeMenuConfirm(); }
+  if (e.key === 'Escape')    { e.preventDefault(); modeMenuBack(); }
+});
+
+// --- Game Show ("Who Wants a Hundred Bucks?") -------------------------------
+// Fullscreen overlay (z-index 2000, above the mode-menu's 1000) that
+// replaces the face canvas while a game is in progress. All 15 questions
+// are generated once at game start (tools/game_show.py) -- this page only
+// ever reads state pushed via /game-events, never calls an LLM itself.
+// Controller D-pad/A/B drive it as a silent fast path (see the "recommended"
+// answer to how TTS commentary should work -- only the voice/chat-turn
+// path speaks; the controller path just updates the screen). Reuses the
+// same explicit nav_mode set/unset the mode-select overlay uses so A/B
+// reliably become nav_confirm/nav_back instead of firing ptt/cancel.
+
+let gsState             = null;
+let gsSelectedAnswer    = null;   // "A","B","C","D"
+let gsAnswerLocked      = false;
+let gsEventPoll         = Date.now() / 1000;
+let gsEliminatedAnswers = [];
+const GS_GRID = [['A','B'],['C','D']];
+
+function gsShow(state) {
+  if (modeMenuOpen) closeModeMenu();
+
+  gsState             = state;
+  gsSelectedAnswer    = null;
+  gsAnswerLocked      = false;
+  gsEliminatedAnswers = [];
+
+  const canvas = document.getElementById('c');
+  if (canvas) canvas.style.display = 'none';
+  document.getElementById('game-show').style.display = 'block';
+
+  fetch('/nav-mode', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ enabled: true }),
+  }).catch(() => {});
+
+  gsRender();
+  gsStartBgAnimation();
+}
+
+function gsHide() {
+  document.getElementById('game-show').style.display = 'none';
+  const canvas = document.getElementById('c');
+  if (canvas) canvas.style.display = 'block';
+  gsState = null;
+
+  fetch('/nav-mode', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ enabled: false }),
+  }).catch(() => {});
+}
+
+function gsRender() {
+  if (!gsState) return;
+  const q = gsState.current_question;
+  if (!q) return;
+
+  document.getElementById('gs-question-num').textContent = `Q${gsState.current_q_num} / ${gsState.total_q}`;
+  document.getElementById('gs-category').textContent = q.category || '';
+  document.getElementById('gs-question').textContent = q.text || '';
+  document.getElementById('gs-current-value').textContent = q.value || '';
+
+  gsRenderAnswers(q.answers);
+  gsRenderLadder();
+  gsRenderLifelines();
+
+  document.getElementById('gs-result-overlay').style.display = 'none';
+  document.getElementById('gs-lifeline-result').style.display = 'none';
+}
+
+function gsRenderAnswers(answers) {
+  const container = document.getElementById('gs-answers');
+  if (!container) return;
+
+  container.innerHTML = (answers || []).map((ans) => {
+    const letter    = ans[0];        // "A","B","C","D"
+    const text      = ans.slice(3);  // text after "A. "
+    const isElim    = gsEliminatedAnswers.includes(letter);
+    const isSel     = gsSelectedAnswer === letter;
+    const isLocked  = gsAnswerLocked && isSel;
+
+    let cls = 'gs-answer-btn';
+    if (isElim) cls += ' eliminated';
+    if (isSel && !isLocked) cls += ' selected';
+    if (isLocked) cls += ' locked';
+
+    return `
+      <button class="${cls}" onclick="gsSelectAnswer('${letter}')" id="gs-ans-${letter}">
+        <span class="gs-letter">${letter}</span>
+        <span>${text}</span>
+      </button>`;
+  }).join('');
+}
+
+function gsRenderLadder() {
+  const ladder = document.getElementById('gs-ladder');
+  const state  = gsState;
+  if (!ladder || !state) return;
+
+  const rungs = [...(state.money_ladder || [])].reverse();
+
+  ladder.innerHTML = rungs.map(rung => {
+    let cls = 'gs-rung';
+    if (rung.level === state.current_q_num) cls += ' current';
+    else if (rung.level <= state.score_level) cls += ' won';
+    else if (rung.safe) cls += ' safe';
+    else cls += ' future';
+
+    const safeIcon = rung.safe ? ' \u{1F512}' : '';
+    return `
+      <div class="${cls}" id="gs-rung-${rung.level}">
+        <span>${rung.value}${safeIcon}</span>
+        <span style="font-size:10px;opacity:0.5">${rung.level}</span>
+      </div>`;
+  }).join('');
+
+  const currentRung = document.getElementById(`gs-rung-${state.current_q_num}`);
+  if (currentRung) currentRung.scrollIntoView({ block: 'center' });
+}
+
+function gsRenderLifelines() {
+  const ll = gsState?.lifelines || {};
+  const fifty    = document.getElementById('gs-ll-fifty');
+  const phone    = document.getElementById('gs-ll-phone');
+  const audience = document.getElementById('gs-ll-audience');
+
+  if (fifty)    fifty.className    = 'gs-lifeline' + (ll.fifty_fifty?.used ? ' used' : '');
+  if (phone)    phone.className    = 'gs-lifeline' + (ll.phone_friend?.used ? ' used' : '');
+  if (audience) audience.className = 'gs-lifeline' + (ll.ask_audience?.used ? ' used' : '');
+}
+
+function gsSelectAnswer(letter) {
+  if (gsAnswerLocked || !gsState?.active) return;
+  gsSelectedAnswer = letter;
+  gsRenderAnswers(gsState.current_question.answers);
+}
+
+function gsLockInAnswer() {
+  if (!gsSelectedAnswer || gsAnswerLocked || !gsState?.active) return;
+  gsAnswerLocked = true;
+  gsRenderAnswers(gsState.current_question.answers);
+
+  fetch('/game-answer', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ answer: gsSelectedAnswer }),
+  }).catch(() => {});
+}
+
+// Moves selection within the fixed 2x2 A/B C/D grid. Derives the current
+// cell from the selected LETTER's fixed grid position, not from its index
+// in the (shrinking, after 50/50) list of still-available answers -- doing
+// it via that index drifted the cursor onto eliminated cells once two
+// answers were removed.
+function gsNavController(direction) {
+  if (!gsState?.active) return;
+  const avail = ['A','B','C','D'].filter(l => !gsEliminatedAnswers.includes(l));
+  if (!avail.length) return;
+
+  if (!gsSelectedAnswer || gsEliminatedAnswers.includes(gsSelectedAnswer)) {
+    gsSelectAnswer(avail[0]);
+    return;
+  }
+
+  let row = 0, col = 0;
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 2; c++) {
+      if (GS_GRID[r][c] === gsSelectedAnswer) { row = r; col = c; }
+    }
+  }
+  if (direction === 'up')    row = Math.max(0, row - 1);
+  if (direction === 'down')  row = Math.min(1, row + 1);
+  if (direction === 'left')  col = Math.max(0, col - 1);
+  if (direction === 'right') col = Math.min(1, col + 1);
+
+  const target = GS_GRID[row][col];
+  if (target && !gsEliminatedAnswers.includes(target)) gsSelectAnswer(target);
+}
+
+function gsUseFiftyFifty() {
+  if (!gsState?.active || gsState?.lifelines?.fifty_fifty?.used) return;
+  fetch('/game-lifeline', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ lifeline: 'fifty_fifty' }),
+  }).catch(() => {});
+}
+
+function gsUsePhone() {
+  if (!gsState?.active || gsState?.lifelines?.phone_friend?.used) return;
+  fetch('/game-lifeline', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ lifeline: 'phone_friend' }),
+  }).catch(() => {});
+}
+
+function gsUseAudience() {
+  if (!gsState?.active || gsState?.lifelines?.ask_audience?.used) return;
+  fetch('/game-lifeline', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ lifeline: 'ask_audience' }),
+  }).catch(() => {});
+}
+
+function gsWalkAway() {
+  if (!gsState?.active) return;
+  fetch('/game-walk', { method: 'POST' }).catch(() => {});
+}
+
+async function pollGameEvents() {
+  try {
+    const r = await fetch(`/game-events?since=${gsEventPoll}`).then(r => r.json());
+    for (const evt of (r.events || [])) {
+      gsEventPoll = Math.max(gsEventPoll, evt.ts || 0);
+      handleGameEvent(evt);
+    }
+  } catch (e) {}
+}
+
+function handleGameEvent(evt) {
+  switch (evt.type) {
+
+    case 'game_start':
+      gsShow(evt.state);
+      break;
+
+    case 'answer_correct': {
+      const correctBtn = document.getElementById(`gs-ans-${evt.answer}`);
+      if (correctBtn) correctBtn.className = 'gs-answer-btn correct';
+      if (evt.fun_fact) gsShowResult('✓', evt.won + '!', evt.fun_fact, false);
+
+      setTimeout(() => {
+        gsEliminatedAnswers = [];
+        gsState             = evt.state;
+        gsSelectedAnswer     = null;
+        gsAnswerLocked        = false;
+        gsRender();
+      }, 3000);
+      break;
+    }
+
+    case 'answer_wrong': {
+      const wrongBtn = document.getElementById(`gs-ans-${evt.answer}`);
+      if (wrongBtn) wrongBtn.className = 'gs-answer-btn wrong';
+      const correctAnsBtn = document.getElementById(`gs-ans-${evt.correct}`);
+      if (correctAnsBtn) {
+        setTimeout(() => { correctAnsBtn.className = 'gs-answer-btn correct'; }, 1000);
+      }
+      setTimeout(() => {
+        gsShowResult('✗', 'Wrong!', `The answer was ${evt.correct}. You leave with ${evt.safe_val}.`, true);
+      }, 2000);
+      setTimeout(() => gsHide(), 8000);
+      break;
+    }
+
+    case 'game_won':
+      setTimeout(() => { gsShowResult('\u{1F389}', 'YOU WIN $100!', 'Congratulations!', true); }, 2000);
+      setTimeout(() => gsHide(), 10000);
+      break;
+
+    case 'walk_away':
+      gsShowResult('\u{1F6B6}', `You walk away with ${evt.won}`, `You were playing for ${evt.gave_up}.`, true);
+      setTimeout(() => gsHide(), 8000);
+      break;
+
+    case 'lifeline_fifty_fifty':
+      gsEliminatedAnswers = evt.remove || [];
+      if (evt.state) gsState = evt.state;
+      gsRenderAnswers(gsState.current_question.answers);
+      gsRenderLifelines();
+      break;
+
+    case 'lifeline_phone':
+      gsShowLifelineResult(`\u{1F4DE} Your friend says: "I think it's ${evt.friend_answer} -- about ${evt.confidence}% sure."`);
+      if (evt.state) { gsState = evt.state; gsRenderLifelines(); }
+      break;
+
+    case 'lifeline_audience': {
+      const poll = evt.poll || {};
+      const pollStr = ['A','B','C','D'].map(l => `${l}: ${poll[l] || 0}%`).join('   ');
+      gsShowLifelineResult('\u{1F465} Audience says:\n' + pollStr);
+      if (evt.state) { gsState = evt.state; gsRenderLifelines(); }
+      break;
+    }
+  }
+}
+
+function gsShowResult(icon, title, subtitle, final) {
+  const overlay = document.getElementById('gs-result-overlay');
+  document.getElementById('gs-result-icon').textContent = icon;
+  document.getElementById('gs-result-text').textContent = title;
+  document.getElementById('gs-result-sub').textContent  = subtitle;
+  overlay.style.display = 'flex';
+}
+
+function gsShowLifelineResult(text) {
+  const el = document.getElementById('gs-lifeline-result');
+  el.textContent      = text;
+  el.style.whiteSpace  = 'pre-line';
+  el.style.display     = 'block';
+}
+
+function gsStartBgAnimation() {
+  const canvas = document.getElementById('gs-bg-canvas');
+  if (!canvas) return;
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx   = canvas.getContext('2d');
+  const stars = Array.from({ length: 120 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.5 + 0.3,
+    a: Math.random(),
+    spd: Math.random() * 0.003 + 0.001,
+  }));
+
+  function drawStars() {
+    if (document.getElementById('game-show').style.display !== 'block') return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      s.a += s.spd;
+      const alpha = (Math.sin(s.a) + 1) / 2 * 0.7;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,220,255,${alpha})`;
+      ctx.fill();
+    });
+    if (gsState) requestAnimationFrame(drawStars);
+  }
+  drawStars();
+}
+
+setInterval(pollGameEvents, 300);
+
+// --- Shared helpers ---
+function hexRgb(hex) {
+  const h = hex.replace('#','');
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+}
+function rgbStr(hex, alpha) {
+  const [r,g,b] = hexRgb(hex);
+  return alpha !== undefined ? `rgba(${r},${g},${b},${alpha})` : `rgb(${r},${g},${b})`;
+}
+function currentAmp() {
+  if (!state.speaking || !state.envelope || !state.envelope.length) return null;
+  const elapsed = Date.now()/1000 - state.started_at;
+  if (elapsed < 0 || elapsed > state.duration_s) return null;
+  const idx = Math.floor((elapsed/state.duration_s)*(state.envelope.length-1));
+  return state.envelope[Math.max(0,Math.min(idx,state.envelope.length-1))];
+}
+
+function roundRect(c, x, y, w, h, r) {
+  if (c.roundRect) {
+    c.beginPath();
+    c.roundRect(x, y, w, h, r);
+  } else {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.lineTo(x + w - r, y);
+    c.arcTo(x+w, y, x+w, y+r, r);
+    c.lineTo(x+w, y+h-r);
+    c.arcTo(x+w, y+h, x+w-r, y+h, r);
+    c.lineTo(x+r, y+h);
+    c.arcTo(x, y+h, x, y+h-r, r);
+    c.lineTo(x, y+r);
+    c.arcTo(x, y, x+r, y, r);
+    c.closePath();
+  }
+}
+
+// ===========================================================================
+// STYLE 0 — Triangle Mosaic (original)
+// ===========================================================================
+
+const COLS  = 20;
+const cellW = IW / (COLS/2);
+const cellH = cellW * Math.sqrt(3) / 2;
+const ROWS  = Math.ceil(IH/cellH) + 2;
+const maxD  = Math.sqrt(IW*IW + IH*IH);
+const tris  = [];
+
+(function buildTriGrid() {
+  for (let row=0; row<ROWS; row++) {
+    for (let col=0; col<COLS; col++) {
+      const hw=cellW/2, x0=col*hw, y0=row*cellH;
+      const isUp=(col+row)%2===0;
+      const verts = isUp
+        ? [[x0,y0+cellH],[x0+cellW,y0+cellH],[x0+hw,y0]]
+        : [[x0,y0],[x0+cellW,y0],[x0+hw,y0+cellH]];
+      const cx=(verts[0][0]+verts[1][0]+verts[2][0])/3;
+      const cy=(verts[0][1]+verts[1][1]+verts[2][1])/3;
+      const dx=cx-IW/2, dy=cy-IH/2;
+      const dist=Math.sqrt(dx*dx+dy*dy)/(maxD/2);
+      const seed=Math.sin(col*127.1+row*311.7)*43758.5453;
+      const phase=(seed-Math.floor(seed))*Math.PI*2;
+      tris.push({verts,cx,cy,dist,phase,bright:0});
+    }
+  }
+})();
+
+let t0 = 0;
+
+function drawTriangles() {
+  t0 += 0.022;
+  const listening=!!state.listening, thinking=!!state.thinking;
+  const amp=currentAmp(), speaking=amp!==null;
+
+  ctx.fillStyle = listening ? COL1 : thinking ? COL2 : BG;
+  ctx.fillRect(0,0,IW,IH);
+
+  for (let i=0; i<tris.length; i++) {
+    const {cx,cy,dist,phase,verts}=tris[i];
+    let target;
+    if (listening)      target=0.15+0.3*Math.abs(Math.sin((1-dist)*Math.PI*3-t0*2.2+phase*0.15));
+    else if (thinking)  target=0.05+0.45*Math.pow(Math.max(0,Math.sin(t0*2.8+phase)),4);
+    else if (speaking)  target=Math.max(0.05,Math.min(1,amp*(0.4+0.6*Math.sin(dist*Math.PI*6-t0*3.5+phase*0.1))*(1-dist*0.25)));
+    else                target=0.05+0.25*Math.abs(Math.sin((cx/IW+cy/IH)*Math.PI*1.8-t0*0.9+phase));
+
+    tris[i].bright += (target-tris[i].bright)*0.15;
+    const b=Math.max(0,Math.min(1,tris[i].bright));
+    if (b<0.02) continue;
+
+    let fill;
+    if (listening||thinking) {
+      const rgb=hexRgb(listening?BG:COL1);
+      fill=`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${(b*0.9).toFixed(3)})`;
+    } else if (speaking) {
+      const base=[BG,COL1,COL2][(i+Math.floor(t0*2))%3];
+      fill=rgbStr(base,b);
+    } else {
+      fill=rgbStr(i%2===0?COL1:COL2,b*0.85);
+    }
+    if (speaking&&b>0.5){ctx.shadowColor=fill;ctx.shadowBlur=b*14;}
+    else ctx.shadowBlur=0;
+    ctx.fillStyle=fill;
+    ctx.beginPath();
+    ctx.moveTo(verts[0][0],verts[0][1]);
+    ctx.lineTo(verts[1][0],verts[1][1]);
+    ctx.lineTo(verts[2][0],verts[2][1]);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.shadowBlur=0;
+}
+
+// ===========================================================================
+// Shared HAL eye state — used by drawHALTerminal() below
+// ===========================================================================
+
+let halAngle = 0;
+let halPulse = 0;
+let halGlow  = 0;
+
+// ===========================================================================
+// STYLE 1 — H9000 Terminal (full-screen scrolling log + HAL eye on top)
+// ===========================================================================
+const termLines = [];
+const MAX_TERM_LINES = 200;
+let termOffset = 0;       // continuous scroll offset in pixels
+let termLastSeen = '';
+
+function termPush(line) {
+  const clean = line.replace(/\[[0-9;]*m/g, '').trimEnd();
+  if (!clean) return;
+  termLines.push({ text: clean, id: Math.random() });
+}
+
+async function termFetchLog() {
+  try {
+    const r = await fetch('/log-tail?n=60');
+    if (!r.ok) return;
+    const raw = await r.text();
+    const lines = raw.split('\n');
+    // Find where we left off
+    const lastIdx = lines.lastIndexOf(termLastSeen);
+    const newLines = lastIdx >= 0 ? lines.slice(lastIdx+1) : lines.slice(-8);
+    newLines.filter(l => l.trim()).forEach(l => termPush(l));
+    const last = lines.filter(l=>l.trim()).slice(-1)[0];
+    if (last) termLastSeen = last;
+    // Keep buffer bounded
+    while (termLines.length > MAX_TERM_LINES) termLines.shift();
+  } catch(e) {}
+}
+setInterval(termFetchLog, 600);
+
+// Seed
+['Q2 SUBSYSTEM ONLINE','NEURAL STACK INITIALISED',
+ 'MEMORY MANAGER READY','CHROMADB CONNECTED',
+ 'TOOL REGISTRY LOADED','VOICE PIPELINE ACTIVE',
+ 'FORZA TELEMETRY LISTENER BOUND','AWAITING INPUT...']
+.forEach(l => termPush(l));
+
+const TERM_FONT_SIZE = 11;
+const TERM_LINE_H    = 15;
+const TERM_COLS      = 110; // chars per line — wide enough to fill 720px canvas
+const TERM_PAD_L     = 12;
+const TERM_SCROLL_SPEED = 0.4; // px per frame
+
+function drawHALTerminal() {
+  halAngle += 0.008;
+  const listening=!!state.listening, thinking=!!state.thinking;
+  const amp=currentAmp(), speaking=amp!==null;
+
+  let coreSize=0.13, glowTarget=0.5, ringSpeed=1, eyeColour=COL1;
+  if (listening)     { glowTarget=0.9; ringSpeed=2.5; coreSize=0.17; }
+  else if (thinking) { glowTarget=0.6; ringSpeed=0.5; eyeColour=COL2; }
+  else if (speaking) { glowTarget=0.4+(amp||0)*0.5; ringSpeed=1.5+(amp||0)*2; }
+  halGlow  += (glowTarget - halGlow) * 0.08;
+  halPulse  = speaking ? (amp||0) : (0.5+0.5*Math.sin(Date.now()/1400));
+
+  const cx=IW/2, cy=IH/2;
+  const R = Math.min(IW,IH)*0.38;
+
+  // === BACKGROUND ===
+  ctx.fillStyle = '#00080a';
+  ctx.fillRect(0,0,IW,IH);
+
+  // === TERMINAL TEXT — full canvas scroll ===
+  ctx.font = `${TERM_FONT_SIZE}px "Courier New",monospace`;
+  ctx.textBaseline = 'top';
+
+  // How many lines fill the screen plus buffer
+  const visCount = Math.ceil(IH / TERM_LINE_H) + 4;
+  const totalLines = termLines.length;
+
+  // Auto-scroll — advance offset each frame
+  termOffset += TERM_SCROLL_SPEED;
+  // Total height of all content
+  const contentH = totalLines * TERM_LINE_H;
+  // Once we've scrolled past all content, loop
+  if (termOffset > contentH) termOffset = 0;
+
+  // Draw lines that are currently visible
+  const firstLineIdx = Math.floor(termOffset / TERM_LINE_H);
+  const pixelOffset  = termOffset % TERM_LINE_H;
+
+  for (let i = 0; i <= visCount; i++) {
+    const lineIdx = (firstLineIdx + i) % Math.max(1, totalLines);
+    const line = termLines[lineIdx];
+    if (!line) continue;
+    const y = i * TERM_LINE_H - pixelOffset;
+    if (y > IH + TERM_LINE_H) continue;
+
+    // Colour coding
+    const t = line.text;
+    let r=0, g=200, b=100, a=0.45; // default green
+    if (t.includes('ERROR') || t.includes('error'))   { r=255;g=60; b=60;  a=0.7; }
+    else if (t.includes('WARNING') || t.includes('WARN')) { r=255;g=180;b=0;   a=0.65; }
+    else if (t.includes('[INFO]'))                     { r=0;  g=210;b=120; a=0.4;  }
+    else if (t.includes('Tool call') || t.includes('Tool result')) { r=255;g=60; b=60; a=0.6; }
+    else if (t.includes('HTTP Request'))               { r=0;  g=180;b=255; a=0.35; }
+    else if (t.startsWith('Q2') || t.startsWith('2026'))       { r=0;  g=200;b=120; a=0.38; }
+
+    ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
+    // Measure and tile to fill canvas width
+    ctx.font = `${TERM_FONT_SIZE}px "Courier New",monospace`;
+    const lineW = ctx.measureText(t).width;
+    if (lineW < 1) return;
+    let tx = TERM_PAD_L;
+    while (tx < IW + lineW) {
+      ctx.fillText(t, tx, y);
+      tx += lineW + 28;
+    }
+  }
+
+  // Scanline overlay — tight, subtle
+  for (let sy=0; sy<IH; sy+=3) {
+    ctx.fillStyle='rgba(0,0,0,0.12)';
+    ctx.fillRect(0,sy,IW,1);
+  }
+
+  // Vignette — dark edges, bright centre helps eye pop
+  const vig = ctx.createRadialGradient(cx,cy,R*0.5,cx,cy,IW*0.9);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(0,0,0,0.75)');
+  ctx.fillStyle=vig; ctx.fillRect(0,0,IW,IH);
+
+  // === HAL EYE — drawn on top ===
+  const grad = ctx.createRadialGradient(cx,cy,R*0.85,cx,cy,R);
+  grad.addColorStop(0,'rgba(20,20,28,0.97)');
+  grad.addColorStop(1,'rgba(5,5,10,0.97)');
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.fillStyle=grad; ctx.fill();
+
+  for (let r2=0; r2<7; r2++) {
+    const radius=R*(0.75-r2*0.07), dir=r2%2===0?1:-1, alpha=0.15+r2*0.04;
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,Math.PI*2);
+    ctx.strokeStyle=rgbStr(eyeColour,alpha); ctx.lineWidth=1.5+r2*0.3; ctx.stroke();
+    const numTicks=12+r2*4;
+    for (let t2=0; t2<numTicks; t2++) {
+      const angle=(t2/numTicks)*Math.PI*2+halAngle*ringSpeed*dir*(r2+1)*0.15;
+      const x1=cx+Math.cos(angle)*radius, y1=cy+Math.sin(angle)*radius;
+      const x2=cx+Math.cos(angle)*(radius-6), y2=cy+Math.sin(angle)*(radius-6);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle=rgbStr(eyeColour,0.25+halPulse*0.15); ctx.lineWidth=1; ctx.stroke();
+    }
+  }
+
+  const irisR=R*0.38;
+  const irisGrad=ctx.createRadialGradient(cx,cy,irisR*0.6,cx,cy,irisR);
+  irisGrad.addColorStop(0,rgbStr(eyeColour,0.15));
+  irisGrad.addColorStop(1,rgbStr(eyeColour,0.55));
+  ctx.beginPath(); ctx.arc(cx,cy,irisR,0,Math.PI*2);
+  ctx.fillStyle=irisGrad; ctx.fill();
+
+  const coreR=Math.min(IW,IH)*(coreSize+halPulse*0.02);
+  const coreGrad=ctx.createRadialGradient(cx,cy,0,cx,cy,coreR);
+  coreGrad.addColorStop(0,'rgba(255,255,230,1)');
+  coreGrad.addColorStop(0.2,rgbStr(eyeColour,1));
+  coreGrad.addColorStop(0.7,rgbStr(eyeColour,halGlow));
+  coreGrad.addColorStop(1,  rgbStr(eyeColour,0));
+  ctx.beginPath(); ctx.arc(cx,cy,coreR*2.5,0,Math.PI*2);
+  ctx.fillStyle=coreGrad; ctx.fill();
+
+  ctx.beginPath(); ctx.arc(cx-coreR*0.25,cy-coreR*0.25,coreR*0.18,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.fill();
+
+  const haloGrad=ctx.createRadialGradient(cx,cy,R*0.9,cx,cy,R*1.4);
+  haloGrad.addColorStop(0,rgbStr(eyeColour,halGlow*0.4));
+  haloGrad.addColorStop(1,rgbStr(eyeColour,0));
+  ctx.beginPath(); ctx.arc(cx,cy,R*1.4,0,Math.PI*2);
+  ctx.fillStyle=haloGrad; ctx.fill();
+
+  if (thinking) {
+    const sweep=(Date.now()/2000)%(Math.PI*2);
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(sweep);
+    ctx.strokeStyle=rgbStr(COL2,0.4); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-R*0.9,0); ctx.lineTo(R*0.9,0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-R*0.9); ctx.lineTo(0,R*0.9); ctx.stroke();
+    ctx.restore();
+  }
+
+  // === STATUS BARS ===
+  const now=new Date(), ts=now.toTimeString().slice(0,8);
+  const mode=thinking?'THINKING':listening?'LISTENING':speaking?'SPEAKING':'READY';
+  ctx.font='10px "Courier New",monospace'; ctx.textBaseline='bottom';
+  ctx.fillStyle='rgba(0,200,255,0.55)';
+  ctx.fillText(`Q2 // ${mode} // ${ts} // LINES:${termLines.length}`, TERM_PAD_L, IH-10);
+  ctx.textBaseline='top';
+  ctx.fillStyle='rgba(0,200,255,0.3)';
+  ctx.fillText('H9000 TERMINAL // SHINTECH ELECTRONICS', TERM_PAD_L, 10);
+}
+
+// ===========================================================================
+// STYLE 2 — KITT (Knight Rider speech visualiser: three bars extending up
+// and down from a centre axis). Self-contained — no dependencies on
+// drawHALTerminal() or drawTriangles().
+// ===========================================================================
+
+let kittLitCentre = 2;   // current lit segment count, centre column (0-14)
+let kittLitSide   = 1;   // current lit segment count, side columns (0-9)
+let kittIdleP     = 0;   // idle phase counter
+let kittListenP   = 0;   // listening phase counter
+let kittThinkP    = 0;   // thinking phase counter
+
+// Zone colouring: segments closest to the centre axis are darker orange,
+// the middle band brighter orange, the outermost band bright red — before
+// the tip-brightening override kicks in on the outermost 2 segments.
+function kittCentreZone(i) {
+  if (i <= 4) return '#ff4400';
+  if (i <= 9) return '#ff6600';
+  return '#ff2200';
+}
+function kittSideZone(i) {
+  if (i <= 3) return '#ff4400';
+  if (i <= 6) return '#ff6600';
+  return '#ff2200';
+}
+
+// Draws one column as a stack of pill-shaped segments extending both up
+// and down from cy, lighting `litCount` of them outward from the centre.
+function drawKittColumn(barX, cy, barW, segCount, litCount, zoneColourFn, thinking) {
+  const segH = 19, gap = 5, step = segH + gap, segR = 10;
+  for (let dir = -1; dir <= 1; dir += 2) {
+    for (let i = 0; i < segCount; i++) {
+      const segY = dir < 0 ? cy - (i + 1) * step : cy + i * step;
+      const isLit = i < litCount;
+      const isTip = i >= segCount - 2;
+      let fillColour;
+      if (!isLit) {
+        ctx.shadowBlur = 0;
+        fillColour = thinking ? 'rgba(40,40,60,0.3)' : 'rgba(80,15,0,0.35)';
+      } else if (thinking) {
+        fillColour = '#ffffff';
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 12;
+      } else if (isTip) {
+        fillColour = 'rgba(255,100,30,1.0)';
+        ctx.shadowColor = fillColour;
+        ctx.shadowBlur = 16;
+      } else {
+        fillColour = zoneColourFn(i);
+        ctx.shadowColor = fillColour;
+        ctx.shadowBlur = 8;
+      }
+      ctx.fillStyle = fillColour;
+      ctx.beginPath();
+      roundRect(ctx, barX - barW/2, segY, barW, segH, segR);
+      ctx.fill();
+    }
+  }
+  ctx.shadowBlur = 0;
+}
+
+// --- Telemetry readout helpers (KITT left/right instrument panels) --------
+
+const KITT_AMBER = 'rgba(255,170,0,0.65)';
+const KITT_LABEL = 'rgba(255,170,0,0.35)';
+const KITT_DASH  = 'rgba(255,170,0,0.35)';
+
+function kittFmtLapTime(ms) {
+  if (!ms || ms <= 0) return '--:--.---';
+  const m = Math.floor(ms / 60000);
+  const s = (ms % 60000) / 1000;
+  const secStr = s.toFixed(3);
+  return `${m}:${s < 10 ? '0' + secStr : secStr}`;
+}
+
+function kittTyreTempColour(t) {
+  if (t < 60) return 'rgba(0,160,255,0.8)';
+  if (t <= 110) return 'rgba(0,220,120,0.75)';
+  return 'rgba(255,60,60,0.85)';
+}
+function kittTyreWearColour(w) {
+  if (w > 50) return 'rgba(0,220,120,0.7)';
+  if (w >= 25) return 'rgba(255,170,0,0.75)';
+  return 'rgba(255,60,60,0.85)';
+}
+function kittFuelColour(f) {
+  if (f > 30) return KITT_AMBER;
+  if (f >= 10) return 'rgba(255,170,0,0.9)';
+  return 'rgba(255,60,60,0.9)';
+}
+function kittFlagColour(flag) {
+  if (flag === 'BLUE') return 'rgba(0,160,255,0.9)';
+  if (flag === 'YELLOW') return 'rgba(255,200,0,0.9)';
+  if (flag === 'BLACK') return 'rgba(200,200,200,0.9)';
+  if (flag === 'RED') return 'rgba(255,60,60,0.9)';
+  return KITT_LABEL; // CLEAR / unknown
+}
+
+// Draws one [label] [value] pair on a shared y, label dim+small, value
+// bright+larger, with the label sitting just outside the value on the
+// side away from the bar columns (right-aligned panel: label further
+// left; left-aligned panel: label further right).
+function kittRow(c, x, y, align, label, value, colour) {
+  c.textAlign = align;
+  c.font = '16px "Courier New",monospace';
+  const vw = c.measureText(value).width;
+  const labelX = align === 'right' ? x - vw - 6 : x + vw + 6;
+  if (label) {
+    c.font = '12px "Courier New",monospace';
+    c.fillStyle = KITT_LABEL;
+    c.fillText(label, labelX, y);
+  }
+  c.font = '16px "Courier New",monospace';
+  c.fillStyle = colour;
+  c.fillText(value, x, y);
+}
+
+function drawKittTelemetry(c, cy, telem) {
+  const STEP = 28;
+  // Align the value columns' outer edges with the "NO TELEMETRY" placeholder
+  // text below (same font, same panel midpoints) so live data lines up
+  // exactly where the placeholder sits when no game is running.
+  c.font = '12px "Courier New",monospace';
+  const noTelHalfW = c.measureText('NO TELEMETRY').width / 2;
+  const LX = 120 + noTelHalfW;
+  const RX = 600 - noTelHalfW;
+  try {
+    c.save();
+    c.textBaseline = 'middle';
+
+    if (!telem) {
+      ['SPD','GEAR','RPM','LAP','POS','FUEL','EST'].forEach((label, i) => {
+        kittRow(c, LX, cy - 14 - i*STEP, 'right', label, '--', KITT_DASH);
+      });
+      ['T-FL','T-FR','T-RL','T-RR'].forEach((label, i) => {
+        kittRow(c, LX, cy + 14 + i*STEP, 'right', label, '--C', KITT_DASH);
+      });
+      ['BEST','LAST','CUR','COMP','FLAG'].forEach((label, i) => {
+        kittRow(c, RX, cy - 14 - i*STEP, 'left', label, i < 3 ? '--:--.---' : '--', KITT_DASH);
+      });
+      ['WEAR','','',''].forEach((label, i) => {
+        kittRow(c, RX, cy + 14 + i*STEP, 'left', label, '--', KITT_DASH);
+      });
+
+      c.textAlign = 'center';
+      c.font = '12px "Courier New",monospace';
+      c.fillStyle = 'rgba(255,170,0,0.2)';
+      c.fillText('NO TELEMETRY', 120, cy + 150);
+      c.fillText('NO TELEMETRY', 600, cy + 150);
+      c.restore();
+      return;
+    }
+
+    // --- Left panel: speed / gear / rpm / lap / pos / fuel / tyre temps ---
+    const speed = telem.speed_kmh != null ? Math.round(telem.speed_kmh) + '' : '--';
+    const gear  = telem.gear != null ? (telem.gear === 0 ? 'N' : String(telem.gear)) : '--';
+    const rpm   = telem.rpm != null ? (Math.round(telem.rpm/100)*100) + '' : '--';
+    const lap   = telem.lap != null ? String(telem.lap) : '--';
+    const fuelPct = telem.fuel_pct;
+    const fuel  = fuelPct != null ? Math.round(fuelPct) + '%' : '--';
+    const fuelColour = fuelPct != null ? kittFuelColour(fuelPct) : KITT_DASH;
+    const est   = telem.fuel_laps != null ? telem.fuel_laps.toFixed(1) : '--';
+    const posColour = telem.is_in_pit ? 'rgba(0,220,120,0.9)' : KITT_AMBER;
+    const posValue  = telem.is_in_pit ? 'PIT' : (telem.position != null ? 'P'+telem.position : '--');
+
+    kittRow(c, LX, cy - 14 - 0*STEP, 'right', 'SPD',  speed, KITT_AMBER);
+    kittRow(c, LX, cy - 14 - 1*STEP, 'right', 'GEAR', gear,  KITT_AMBER);
+    kittRow(c, LX, cy - 14 - 2*STEP, 'right', 'RPM',  rpm,   KITT_AMBER);
+    kittRow(c, LX, cy - 14 - 3*STEP, 'right', 'LAP',  lap,   KITT_AMBER);
+    kittRow(c, LX, cy - 14 - 4*STEP, 'right', 'POS',  posValue, posColour);
+    kittRow(c, LX, cy - 14 - 5*STEP, 'right', 'FUEL', fuel,  fuelColour);
+    kittRow(c, LX, cy - 14 - 6*STEP, 'right', 'EST',  est,   KITT_AMBER);
+
+    const tyreTemps  = [telem.tyre_temp_fl, telem.tyre_temp_fr, telem.tyre_temp_rl, telem.tyre_temp_rr];
+    const tyreLabels = ['T-FL','T-FR','T-RL','T-RR'];
+    tyreTemps.forEach((t, i) => {
+      const val = t != null ? Math.round(t) + 'C' : '--C';
+      const colour = t != null ? kittTyreTempColour(t) : KITT_DASH;
+      kittRow(c, LX, cy + 14 + i*STEP, 'right', tyreLabels[i], val, colour);
+    });
+
+    // --- Right panel: lap times / compound / flag / tyre wear ---
+    kittRow(c, RX, cy - 14 - 0*STEP, 'left', 'BEST', kittFmtLapTime(telem.best_lap_ms), KITT_AMBER);
+    kittRow(c, RX, cy - 14 - 1*STEP, 'left', 'LAST', kittFmtLapTime(telem.last_lap_ms), KITT_AMBER);
+    kittRow(c, RX, cy - 14 - 2*STEP, 'left', 'CUR',  kittFmtLapTime(telem.current_lap_ms), KITT_AMBER);
+
+    const compound = telem.compound ? telem.compound.slice(0,4).toUpperCase() : '--';
+    kittRow(c, RX, cy - 14 - 3*STEP, 'left', 'COMP', compound, KITT_AMBER);
+
+    const flagRaw = telem.flag;
+    const flag = (!flagRaw || flagRaw === 'None') ? 'CLEAR' : flagRaw.toUpperCase();
+    kittRow(c, RX, cy - 14 - 4*STEP, 'left', 'FLAG', flag, kittFlagColour(flag));
+
+    const wearVals = [telem.tyre_wear_fl, telem.tyre_wear_fr, telem.tyre_wear_rl, telem.tyre_wear_rr];
+    const wearTags = ['W-FL','W-FR','W-RL','W-RR'];
+    wearVals.forEach((w, i) => {
+      const val = w != null ? `${wearTags[i]} ${Math.round(w)}%` : '--';
+      const colour = w != null ? kittTyreWearColour(w) : KITT_DASH;
+      kittRow(c, RX, cy + 14 + i*STEP, 'left', i === 0 ? 'WEAR' : '', val, colour);
+    });
+
+    c.textAlign = 'center';
+    c.restore();
+  } catch (e) {
+    c.restore();
+  }
+}
+
+function drawKittRpmBar(c, cy, telem) {
+  try {
+    if (!telem || telem.rpm == null || !telem.rpm_max) return;
+    const x0 = 20, x1 = 236, y = cy - 210, h = 6, w = x1 - x0;
+    c.save();
+    c.fillStyle = 'rgba(80,15,0,0.4)';
+    c.fillRect(x0, y, w, h);
+    const pct = Math.max(0, Math.min(1, telem.rpm / telem.rpm_max));
+    let colour;
+    if (pct < 0.7) colour = 'rgba(0,220,120,0.7)';
+    else if (pct < 0.9) colour = 'rgba(255,170,0,0.8)';
+    else colour = 'rgba(255,60,60,0.9)';
+    c.fillStyle = colour;
+    c.fillRect(x0, y, w*pct, h);
+    c.restore();
+  } catch (e) {}
+}
+
+function drawKITT() {
+  const listening=!!state.listening, thinking=!!state.thinking;
+  const amp=currentAmp(), speaking=amp!==null;
+  const cx=IW/2, cy=IH/2;
+
+  // === Background + CRT scanlines ===
+  ctx.fillStyle = '#050505';
+  ctx.fillRect(0,0,IW,IH);
+  for (let sy=0; sy<IH; sy+=3) {
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillRect(0,sy,IW,1);
+  }
+
+  // === Telemetry instrument panels (drawn before the bars so bar glow
+  // overlays the text slightly for depth) ===
+  drawKittTelemetry(ctx, cy, kittTelemetry);
+  drawKittRpmBar(ctx, cy, kittTelemetry);
+
+  // === Lit segment counts per state ===
+  if (thinking) {
+    kittThinkP += 0.02;
+    const centreExtra = Math.round(2*Math.abs(Math.sin(kittThinkP)));
+    const sideExtra   = Math.round(1*Math.abs(Math.sin(kittThinkP+0.7)));
+    kittLitCentre = 8 + centreExtra;
+    kittLitSide   = 5 + sideExtra;
+  } else if (listening) {
+    kittListenP += 0.08;
+    kittLitCentre = 4 + Math.round(5*Math.abs(Math.sin(kittListenP)));
+    kittLitSide   = 3 + Math.round(3*Math.abs(Math.sin(kittListenP+0.6)));
+  } else if (speaking) {
+    const a = amp || 0;
+    const targetCentre = Math.round(a*14);
+    const targetSide   = Math.round(a*9);
+    kittLitCentre += (targetCentre - kittLitCentre) * 0.4;
+    kittLitSide   += (targetSide   - kittLitSide)   * 0.4;
+    kittLitCentre = Math.max(1, kittLitCentre);
+    kittLitSide   = Math.max(1, kittLitSide);
+  } else {
+    kittIdleP += 0.025;
+    kittLitCentre = 2 + Math.round(1*Math.abs(Math.sin(kittIdleP)));
+    kittLitSide   = 1 + Math.round(1*Math.abs(Math.sin(kittIdleP+0.4)));
+  }
+
+  const litCentreCount = Math.min(14, Math.max(0, Math.round(kittLitCentre)));
+  const litSideCount   = Math.min(9,  Math.max(0, Math.round(kittLitSide)));
+
+  // === The three segmented columns ===
+  const barW = 64, gap = 44;
+  drawKittColumn(cx-(barW+gap), cy, barW, 9,  litSideCount,   kittSideZone,   thinking);
+  drawKittColumn(cx,            cy, barW, 14, litCentreCount, kittCentreZone, thinking);
+  drawKittColumn(cx+(barW+gap), cy, barW, 9,  litSideCount,   kittSideZone,   thinking);
+
+  // === Labels ===
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  ctx.font = '14px "Courier New",monospace';
+  ctx.fillStyle = 'rgba(255,170,0,0.4)';
+  ctx.fillText('K N I G H T   I N D U S T R I E S   T W O   T H O U S A N D', cx, 92);
+
+  let stateText;
+  if (thinking) stateText = 'PROCESSING';
+  else if (listening) stateText = 'LISTENING';
+  else if (speaking) stateText = 'SPEAKING';
+  else stateText = 'READY';
+
+  ctx.font = '17px "Courier New",monospace';
+  ctx.fillStyle = thinking ? 'rgba(255,255,255,0.85)' : 'rgba(255,170,0,0.7)';
+  ctx.fillText(stateText, cx, 120);
+
+  ctx.font = '14px "Courier New",monospace';
+  ctx.fillStyle = 'rgba(255,60,0,0.3)';
+  ctx.fillText('KITT  v1', cx, IH-55);
+}
+
+// ===========================================================================
+// STYLE 3 — KITT Hi-Con (high-contrast KITT variant for Quest 3, low-res
+// displays, and bright environments). Same bar sizing/positions/segment
+// counts as drawKITT() — only colours change. A deliberate colour-modified
+// COPY of drawKITT() rather than a parameterised version of it (per design
+// note: easier to maintain, and the two share NO state variables so tuning
+// one animation curve can never bleed into the other).
+// ===========================================================================
+
+let kittHCLitCentre = 2;
+let kittHCLitSide   = 1;
+let kittHCIdleP     = 0;
+let kittHCListenP   = 0;
+let kittHCThinkP    = 0;
+
+const KITT_HC_VALUE = '#ffffff';
+const KITT_HC_LABEL = 'rgba(180,180,180,0.9)';
+
+function kittTyreTempColourHiCon(t) {
+  if (t < 60) return '#4488ff';
+  if (t <= 110) return '#00ff88';
+  return '#ff4444';
+}
+function kittTyreWearColourHiCon(w) {
+  if (w > 50) return '#ffffff';
+  if (w >= 25) return '#ffdd00';
+  return '#ff4444';
+}
+function kittFuelColourHiCon(f) {
+  if (f > 30) return '#ffffff';
+  if (f >= 10) return '#ffdd00';
+  return '#ff4444';
+}
+
+// Same shape as drawKittColumn(), but the lit-segment colour comes from
+// the current app state (thinking=green, listening=blue, speaking=white,
+// idle=grey) rather than from bar-position "zones" — Hi-Con deliberately
+// drops the amber/red zone banding in favour of one clear colour per state.
+function drawKittColumnHiCon(barX, cy, barW, segCount, litCount, appState) {
+  const segH = 19, gap = 5, step = segH + gap, segR = 10;
+  for (let dir = -1; dir <= 1; dir += 2) {
+    for (let i = 0; i < segCount; i++) {
+      const segY = dir < 0 ? cy - (i + 1) * step : cy + i * step;
+      const isLit = i < litCount;
+      const isTip = i >= segCount - 2;
+      let fillColour;
+      if (!isLit) {
+        ctx.shadowBlur = 0;
+        fillColour = 'rgba(60,60,60,0.5)';
+      } else if (appState.mode === 'thinking') {
+        fillColour = '#00ff88';
+        ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 20;
+      } else if (appState.mode === 'listening') {
+        fillColour = '#4488ff';
+        ctx.shadowColor = '#4488ff'; ctx.shadowBlur = 20;
+      } else if (appState.mode === 'speaking') {
+        fillColour = '#ffffff';
+        ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 20 + (appState.amp||0)*20;
+      } else if (isTip) {
+        fillColour = 'rgba(255,255,255,0.9)';
+        ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 20;
+      } else {
+        fillColour = 'rgba(180,180,180,0.8)';
+        ctx.shadowBlur = 0;
+      }
+      ctx.fillStyle = fillColour;
+      ctx.beginPath();
+      roundRect(ctx, barX - barW/2, segY, barW, segH, segR);
+      ctx.fill();
+    }
+  }
+  ctx.shadowBlur = 0;
+}
+
+function kittRowHiCon(c, x, y, align, label, value, colour) {
+  c.textAlign = align;
+  c.font = '16px "Courier New",monospace';
+  const vw = c.measureText(value).width;
+  const labelX = align === 'right' ? x - vw - 6 : x + vw + 6;
+  if (label) {
+    c.font = '12px "Courier New",monospace';
+    c.fillStyle = KITT_HC_LABEL;
+    c.fillText(label, labelX, y);
+  }
+  c.font = '16px "Courier New",monospace';
+  c.fillStyle = colour;
+  c.fillText(value, x, y);
+}
+
+function drawKittTelemetryHiCon(c, cy, telem) {
+  const STEP = 28;
+  c.font = '12px "Courier New",monospace';
+  const noTelHalfW = c.measureText('NO TELEMETRY').width / 2;
+  const LX = 120 + noTelHalfW;
+  const RX = 600 - noTelHalfW;
+  try {
+    c.save();
+    c.textBaseline = 'middle';
+
+    if (!telem) {
+      ['SPD','GEAR','RPM','LAP','POS','FUEL','EST'].forEach((label, i) => {
+        kittRowHiCon(c, LX, cy - 14 - i*STEP, 'right', label, '--', KITT_HC_LABEL);
+      });
+      ['T-FL','T-FR','T-RL','T-RR'].forEach((label, i) => {
+        kittRowHiCon(c, LX, cy + 14 + i*STEP, 'right', label, '--C', KITT_HC_LABEL);
+      });
+      ['BEST','LAST','CUR','COMP','FLAG'].forEach((label, i) => {
+        kittRowHiCon(c, RX, cy - 14 - i*STEP, 'left', label, i < 3 ? '--:--.---' : '--', KITT_HC_LABEL);
+      });
+      ['WEAR','','',''].forEach((label, i) => {
+        kittRowHiCon(c, RX, cy + 14 + i*STEP, 'left', label, '--', KITT_HC_LABEL);
+      });
+
+      c.textAlign = 'center';
+      c.font = '12px "Courier New",monospace';
+      c.fillStyle = 'rgba(180,180,180,0.3)';
+      c.fillText('NO TELEMETRY', 120, cy + 150);
+      c.fillText('NO TELEMETRY', 600, cy + 150);
+      c.restore();
+      return;
+    }
+
+    const speed = telem.speed_kmh != null ? Math.round(telem.speed_kmh) + '' : '--';
+    const gear  = telem.gear != null ? (telem.gear === 0 ? 'N' : String(telem.gear)) : '--';
+    const rpm   = telem.rpm != null ? (Math.round(telem.rpm/100)*100) + '' : '--';
+    const lap   = telem.lap != null ? String(telem.lap) : '--';
+    const fuelPct = telem.fuel_pct;
+    const fuel  = fuelPct != null ? Math.round(fuelPct) + '%' : '--';
+    const fuelColour = fuelPct != null ? kittFuelColourHiCon(fuelPct) : KITT_HC_LABEL;
+    const est   = telem.fuel_laps != null ? telem.fuel_laps.toFixed(1) : '--';
+    const posColour = telem.is_in_pit ? '#00ff88' : KITT_HC_VALUE;
+    const posValue  = telem.is_in_pit ? 'PIT' : (telem.position != null ? 'P'+telem.position : '--');
+
+    kittRowHiCon(c, LX, cy - 14 - 0*STEP, 'right', 'SPD',  speed, KITT_HC_VALUE);
+    kittRowHiCon(c, LX, cy - 14 - 1*STEP, 'right', 'GEAR', gear,  KITT_HC_VALUE);
+    kittRowHiCon(c, LX, cy - 14 - 2*STEP, 'right', 'RPM',  rpm,   KITT_HC_VALUE);
+    kittRowHiCon(c, LX, cy - 14 - 3*STEP, 'right', 'LAP',  lap,   KITT_HC_VALUE);
+    kittRowHiCon(c, LX, cy - 14 - 4*STEP, 'right', 'POS',  posValue, posColour);
+    kittRowHiCon(c, LX, cy - 14 - 5*STEP, 'right', 'FUEL', fuel,  fuelColour);
+    kittRowHiCon(c, LX, cy - 14 - 6*STEP, 'right', 'EST',  est,   KITT_HC_VALUE);
+
+    const tyreTemps  = [telem.tyre_temp_fl, telem.tyre_temp_fr, telem.tyre_temp_rl, telem.tyre_temp_rr];
+    const tyreLabels = ['T-FL','T-FR','T-RL','T-RR'];
+    tyreTemps.forEach((t, i) => {
+      const val = t != null ? Math.round(t) + 'C' : '--C';
+      const colour = t != null ? kittTyreTempColourHiCon(t) : KITT_HC_LABEL;
+      kittRowHiCon(c, LX, cy + 14 + i*STEP, 'right', tyreLabels[i], val, colour);
+    });
+
+    kittRowHiCon(c, RX, cy - 14 - 0*STEP, 'left', 'BEST', kittFmtLapTime(telem.best_lap_ms), KITT_HC_VALUE);
+    kittRowHiCon(c, RX, cy - 14 - 1*STEP, 'left', 'LAST', kittFmtLapTime(telem.last_lap_ms), KITT_HC_VALUE);
+    kittRowHiCon(c, RX, cy - 14 - 2*STEP, 'left', 'CUR',  kittFmtLapTime(telem.current_lap_ms), KITT_HC_VALUE);
+
+    const compound = telem.compound ? telem.compound.slice(0,4).toUpperCase() : '--';
+    kittRowHiCon(c, RX, cy - 14 - 3*STEP, 'left', 'COMP', compound, KITT_HC_VALUE);
+
+    const flagRaw = telem.flag;
+    const flag = (!flagRaw || flagRaw === 'None') ? 'CLEAR' : flagRaw.toUpperCase();
+    kittRowHiCon(c, RX, cy - 14 - 4*STEP, 'left', 'FLAG', flag, kittFlagColour(flag));
+
+    const wearVals = [telem.tyre_wear_fl, telem.tyre_wear_fr, telem.tyre_wear_rl, telem.tyre_wear_rr];
+    const wearTags = ['W-FL','W-FR','W-RL','W-RR'];
+    wearVals.forEach((w, i) => {
+      const val = w != null ? `${wearTags[i]} ${Math.round(w)}%` : '--';
+      const colour = w != null ? kittTyreWearColourHiCon(w) : KITT_HC_LABEL;
+      kittRowHiCon(c, RX, cy + 14 + i*STEP, 'left', i === 0 ? 'WEAR' : '', val, colour);
+    });
+
+    c.textAlign = 'center';
+    c.restore();
+  } catch (e) {
+    c.restore();
+  }
+}
+
+function drawKittRpmBarHiCon(c, cy, telem) {
+  try {
+    if (!telem || telem.rpm == null || !telem.rpm_max) return;
+    const x0 = 20, x1 = 236, y = cy - 210, h = 6, w = x1 - x0;
+    c.save();
+    c.fillStyle = 'rgba(60,60,60,0.5)';
+    c.fillRect(x0, y, w, h);
+    const pct = Math.max(0, Math.min(1, telem.rpm / telem.rpm_max));
+    let colour;
+    if (pct < 0.7) colour = '#00ff88';
+    else if (pct < 0.9) colour = '#ffdd00';
+    else colour = '#ff4444';
+    c.fillStyle = colour;
+    c.fillRect(x0, y, w*pct, h);
+    c.restore();
+  } catch (e) {}
+}
+
+function drawKITTHiCon() {
+  const listening=!!state.listening, thinking=!!state.thinking;
+  const amp=currentAmp(), speaking=amp!==null;
+  const cx=IW/2, cy=IH/2;
+
+  // === Background + CRT scanlines — pure black for maximum contrast ===
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0,0,IW,IH);
+  for (let sy=0; sy<IH; sy+=3) {
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillRect(0,sy,IW,1);
+  }
+
+  drawKittTelemetryHiCon(ctx, cy, kittTelemetry);
+  drawKittRpmBarHiCon(ctx, cy, kittTelemetry);
+
+  // === Lit segment counts per state — identical curves to drawKITT(),
+  // just tracked in kittHC* variables so the two styles never interfere ===
+  if (thinking) {
+    kittHCThinkP += 0.02;
+    const centreExtra = Math.round(2*Math.abs(Math.sin(kittHCThinkP)));
+    const sideExtra   = Math.round(1*Math.abs(Math.sin(kittHCThinkP+0.7)));
+    kittHCLitCentre = 8 + centreExtra;
+    kittHCLitSide   = 5 + sideExtra;
+  } else if (listening) {
+    kittHCListenP += 0.08;
+    kittHCLitCentre = 4 + Math.round(5*Math.abs(Math.sin(kittHCListenP)));
+    kittHCLitSide   = 3 + Math.round(3*Math.abs(Math.sin(kittHCListenP+0.6)));
+  } else if (speaking) {
+    const a = amp || 0;
+    const targetCentre = Math.round(a*14);
+    const targetSide   = Math.round(a*9);
+    kittHCLitCentre += (targetCentre - kittHCLitCentre) * 0.4;
+    kittHCLitSide   += (targetSide   - kittHCLitSide)   * 0.4;
+    kittHCLitCentre = Math.max(1, kittHCLitCentre);
+    kittHCLitSide   = Math.max(1, kittHCLitSide);
+  } else {
+    kittHCIdleP += 0.025;
+    kittHCLitCentre = 2 + Math.round(1*Math.abs(Math.sin(kittHCIdleP)));
+    kittHCLitSide   = 1 + Math.round(1*Math.abs(Math.sin(kittHCIdleP+0.4)));
+  }
+
+  const litCentreCount = Math.min(14, Math.max(0, Math.round(kittHCLitCentre)));
+  const litSideCount   = Math.min(9,  Math.max(0, Math.round(kittHCLitSide)));
+
+  const appState = thinking ? {mode:'thinking'} : listening ? {mode:'listening'} : speaking ? {mode:'speaking', amp} : {mode:'idle'};
+
+  // === The three segmented columns ===
+  const barW = 64, gap = 44;
+  drawKittColumnHiCon(cx-(barW+gap), cy, barW, 9,  litSideCount,   appState);
+  drawKittColumnHiCon(cx,            cy, barW, 14, litCentreCount, appState);
+  drawKittColumnHiCon(cx+(barW+gap), cy, barW, 9,  litSideCount,   appState);
+
+  // === Labels ===
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  ctx.font = '14px "Courier New",monospace';
+  ctx.fillStyle = 'rgba(200,200,200,0.8)';
+  ctx.fillText('K N I G H T   I N D U S T R I E S   T W O   T H O U S A N D', cx, 92);
+
+  let stateText;
+  if (thinking) stateText = 'PROCESSING';
+  else if (listening) stateText = 'LISTENING';
+  else if (speaking) stateText = 'SPEAKING';
+  else stateText = 'READY';
+
+  ctx.font = '17px "Courier New",monospace';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(stateText, cx, 120);
+
+  ctx.font = '14px "Courier New",monospace';
+  ctx.fillStyle = 'rgba(160,160,160,0.7)';
+  ctx.fillText('KITT HI-CON', cx, IH-55);
+}
+
+// ===========================================================================
+// Style initialisation
+// ===========================================================================
+
+function initStyle(s) {
+}
+
+// ===========================================================================
+// Main draw loop
+// ===========================================================================
+
+function draw() {
+  switch(currentStyle) {
+    case 0: drawTriangles();   break;
+    case 1: drawHALTerminal(); break;
+    case 2: drawKITT();        break;
+    case 3: drawKITTHiCon();   break;
+  }
+
+  // Style name overlay — fades out after switch
+  if (styleLabelAlpha > 0.01) {
+    ctx.font='bold 28px monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle=rgbStr(COL2, styleLabelAlpha*0.9);
+    ctx.fillText(STYLE_NAMES[currentStyle], IW/2, 60);
+    styleLabelAlpha *= 0.97;
+  }
+
+  requestAnimationFrame(draw);
+}
+
+// Bootstrap: fetch the real face style from the Pi before the first frame
+// ever renders, so we never draw the localStorage/default style even for
+// one frame. The canvas stays hidden (opacity 0, set above) until this
+// resolves either way.
+fetch('/state')
+  .then(r => r.json())
+  .then(s => {
+    if (s && s.face_style !== undefined) {
+      currentStyle = s.face_style;
+      _lastFaceStyle = currentStyle;
+      localStorage.setItem('q2-face-style', currentStyle);
+    }
+    initStyle(currentStyle);
+    showStyleLabel();
+    requestAnimationFrame(draw);
+    canvas.style.opacity = '1';
+  })
+  .catch(() => {
+    // Face server not reachable yet -- fall back to localStorage/default
+    // rather than leaving the kiosk display blank.
+    initStyle(currentStyle);
+    showStyleLabel();
+    requestAnimationFrame(draw);
+    canvas.style.opacity = '1';
+  });
+</script>
+</body>
+</html>

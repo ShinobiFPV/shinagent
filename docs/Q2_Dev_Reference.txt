@@ -1,0 +1,116 @@
+================================================================================
+  Q2 DEV REFERENCE
+  IMQ2 ("Q2") -- the user's voice-first personal AI companion
+================================================================================
+
+  This is a working reference for running and maintaining Q2 day to day.
+  See CLAUDE.md in the repo root for the full architecture writeup.
+
+
+  SECTION 1 -- SETUP
+
+  -- First-time setup on a new machine --
+
+      cd ~/imq2
+      python3 -m venv .venv
+      source .venv/bin/activate      # Windows: .venv\Scripts\activate
+      pip install -r requirements.txt
+      cp .env.template .env
+      nano .env                      # fill in API keys
+
+  -- Updating an existing install --
+
+      cd ~/imq2
+      git pull
+      source .venv/bin/activate
+      pip install -r requirements.txt
+
+
+  SECTION 2 -- CONFIGURATION
+
+  -- Main config --
+
+      config/config.yaml            All runtime settings (LLM backend,
+                                     voice devices, personality profile,
+                                     tool grants, purchasing, etc). Can be
+                                     edited by hand or through the Settings
+                                     panel while Q2 is running.
+
+  -- Settings panel (recommended over hand-editing config.yaml) --
+
+      Pi kiosk (direct):    http://127.0.0.1:8765/settings.html
+      Phone / webapp proxy: http://<your-pi-ip>:8766/settings
+
+  -- Personality profiles --
+
+      personality/profiles/*.yaml   Agent modes (Q2 Default, Q2 Guest,
+                                     First Officer, Race Engineer). Switch
+                                     via --profile <name> on the command
+                                     line, or Settings > Personality >
+                                     Agent Mode.
+
+  -- LLM backend --
+
+      Set llm.backend in config.yaml, or override per-run with --llm
+      (claude | openai | grok | glm | ollama).
+
+
+  SECTION 3 -- STARTING AND STOPPING Q2
+
+  -- Run in the foreground (development / debugging) --
+
+      python main.py                       # voice mode (default)
+      python main.py --text                # text mode, no mic/speaker needed
+      python main.py --text --profile q2_guest
+      python main.py --text --llm openai
+      python main.py --face                # also starts the kiosk face display
+      python main.py --webapp              # also starts the mobile web app API
+
+      Stop with Ctrl+C.
+
+  -- Caveat --
+
+      A foreground run like this dies the moment your SSH session drops
+      or the terminal closes. For anything left running unattended (which
+      is the normal case for Q2 on your-pi), use tmux -- see Section 3b.
+
+
+  SECTION 3b -- TMUX (PERSISTENT Q2 SESSION)
+
+  Using tmux means Q2 keeps running even if your SSH connection drops,
+  and you can reconnect to the live terminal from any PowerShell window.
+
+  -- Start Q2 in tmux (recommended) --
+
+      bash scripts/q2_start.sh              # voice + face (default)
+      bash scripts/q2_start.sh --text       # text mode
+      bash scripts/q2_start.sh --face --llm glm   # specific backend
+
+  -- Attach to Q2's live terminal --
+
+      bash scripts/q2_attach.sh
+      OR
+      tmux attach -t q2
+
+  -- Detach without stopping Q2 --
+
+      Press Ctrl+B then D
+      (Q2 keeps running in the background)
+
+  -- Check if Q2 is running --
+
+      bash scripts/q2_status.sh
+
+  -- Stop Q2 --
+
+      bash scripts/q2_stop.sh
+
+  -- List all tmux sessions --
+
+      tmux ls
+
+  -- tmux keyboard shortcuts (while attached) --
+
+      Ctrl+B then D     Detach (leave Q2 running)
+      Ctrl+B then [     Scroll mode (use arrow keys, q to exit)
+      Ctrl+B then ?     Show all shortcuts

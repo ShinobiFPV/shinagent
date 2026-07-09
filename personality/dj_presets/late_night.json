@@ -1,0 +1,89 @@
+{
+  "theme": "3AM: Music for the Hours That Don't Count",
+  "description": "Bristol trip-hop and its closest neighbours -- five tracks built for the hours when nobody's keeping score.",
+  "mood_arc": "Stays low and unhurried throughout -- this is a set that sits in one mood rather than building anywhere, deliberately.",
+  "dj_style": "back_announce",
+  "total_time": 28,
+  "tracks": [
+    {
+      "title": "Teardrop",
+      "artist": "Massive Attack",
+      "album": "Mezzanine",
+      "year": 1998,
+      "duration_s": 331,
+      "youtube_query": "Massive Attack Teardrop official video",
+      "pre_announce": "We're opening with the record most people associate with 3am even if they don't know its name -- it's been used as a TV theme so often it's become shorthand for this whole mood.",
+      "back_announce": "That's Massive Attack -- Teardrop, from Mezzanine. The vocal is Elizabeth Fraser of the Cocteau Twins. The story that circulates around this song -- reportedly true, though details vary by account -- is that Jeff Buckley had been approached about singing on it before his death in 1997, and Fraser's vocal take came together in the aftermath of that loss. It later became internationally recognisable as the theme song for the TV show House.",
+      "mid_song_note": "",
+      "connection_to_next": "Massive Attack didn't build this sound alone -- Bristol in the early-to-mid 90s had a whole small scene doing something similar. This next one is arguably the genre's high-water mark.",
+      "facts": [
+        "Teardrop became widely known outside music circles as the theme song for the TV series House.",
+        "Elizabeth Fraser, the vocalist, was previously the singer of Cocteau Twins."
+      ]
+    },
+    {
+      "title": "Roads",
+      "artist": "Portishead",
+      "album": "Dummy",
+      "year": 1994,
+      "duration_s": 302,
+      "youtube_query": "Portishead Roads official audio",
+      "pre_announce": "Portishead were the other pillar of the Bristol sound, and Dummy is the album that made 'trip-hop' a real genre name rather than a joke journalists made up.",
+      "back_announce": "Roads, from Dummy. Beth Gibbons' vocal here is about as bleak as the genre gets. Dummy won the Mercury Prize in 1995 -- serious recognition for a record built largely from samples, turntable scratches, and a genuinely haunted-sounding vocal.",
+      "mid_song_note": "",
+      "connection_to_next": "Portishead and the next artist on this set were both part of the same small Bristol circle in the early 90s -- and there's a much more direct link between them than just geography: they share an actual sample.",
+      "facts": [
+        "Dummy won the Mercury Music Prize in 1995.",
+        "Portishead named themselves after the town of Portishead, near Bristol, where founding member Geoff Barrow grew up."
+      ]
+    },
+    {
+      "title": "Hell Is Around the Corner",
+      "artist": "Tricky",
+      "album": "Maxinquaye",
+      "year": 1995,
+      "duration_s": 299,
+      "youtube_query": "Tricky Hell Is Around the Corner official audio",
+      "pre_announce": "Tricky came up in the same Bristol orbit as Massive Attack -- he was actually a member of the Wild Bunch sound system collective that Massive Attack grew out of, before going solo.",
+      "back_announce": "Hell Is Around the Corner, from Maxinquaye. And here's the direct link I mentioned: this track and Portishead's Glory Box both build around the same sampled guitar figure, from Isaac Hayes' Ike's Rap II -- the same source turning up in two different records from the same small scene within a year of each other.",
+      "mid_song_note": "",
+      "connection_to_next": "That's Bristol's own family tree. To close, one more record from the same mid-90s stretch that shares the mood completely, even though the artist has nothing to do with Bristol at all.",
+      "facts": [
+        "Tricky was an early member of the Wild Bunch sound system, the Bristol collective Massive Attack emerged from.",
+        "Hell Is Around the Corner and Portishead's Glory Box both sample Isaac Hayes' 'Ike's Rap II.'"
+      ]
+    },
+    {
+      "title": "Rabbit in Your Headlights",
+      "artist": "UNKLE feat. Thom Yorke",
+      "album": "Psyence Fiction",
+      "year": 1998,
+      "duration_s": 367,
+      "youtube_query": "UNKLE Rabbit in Your Headlights Thom Yorke official video",
+      "pre_announce": "Not Bristol this time -- UNKLE was DJ Shadow and James Lavelle's project -- but it shares the same nocturnal, cinematic gravity, and the vocal here is one of the more unexpected features of the decade.",
+      "back_announce": "Rabbit in Your Headlights, produced by DJ Shadow with Thom Yorke of Radiohead on vocals. The music video, directed by Jonathan Glazer, is as well remembered as the track itself -- a man walking through motorway traffic, repeatedly struck by passing cars, refusing to stop.",
+      "mid_song_note": "",
+      "connection_to_next": "And to close the set -- one more artist entirely outside this scene, but working the same small hours.",
+      "facts": [
+        "The music video was directed by Jonathan Glazer, later known for the films Under the Skin and Sexy Beast.",
+        "Psyence Fiction (1998) was UNKLE's debut album, built around a rotating cast of guest vocalists."
+      ]
+    },
+    {
+      "title": "Hyperballad",
+      "artist": "Bjork",
+      "album": "Post",
+      "year": 1995,
+      "duration_s": 328,
+      "youtube_query": "Bjork Hyperballad official audio",
+      "pre_announce": "Last one, and a genuine outlier for this set -- Icelandic, not Bristol, not part of that scene at all. But the mood is unmistakably the same 3am register, from the same year as most of what we've played tonight.",
+      "back_announce": "Hyperballad, from Post. Not part of the Bristol lineage this set has mostly followed -- just a record from the same mid-90s moment that ended up in exactly the same emotional territory, which felt like the right way to close things out.",
+      "mid_song_note": "",
+      "connection_to_next": "",
+      "facts": [
+        "Post (1995) was Bjork's second solo studio album.",
+        "Hyperballad's lyric describes throwing objects off a cliff before facing the day -- one interpretation among several the song invites."
+      ]
+    }
+  ]
+}

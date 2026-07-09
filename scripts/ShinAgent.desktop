@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=ShinAgent
+Comment=ShinAgent AI Companion -- voice-first assistant by ShinTech Electronics
+Exec=bash -c "cd ~/shinagent && source .venv/bin/activate && python3 main.py --face"
+Icon=terminal
+Terminal=true
+Type=Application
+Categories=Utility;AI;
+StartupNotify=false

@@ -1,0 +1,89 @@
+{
+  "theme": "UK Garage 1999-2003: The Three Years That Defined a Genre",
+  "description": "Five tracks, five years, one scene rewiring itself in real time -- from 2-step garage's pop breakthrough to the first cracks that would become grime.",
+  "mood_arc": "Starts bright and pop-facing, gets rawer and more collective-minded through the middle, ends fractured and futuristic -- garage splintering into something new by 2003.",
+  "dj_style": "back_announce",
+  "total_time": 21,
+  "tracks": [
+    {
+      "title": "Re-Rewind (The Crowd Say Bo Selecta)",
+      "artist": "Artful Dodger feat. Craig David",
+      "album": "",
+      "year": 1999,
+      "duration_s": 270,
+      "youtube_query": "Artful Dodger Re-Rewind Craig David official",
+      "pre_announce": "We start in 1999, before Craig David was a solo star -- when he was just the voice on an Artful Dodger 2-step record.",
+      "back_announce": "That's Re-Rewind. Craig David was the vocalist, not the headline act -- this was Artful Dodger's record. It went top 5 in the UK and effectively launched his solo career off the back of it.",
+      "mid_song_note": "",
+      "connection_to_next": "Within a year, David had his own contract. This next one is the song that made him a solo name in his own right.",
+      "facts": [
+        "The title's parenthetical hook, 'the crowd say bo selecta,' became a catchphrase in UK garage MC culture.",
+        "Craig David was still a teenager from Southampton when this was recorded."
+      ]
+    },
+    {
+      "title": "Fill Me In",
+      "artist": "Craig David",
+      "album": "Born to Do It",
+      "year": 2000,
+      "duration_s": 240,
+      "youtube_query": "Craig David Fill Me In official video",
+      "pre_announce": "This is the follow-up -- Craig David going it alone for the first time.",
+      "back_announce": "Fill Me In, from Born to Do It. It went to number one in the UK -- his first solo chart-topper, and it happened within a year of being a featured vocalist on someone else's single.",
+      "mid_song_note": "",
+      "connection_to_next": "Garage was still a scene built on crews and collectives, though -- not every act was chasing a solo pop crossover. This next one is the opposite instinct: a whole collective, one track, everyone gets a turn.",
+      "facts": [
+        "Born to Do It became one of the best-selling UK albums of 2000.",
+        "The lyric tells a fairly frank story about a secret relationship -- unusually direct for daytime radio at the time."
+      ]
+    },
+    {
+      "title": "21 Seconds",
+      "artist": "So Solid Crew",
+      "album": "They Don't Know",
+      "year": 2001,
+      "duration_s": 270,
+      "youtube_query": "So Solid Crew 21 Seconds official video",
+      "pre_announce": "So Solid Crew were a whole collective out of Battersea, South London -- and this track is built around a gimmick that doubles as a mission statement: every MC gets exactly 21 seconds.",
+      "back_announce": "21 Seconds -- UK number one. The whole point was democratic: a crew of a dozen-plus MCs, and the song gives almost every one of them their own timed verse. It's less a pop song than a roll call.",
+      "mid_song_note": "",
+      "connection_to_next": "That crew-first, MC-first energy is exactly what carried garage toward its next mutation. This next artist came up adjacent to that same scene, on a record that pushed the lyrics somewhere heavier.",
+      "facts": [
+        "So Solid Crew had well over twenty members at points, making 21 Seconds a genuine logistical challenge to fit everyone in.",
+        "The single reached number one on the UK Singles Chart in 2001."
+      ]
+    },
+    {
+      "title": "It Takes More",
+      "artist": "Ms. Dynamite",
+      "album": "A Little Deeper",
+      "year": 2002,
+      "duration_s": 240,
+      "youtube_query": "Ms Dynamite It Takes More official video",
+      "pre_announce": "A Little Deeper is the album this comes from, and the title's not an accident -- Ms. Dynamite used a garage-inflected sound to talk about things garage singles mostly didn't.",
+      "back_announce": "It Takes More. The album A Little Deeper won the Mercury Prize in 2002 -- serious critical recognition for a scene that was mostly still treated as club music, not album music.",
+      "mid_song_note": "",
+      "connection_to_next": "The following year, the Mercury Prize went to another artist who'd come up in and around this same pirate-radio, MC-culture world -- but by then the sound had moved again.",
+      "facts": [
+        "It Takes More addresses drug culture and exploitation directly, a sharper turn than most garage-era pop singles.",
+        "Ms. Dynamite won the Mercury Prize for A Little Deeper in 2002."
+      ]
+    },
+    {
+      "title": "I Luv U",
+      "artist": "Dizzee Rascal",
+      "album": "Boy in da Corner",
+      "year": 2003,
+      "duration_s": 240,
+      "youtube_query": "Dizzee Rascal I Luv U official video",
+      "pre_announce": "This is where the set ends -- 2003, and the sound has already stopped being garage.",
+      "back_announce": "I Luv U, off Boy in da Corner. Dizzee Rascal was around nineteen when he made this. The album won the Mercury Prize in 2003 -- Ms. Dynamite the year before, Dizzee the year after. Two years running, the prize went to artists who'd come up through this exact scene. By this point though, the sound had sped up, gotten sparser and more aggressive -- garage was becoming grime in real time, and this is one of the records that did it.",
+      "mid_song_note": "",
+      "connection_to_next": "",
+      "facts": [
+        "Boy in da Corner won the Mercury Prize in 2003, the year after Ms. Dynamite's A Little Deeper won it.",
+        "Dizzee Rascal produced most of Boy in da Corner himself, largely on consumer-grade software rather than a studio."
+      ]
+    }
+  ]
+}

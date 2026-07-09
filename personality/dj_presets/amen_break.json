@@ -1,0 +1,89 @@
+{
+  "theme": "The Amen Break: The Six-Second Loop That Changed Music",
+  "description": "One drum break, from one forgotten B-side, run through five completely different genres. Same six seconds of drumming, five different lives.",
+  "mood_arc": "Traces the break from its hip-hop roots into jungle/drum and bass intensity, then out into unexpected corners of rock and pop -- same source, wildly different destinations.",
+  "dj_style": "back_announce",
+  "total_time": 27,
+  "tracks": [
+    {
+      "title": "Straight Outta Compton",
+      "artist": "N.W.A",
+      "album": "Straight Outta Compton",
+      "year": 1988,
+      "duration_s": 258,
+      "youtube_query": "NWA Straight Outta Compton official audio",
+      "pre_announce": "Before we get into this, one piece of background: there's a drum break from a 1969 B-side called Amen, Brother by a soul group called The Winstons -- six seconds long, never a hit at the time. It's since become one of the most sampled pieces of music in history. This track is one of the early, well-known examples of it turning up in hip-hop.",
+      "back_announce": "That break -- chopped up, sped around -- is part of a lineage that gets cited constantly in Amen break histories. The Winstons themselves reportedly never saw royalties from any of it; the break was lifted for decades before sample clearance was standard practice.",
+      "mid_song_note": "",
+      "connection_to_next": "Hip-hop is where the break got famous. But it's jungle and drum and bass, a few years later in the UK, where producers really took it apart and rebuilt it -- speeding it up until it barely sounds like a drum kit anymore.",
+      "facts": [
+        "The Amen break originates from The Winstons' 1969 single 'Amen, Brother,' the B-side to 'Color Him Father.'",
+        "The Winstons' drummer, G.C. Coleman, played the break and reportedly never received royalties for its use."
+      ]
+    },
+    {
+      "title": "Blood Sugar",
+      "artist": "Pendulum",
+      "album": "",
+      "year": 2005,
+      "duration_s": 300,
+      "youtube_query": "Pendulum Blood Sugar official audio",
+      "pre_announce": "This is what the Amen break sounds like once drum and bass producers got hold of it and pushed the tempo somewhere hip-hop never went.",
+      "back_announce": "Blood Sugar -- one of the most straightforwardly Amen-break-driven tracks in the drum and bass canon, chopped and layered at well over double the tempo of the original 1969 recording.",
+      "mid_song_note": "",
+      "connection_to_next": "That's the break at its most recognisable and aggressive. Now here's the same idea landing somewhere nobody would expect it: mid-90s art rock.",
+      "facts": [
+        "Drum and bass as a genre leans on the Amen break so heavily that entire sample packs exist purely of pre-chopped Amen variations.",
+        "Pendulum crossed over from drum and bass into a much bigger rock-festival audience through tracks built on breaks like this one."
+      ]
+    },
+    {
+      "title": "Little Wonder",
+      "artist": "David Bowie",
+      "album": "Earthling",
+      "year": 1997,
+      "duration_s": 283,
+      "youtube_query": "David Bowie Little Wonder official audio",
+      "pre_announce": "Bowie spent the mid-90s listening to jungle and drum and bass, and Earthling is the album where that shows up most directly.",
+      "back_announce": "Little Wonder, from Earthling. The whole album leans on chopped, heavily processed breakbeats in the jungle tradition this set has been tracing -- Bowie was reportedly listening to a lot of Underworld and drum and bass radio at the time he made it.",
+      "mid_song_note": "",
+      "connection_to_next": "From art-rock's jungle phase to Britpop's, in the same era -- the next track opens with a break so recognisable it's become a genre in-joke.",
+      "facts": [
+        "Earthling was released in 1997, during a period when Bowie was actively engaging with London's drum and bass scene.",
+        "Bowie has cited Trent Reznor and UK jungle/DnB producers as reference points for the album's sound."
+      ]
+    },
+    {
+      "title": "D'You Know What I Mean?",
+      "artist": "Oasis",
+      "album": "Be Here Now",
+      "year": 1997,
+      "duration_s": 315,
+      "youtube_query": "Oasis D'You Know What I Mean official video",
+      "pre_announce": "Same year as the last one, completely different scene -- and it opens with a drum loop that's long been pointed to as an Amen-break lift, in a Britpop context nobody expects it in.",
+      "back_announce": "D'You Know What I Mean, off Be Here Now. That opening break sits underneath one of the most maximalist productions of the Britpop era -- a genuinely strange place to find the same six seconds that powered jungle raves and NWA records.",
+      "mid_song_note": "",
+      "connection_to_next": "That's the loop turning up somewhere gentle by comparison. This last one is the opposite -- one of the most aggressive, controversial uses of a breakbeat from the same year.",
+      "facts": [
+        "Be Here Now (1997) was, at the time, one of the fastest-selling albums in UK chart history.",
+        "The album version of D'You Know What I Mean runs well over seven minutes; the single was trimmed down."
+      ]
+    },
+    {
+      "title": "Smack My Bitch Up",
+      "artist": "The Prodigy",
+      "album": "The Fat of the Land",
+      "year": 1997,
+      "duration_s": 338,
+      "youtube_query": "The Prodigy Smack My Bitch Up official audio",
+      "pre_announce": "Last one -- same year again, 1997 was clearly a big year for breakbeats crossing over. This is The Prodigy at their most confrontational.",
+      "back_announce": "Smack My Bitch Up. The Prodigy came directly out of UK rave and breakbeat culture, and this track -- and its video -- became one of the most controversial and talked-about releases of the decade, for reasons that have nothing to do with the drums underneath it.",
+      "mid_song_note": "",
+      "connection_to_next": "",
+      "facts": [
+        "The Fat of the Land (1997) topped the charts in multiple countries including the US and UK.",
+        "The song's title and the accompanying music video drew significant controversy and radio bans on release."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+# IMQ2 Requirements
+# This covers the agent process (voice/text mode) and the always-started
+# webapp subprocess (webapp/server.py). Windows-only companion bridge
+# scripts (windows/*.py — ac_bridge, msfs_bridge, ed_bridge,
+# acc_setup_manager) never run on the Pi and have their own
+# windows/requirements.txt instead.
+
+# Core (always needed)
+anthropic>=0.25.0
+pyyaml>=6.0
+python-dotenv>=1.0
+numpy>=1.24.0          # used directly by voice/pipeline.py and integrations/webcam.py
+
+# LLM backends (openai package also covers the OpenAI-compatible Grok/GLM/Gemini
+# backends in core/llm.py, plus whisper_cloud STT and openai_tts TTS below)
+openai>=1.30.0
+
+# Web app (webapp/server.py — always started by main.py regardless of voice/text mode)
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# Memory
+chromadb>=0.5.0
+
+# Google Workspace tools (Gmail, Calendar, Docs, Drive, Sheets —
+# integrations/gmail_oauth.py, google_services.py, google_*.py)
+google-api-python-client>=2.100.0
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.2.0
+
+# STT — pick one (or install all for fallback capability)
+deepgram-sdk>=3.0.0
+# openai>=1.30.0 above also covers whisper_cloud STT
+
+# TTS
+elevenlabs>=1.0.0
+
+# Voice I/O
+sounddevice>=0.4.6
+soundfile>=0.12.1
+
+# Voice activity detection (voice/pipeline.py's VoiceActivityDetector) --
+# requires a C compiler on Windows (Microsoft C++ Build Tools) to build from
+# source. If that install fails, use the prebuilt-wheel fork instead, which
+# installs under the same `webrtcvad` import name:
+#   pip install webrtcvad-wheels
+# Linux/Pi installs (gcc is present via build-essential) can use this as-is.
+# If neither is installed, VoiceActivityDetector falls back to energy-only
+# detection automatically (see its _has_webrtcvad flag).
+webrtcvad>=2.0.10
+
+# Controller input (8BitDo Zero 2, gamepad mode) — Linux/evdev-only;
+# voice/controller.py guards the import behind sys.platform == 'linux', so
+# it's safe to leave uninstalled on a dev machine that never uses the
+# physical controller (e.g. this Windows/Mac gaming PC, where the HUD is
+# the interaction surface instead).
+evdev>=1.6.1; sys_platform == "linux"
+
+# Flipper Zero WiFi Master Controller (voice/controller_server.py) --
+# soft dependency, works on any platform (pure asyncio); if missing,
+# FlipperControllerServer.start() logs a warning and no-ops.
+websockets>=12.0
+
+# Webcam capture (integrations/webcam.py)
+opencv-python>=4.8.0
+
+# Icon generation (tools/generate_icons.py)
+Pillow>=10.0.0
+
+# Web search tool
+requests>=2.31.0
+# tavily-python>=0.3.0  # optional — or use raw requests as above
+
+# Elite Dangerous Ship Computer — INARA scraping fallback (engineers/materials)
+beautifulsoup4>=4.12.0
+
+# Local STT fallback (install when migrating to Pi or going offline)
+# faster-whisper>=1.0.0
+
+# Local TTS fallback
+# piper-tts is a binary install — see scripts/setup_piper.sh
+
+# Wake word (optional, requires Picovoice account for access key)
+# pvporcupine>=3.0.0
+
+# Body / serial interface
+pyserial>=3.5
+
+# MIDI input (Whiplash Mode drum-kit trigger reading) -- optional, only
+# needed if a physical MIDI drum kit is connected; tools/whiplash.py and
+# integrations/whiplash_midi.py both lazy-import this and degrade to
+# "no MIDI input available" if it's missing.
+# Requires a C++ build toolchain on Windows:
+#   pip install python-rtmidi
+#   If the build fails: pip install python-rtmidi --pre
+#   Or download a pre-built wheel from the rtmidi documentation.
+# python-rtmidi>=1.5.0
+
+# Platform-specific audio fallback
+# pyaudio>=0.2.14       # alternative to sounddevice on some platforms

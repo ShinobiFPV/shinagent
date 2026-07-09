@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>COVAS — Ship Computer</title>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --accent: #ff8c00;
+    --text: #c8d8e8;
+    --panel: rgba(10, 20, 40, 0.8);
+    --border: rgba(255, 140, 0, 0.2);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Eurostile', 'Trebuchet MS', 'Courier New', monospace;
+    overflow-x: hidden;
+  }
+  body {
+    display: flex; flex-direction: column;
+    min-height: 100vh;
+  }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap; gap: 6px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header .logo {
+    color: var(--accent);
+    font-weight: bold;
+    letter-spacing: 3px;
+    font-size: 1.1rem;
+  }
+  header .meta {
+    display: flex; gap: 16px; font-size: 0.85rem; color: var(--text);
+    flex-wrap: wrap;
+  }
+  header .meta span b { color: var(--accent); }
+
+  main {
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+  }
+  .panel h2 {
+    margin: 0 0 8px 0;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+
+  /* -- Status panel -- */
+  #statusLine {
+    display: flex; flex-wrap: wrap; gap: 8px 18px;
+    font-size: 0.9rem;
+  }
+  #statusLine .item { display: flex; gap: 6px; align-items: center; }
+  #statusLine .label { color: #6a7a8c; }
+  .fuel-bar-wrap {
+    width: 90px; height: 8px; background: rgba(255,255,255,0.08);
+    border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle;
+  }
+  .fuel-bar-fill {
+    height: 100%; background: var(--accent);
+    transition: width 0.4s ease;
+  }
+  .up { color: #4caf50; }
+  .down { color: #f44336; }
+  .warn { color: #ffb300; }
+
+  /* -- Event log -- */
+  #eventLog {
+    max-height: 260px; overflow-y: auto;
+    display: flex; flex-direction: column-reverse;
+    font-size: 0.85rem;
+  }
+  .event-row {
+    padding: 4px 2px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; gap: 8px;
+  }
+  .event-row .t { color: #556; min-width: 42px; }
+  .event-row.flash { animation: flashIn 1.2s ease; }
+  @keyframes flashIn {
+    from { background: rgba(255,140,0,0.25); }
+    to   { background: transparent; }
+  }
+  .ev-jump    { color: var(--accent); }
+  .ev-scan    { color: #4dd0e1; }
+  .ev-combat  { color: #ff5252; }
+  .ev-trade   { color: #66bb6a; }
+  .ev-mission { color: #ffca28; }
+  .ev-comms   { color: #8a97a6; }
+  .ev-q2      { color: #fff; font-weight: bold; }
+
+  /* -- Q2 response -- */
+  #q2Response {
+    font-size: 0.95rem;
+    min-height: 1.2em;
+    transition: opacity 1.5s ease;
+  }
+  #q2Response .ts { display: block; font-size: 0.7rem; color: #556; margin-top: 4px; }
+
+  /* -- Paste input -- */
+  textarea#pasteInput {
+    width: 100%; min-height: 70px; resize: vertical;
+    background: rgba(0,0,0,0.3); color: var(--text);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 8px; font-family: inherit; font-size: 0.9rem;
+  }
+  button {
+    background: rgba(255,140,0,0.12);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover { background: rgba(255,140,0,0.25); }
+  button:active { background: rgba(255,140,0,0.4); }
+
+  .row-btns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+  /* -- Quick queries -- */
+  .quick-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+  }
+  .quick-grid button { width: 100%; }
+
+  /* -- Galaxy search -- */
+  input#searchInput {
+    width: 100%; background: rgba(0,0,0,0.3); color: var(--text);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 8px; font-family: inherit; font-size: 0.9rem;
+  }
+  #searchResults { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .result-card {
+    background: rgba(0,0,0,0.25); border: 1px solid var(--border);
+    border-radius: 4px; padding: 8px 10px; font-size: 0.85rem;
+    white-space: pre-wrap;
+  }
+
+  .conn-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px; background: #f44336;
+  }
+  .conn-dot.on { background: #4caf50; }
+
+  @media (prefers-color-scheme: light) {
+    /* This page intentionally always renders as an ED-HUD dark panel,
+       regardless of system theme — matching the in-game HUD aesthetic
+       the commander is looking at right next to it. */
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">COVAS</div>
+  <div class="meta">
+    <span id="hdrCommander"><b>—</b></span>
+    <span id="hdrShip"><b>—</b></span>
+    <span id="hdrCredits"><b>—</b></span>
+  </div>
+</header>
+
+<main>
+
+  <div class="panel">
+    <h2><span class="conn-dot" id="connDot"></span>Current Status</h2>
+    <div id="statusLine">
+      <div class="item"><span class="label">System:</span><span id="stSystem">—</span></div>
+      <div class="item"><span class="label">Mode:</span><span id="stMode">—</span></div>
+      <div class="item"><span class="label">Where:</span><span id="stWhere">—</span></div>
+    </div>
+    <div id="statusLine" style="margin-top:8px">
+      <div class="item">
+        <span class="label">Fuel:</span>
+        <span class="fuel-bar-wrap"><span class="fuel-bar-fill" id="fuelBar" style="width:0%"></span></span>
+        <span id="fuelText">—</span>
+      </div>
+      <div class="item"><span class="label">Shields:</span><span id="stShields">—</span></div>
+      <div class="item"><span class="label">Pips:</span><span id="stPips">—</span></div>
+    </div>
+    <div id="statusLine" style="margin-top:8px">
+      <div class="item"><span class="label">Legal:</span><span id="stLegal">—</span></div>
+      <div class="item"><span class="label">Cargo:</span><span id="stCargo">—</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Recent Events</h2>
+    <div id="eventLog"><div class="event-row"><span class="t">—</span><span>No events yet.</span></div></div>
+  </div>
+
+  <div class="panel">
+    <h2>Q2 Response</h2>
+    <div id="q2Response">Standing by, Commander.</div>
+  </div>
+
+  <div class="panel">
+    <h2>Paste From Game</h2>
+    <textarea id="pasteInput" placeholder="Paste game text here — station names, mission text, market listings, scan results..."></textarea>
+    <div class="row-btns">
+      <button onclick="sendPaste()">SEND TO Q2</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Quick Queries</h2>
+    <div class="quick-grid">
+      <button onclick="quickQuery('status', 'Give me a ship status summary.')">Status</button>
+      <button onclick="quickQuery('fuel', 'What is my fuel status?')">Fuel</button>
+      <button onclick="quickQuery('target', 'What do you have on my current target?')">Target</button>
+      <button onclick="quickQuery('system', 'Tell me about the current system.')">System Info</button>
+      <button onclick="quickQuery('nearest', 'What&#39;s the nearest system with a good economy?')">Nearest SC</button>
+      <button onclick="quickQuery('events', 'Give me the recent events log.')">Events</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Galaxy Search</h2>
+    <input type="text" id="searchInput" placeholder="Search systems, stations, commodities..." onkeydown="if(event.key==='Enter') runSearch()">
+    <div class="row-btns"><button onclick="runSearch()">SEARCH</button></div>
+    <div id="searchResults"></div>
+  </div>
+
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+let lastTopEventKey = null;
+let q2FadeTimer = null;
+
+function eventClass(type) {
+  const t = (type || '').toLowerCase();
+  if (t.includes('jump') || t.includes('supercruise') || t.includes('dock')) return 'ev-jump';
+  if (t.includes('scan') || t.includes('fss') || t.includes('saa')) return 'ev-scan';
+  if (t.includes('attack') || t.includes('damage') || t.includes('died') || t.includes('bounty') || t.includes('shieldstate')) return 'ev-combat';
+  if (t.includes('market') || t.includes('cargo') || t.includes('fuelscoop') || t.includes('engineer')) return 'ev-trade';
+  if (t.includes('mission')) return 'ev-mission';
+  if (t.includes('text') || t.includes('paste')) return 'ev-comms';
+  return '';
+}
+
+function fmtBool(v, onWord, offWord) {
+  if (v === null || v === undefined) return '—';
+  return v ? onWord : offWord;
+}
+
+function renderState(payload) {
+  $('connDot').classList.toggle('on', !!payload.active);
+  const s = payload.state || {};
+  const loc = s.location || {};
+  const fuel = s.fuel || {};
+  const status = s.status || {};
+
+  $('hdrCommander').innerHTML = `<b>${s.commander || '—'}</b>`;
+  $('hdrShip').innerHTML = `<b>${s.ship || '—'}</b>`;
+  $('hdrCredits').innerHTML = s.credits != null ? `<b>${Number(s.credits).toLocaleString()} Cr</b>` : '<b>—</b>';
+
+  $('stSystem').textContent = loc.system || '—';
+  $('stMode').textContent = loc.docked ? 'DOCKED' : loc.landed ? 'LANDED' : loc.supercruise ? 'SUPERCRUISE' : 'NORMAL SPACE';
+  $('stWhere').textContent = loc.station || loc.body || '—';
+
+  const main = fuel.main, cap = fuel.capacity;
+  const pct = (main != null && cap) ? Math.round((main / cap) * 100) : null;
+  $('fuelBar').style.width = (pct != null ? pct : 50) + '%';
+  $('fuelBar').style.background = fuel.low ? '#f44336' : 'var(--accent, #ff8c00)';
+  $('fuelText').textContent = main != null ? `${main}T${pct != null ? ' (' + pct + '%)' : ''}` : '—';
+
+  const shieldsEl = $('stShields');
+  if (status.shields_up === true) { shieldsEl.textContent = 'UP'; shieldsEl.className = 'up'; }
+  else if (status.shields_up === false) { shieldsEl.textContent = 'DOWN'; shieldsEl.className = 'down'; }
+  else { shieldsEl.textContent = '—'; shieldsEl.className = ''; }
+
+  $('stPips').textContent = Array.isArray(status.pips) ? status.pips.join('/') : '—';
+  const legalEl = $('stLegal');
+  legalEl.textContent = status.legal_state || '—';
+  legalEl.className = (status.legal_state && status.legal_state !== 'Clean') ? 'warn' : '';
+  $('stCargo').textContent = (status.cargo != null ? status.cargo + 'T' : '—');
+
+  // Event log — newest first, colour-coded, flash the newest if it's new.
+  const events = s.recent_events || [];
+  const log = $('eventLog');
+  if (events.length === 0) {
+    log.innerHTML = '<div class="event-row"><span class="t">—</span><span>No events yet.</span></div>';
+  } else {
+    const topKey = events[0].time + '|' + events[0].text;
+    log.innerHTML = events.map((e, i) => {
+      const cls = eventClass(e.type);
+      const flash = (i === 0 && topKey !== lastTopEventKey) ? ' flash' : '';
+      return `<div class="event-row${flash}"><span class="t">${e.time}</span><span class="${cls}">${escapeHtml(e.text)}</span></div>`;
+    }).join('');
+    lastTopEventKey = topKey;
+  }
+
+  if (payload.last_q2_response) {
+    showQ2Response(payload.last_q2_response, payload.last_response_time);
+  }
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+let lastShownResponseTime = 0;
+function showQ2Response(text, ts) {
+  if (ts && ts === lastShownResponseTime) return;
+  lastShownResponseTime = ts || Date.now() / 1000;
+  const el = $('q2Response');
+  el.style.opacity = '1';
+  el.innerHTML = escapeHtml(text) + `<span class="ts">${new Date().toLocaleTimeString()}</span>`;
+  clearTimeout(q2FadeTimer);
+  q2FadeTimer = setTimeout(() => { el.style.opacity = '0.35'; }, 30000);
+}
+
+async function pollState() {
+  try {
+    const r = await fetch('/ed/state');
+    const data = await r.json();
+    renderState(data);
+  } catch (e) {
+    $('connDot').classList.remove('on');
+  }
+}
+setInterval(pollState, 2000);
+pollState();
+
+async function sendPaste() {
+  const text = $('pasteInput').value.trim();
+  if (!text) return;
+  showQ2Response('Processing...', Date.now() / 1000);
+  try {
+    const r = await fetch('/ed/paste', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    const data = await r.json();
+    showQ2Response(data.response || data.error || 'No response.', Date.now() / 1000);
+    $('pasteInput').value = '';
+  } catch (e) {
+    showQ2Response('Paste failed: ' + e, Date.now() / 1000);
+  }
+}
+
+async function quickQuery(key, message) {
+  showQ2Response('Processing...', Date.now() / 1000);
+  try {
+    const r = await fetch('/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+    const data = await r.json();
+    showQ2Response(data.reply || data.error || 'No response.', Date.now() / 1000);
+  } catch (e) {
+    showQ2Response('Query failed: ' + e, Date.now() / 1000);
+  }
+}
+
+async function runSearch() {
+  const query = $('searchInput').value.trim();
+  if (!query) return;
+  const results = $('searchResults');
+  results.innerHTML = '<div class="result-card">Searching...</div>';
+  try {
+    const r = await fetch('/ed/search', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+    const data = await r.json();
+    results.innerHTML = `<div class="result-card">${escapeHtml(data.result || data.error || 'No result.')}</div>`;
+  } catch (e) {
+    results.innerHTML = `<div class="result-card">Search failed: ${escapeHtml(String(e))}</div>`;
+  }
+}
+</script>
+
+</body>
+</html>

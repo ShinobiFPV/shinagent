@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pop-Up Video — Q2</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --panel: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.12);
+    --text: #eae8f5;
+    --dim: #9a97b8;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+  }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* -- film strip aesthetic -- */
+  .filmstrip {
+    height: 18px;
+    background: repeating-linear-gradient(90deg, #000 0 10px, #2a2a3e 10px 24px);
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    flex-shrink: 0;
+  }
+  .filmstrip.top { border-top: none; }
+  .filmstrip.bottom { border-bottom: none; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap; gap: 8px;
+  }
+  header .title { font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; }
+  header .sub { color: var(--dim); font-size: 0.8rem; }
+  .progress-wrap {
+    flex: 1; min-width: 120px; margin: 0 16px;
+    height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;
+  }
+  .progress-bar { height: 100%; background: linear-gradient(90deg,#f78fb3,#a29bfe); width: 0%; transition: width .5s; }
+  .bubble-count { font-size: 0.8rem; color: var(--dim); white-space: nowrap; }
+
+  main {
+    flex: 1; display: flex; gap: 12px; padding: 12px;
+    max-width: 900px; width: 100%; margin: 0 auto;
+  }
+  .stage { flex: 1; position: relative; min-height: 320px; }
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px;
+  }
+  .sidebar h3 { margin: 0 0 8px; font-size: 0.85rem; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+  .upcoming-item { font-size: 0.82rem; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .upcoming-item .ts { color: #f78fb3; font-weight: bold; margin-right: 6px; }
+  .upcoming-item .ic { margin-right: 4px; }
+
+  /* -- pop-up bubble -- */
+  .bubble {
+    position: absolute; top: 20px; right: 0;
+    max-width: 340px;
+    color: #1a1a1a;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    padding: 12px 16px;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  }
+  .bubble.show { opacity: 1; transform: translateX(0); }
+  .bubble::after {
+    content: ''; position: absolute; bottom: -10px; left: 24px;
+    width: 0; height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid currentColor;
+  }
+  .bubble-head { display: flex; align-items: center; gap: 6px; font-weight: bold; margin-bottom: 4px; }
+  .bubble-body { font-size: 0.92rem; line-height: 1.35; }
+
+  .bubble.FACT        { background: #fff9c4; color: #fff9c4; }
+  .bubble.CAST        { background: #e3f2fd; color: #e3f2fd; }
+  .bubble.MUSIC       { background: #f3e5f5; color: #f3e5f5; }
+  .bubble.LOCATION    { background: #e8f5e9; color: #e8f5e9; }
+  .bubble.TECH        { background: #fff3e0; color: #fff3e0; }
+  .bubble.CORRECTION  { background: #ffebee; color: #ffebee; }
+  .bubble.HISTORY     { background: #f5f5f5; color: #f5f5f5; }
+  .bubble.EASTER_EGG  { background: #fffde7; color: #fffde7; }
+  .bubble .bubble-head, .bubble .bubble-body { color: #1a1a1a; }
+
+  .empty-stage { color: var(--dim); text-align: center; margin-top: 80px; font-size: 0.95rem; }
+
+  .bottom-panel {
+    background: var(--panel); border-top: 1px solid var(--border);
+    padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  input[type=text], input[type=number] {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 8px 10px; font-size: 0.9rem;
+  }
+  button {
+    background: linear-gradient(90deg,#f78fb3,#a29bfe); border: none; color: #1a1a1a;
+    font-weight: bold; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem;
+  }
+  button.ghost { background: rgba(255,255,255,0.08); color: var(--text); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  label.toggle-label { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--dim); }
+  #genStatus { font-size: 0.8rem; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<div class="filmstrip top"></div>
+
+<header>
+  <div>
+    <div class="title" id="hdrTitle">No title loaded</div>
+    <div class="sub" id="hdrSub">Say what you're watching, or generate one below</div>
+  </div>
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="bubble-count" id="bubbleCount">0 pop-ups</div>
+</header>
+
+<main>
+  <div class="stage" id="stage">
+    <div class="empty-stage" id="emptyStage">Pop-ups will appear here as Q2 delivers them.</div>
+  </div>
+  <div class="sidebar">
+    <h3>Upcoming</h3>
+    <div id="upcomingList"><div class="upcoming-item">--</div></div>
+  </div>
+</main>
+
+<div class="bottom-panel">
+  <div class="row">
+    <input type="text" id="tsInput" placeholder="HH:MM:SS or 7:23">
+    <button onclick="getTimestamp()">Get Pop-Up</button>
+    <button class="ghost" onclick="clearSession()">Clear Session</button>
+    <label class="toggle-label"><input type="checkbox" id="autoAdvance" onchange="toggleAutoAdvance()"> Auto-advance</label>
+  </div>
+  <div class="row">
+    <input type="text" id="genTitle" placeholder="Title, e.g. Hackers">
+    <input type="number" id="genYear" placeholder="Year" style="width:90px">
+    <button onclick="generatePopups()" id="genBtn">Generate Pop-Ups</button>
+    <span id="genStatus"></span>
+  </div>
+  <div class="row">
+    <div id="savedTitles" style="font-size:0.8rem;color:var(--dim)"></div>
+  </div>
+</div>
+
+<div class="filmstrip bottom"></div>
+
+<script>
+let lastDeliveredTime = 0;
+let autoAdvanceInterval = null;
+let autoAdvanceStart = 0;
+
+function fmtTime(s) {
+  s = Math.max(0, Math.floor(s));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return h ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}` : `${m}:${String(sec).padStart(2,'0')}`;
+}
+
+const ICONS = {FACT:'🟡', CAST:'🔵', MUSIC:'🟣', LOCATION:'🟢',
+               TECH:'🟠', CORRECTION:'🔴', HISTORY:'⚪', EASTER_EGG:'✨'};
+
+function showBubble(popup) {
+  const stage = document.getElementById('stage');
+  document.getElementById('emptyStage').style.display = 'none';
+  const b = document.createElement('div');
+  b.className = 'bubble ' + (popup.type || 'FACT');
+  b.innerHTML = `<div class="bubble-head">${ICONS[popup.type] || '🟡'} ${popup.title || ''}</div>
+                 <div class="bubble-body">${popup.body || ''}</div>`;
+  stage.appendChild(b);
+  requestAnimationFrame(() => b.classList.add('show'));
+  setTimeout(() => {
+    b.style.opacity = '0';
+    b.style.transform = 'translateX(40px)';
+    setTimeout(() => b.remove(), 500);
+  }, 12000);
+}
+
+async function pollState() {
+  try {
+    const r = await fetch('/popup/api/state');
+    const s = await r.json();
+    if (s.active) {
+      document.getElementById('hdrTitle').textContent = s.title + (s.year ? ` (${s.year})` : '');
+      document.getElementById('hdrSub').textContent = `Position: ${fmtTime(s.current_ts || 0)}`;
+      document.getElementById('bubbleCount').textContent = `${s.popup_count} pop-ups`;
+    } else {
+      document.getElementById('hdrTitle').textContent = 'No title loaded';
+      document.getElementById('hdrSub').textContent = "Say what you're watching, or generate one below";
+      document.getElementById('bubbleCount').textContent = '0 pop-ups';
+    }
+    if (s.last_delivered && s.last_delivered_time > lastDeliveredTime) {
+      lastDeliveredTime = s.last_delivered_time;
+      showBubble(s.last_delivered);
+    }
+    const savedDiv = document.getElementById('savedTitles');
+    if (s.saved_titles && s.saved_titles.length) {
+      savedDiv.textContent = 'Saved: ' + s.saved_titles.slice(0, 5)
+        .map(t => `${t.title}${t.year ? ' ('+t.year+')' : ''}`).join(', ');
+    }
+  } catch (e) { /* keep last known state */ }
+
+  try {
+    const r2 = await fetch('/popup/api/upcoming');
+    const u = await r2.json();
+    const list = document.getElementById('upcomingList');
+    if (u.active && u.upcoming && u.upcoming.length) {
+      list.innerHTML = u.upcoming.map(p =>
+        `<div class="upcoming-item"><span class="ts">${p.timestamp_display}</span><span class="ic">${ICONS[p.type]||''}</span>${p.title}</div>`
+      ).join('');
+    } else {
+      list.innerHTML = '<div class="upcoming-item">--</div>';
+    }
+  } catch (e) { /* ignore */ }
+}
+
+async function getTimestamp() {
+  const ts = document.getElementById('tsInput').value.trim();
+  if (!ts) return;
+  await fetch('/popup/api/timestamp', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({timestamp: ts}),
+  });
+  document.getElementById('tsInput').value = '';
+  pollState();
+}
+
+async function clearSession() {
+  await fetch('/face-api/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({popup_clear: true}),
+  }).catch(() => {});
+  pollState();
+}
+
+async function generatePopups() {
+  const title = document.getElementById('genTitle').value.trim();
+  const year = document.getElementById('genYear').value.trim();
+  if (!title) return;
+  const btn = document.getElementById('genBtn');
+  const status = document.getElementById('genStatus');
+  btn.disabled = true;
+  status.textContent = 'Researching + generating... this can take a minute.';
+  try {
+    const r = await fetch('/popup/api/generate', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({title, year: year ? parseInt(year) : null}),
+    });
+    const d = await r.json();
+    status.textContent = d.ok ? d.message : ('Error: ' + d.error);
+  } catch (e) {
+    status.textContent = 'Could not reach server.';
+  }
+  btn.disabled = false;
+  pollState();
+}
+
+function toggleAutoAdvance() {
+  const on = document.getElementById('autoAdvance').checked;
+  if (autoAdvanceInterval) { clearInterval(autoAdvanceInterval); autoAdvanceInterval = null; }
+  if (on) {
+    autoAdvanceStart = Date.now();
+    autoAdvanceInterval = setInterval(async () => {
+      const elapsed = Math.floor((Date.now() - autoAdvanceStart) / 1000);
+      await fetch('/popup/api/timestamp', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({timestamp: String(elapsed)}),
+      });
+    }, 1000);
+  }
+}
+
+setInterval(pollState, 2000);
+pollState();
+</script>
+
+</body>
+</html>

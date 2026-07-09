@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ACC Setup Manager</title>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --accent: #e8002a;
+    --text: #e8e8e8;
+    --panel: rgba(20, 10, 15, 0.8);
+    --border: rgba(232, 0, 42, 0.2);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Eurostile', 'Trebuchet MS', 'Courier New', monospace;
+    overflow-x: hidden;
+  }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap; gap: 6px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header .logo { color: var(--accent); font-weight: bold; letter-spacing: 3px; font-size: 1.1rem; }
+  header .meta { display: flex; gap: 16px; font-size: 0.85rem; flex-wrap: wrap; }
+
+  main {
+    flex: 1; padding: 10px;
+    display: flex; flex-direction: column; gap: 10px;
+    max-width: 900px; width: 100%; margin: 0 auto;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+  }
+  .panel h2 {
+    margin: 0 0 8px 0;
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+
+  .conn-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px; background: #f44336;
+  }
+  .conn-dot.on { background: #4caf50; }
+
+  /* -- Filters -- */
+  .filters-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  select, input, textarea {
+    background: rgba(0,0,0,0.3); color: var(--text);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 7px 8px; font-family: inherit; font-size: 0.85rem;
+  }
+  select { min-width: 140px; }
+
+  button {
+    background: rgba(232,0,42,0.15);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-family: inherit; font-size: 0.85rem; letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover { background: rgba(232,0,42,0.3); }
+  button:active { background: rgba(232,0,42,0.45); }
+  button.ghost { background: transparent; color: var(--text); opacity: 0.7; }
+  button.ghost:hover { background: rgba(255,255,255,0.08); opacity: 1; }
+  button:disabled { opacity: 0.4; cursor: default; }
+
+  /* -- Setup cards -- */
+  #setupGrid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+  }
+  .setup-card {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .setup-card .name { font-weight: bold; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; }
+  .setup-card .fav { cursor: pointer; color: #555; font-size: 1.1rem; }
+  .setup-card .fav.on { color: #ffb300; }
+  .setup-card .tags { font-size: 0.78rem; color: #9aa; }
+  .setup-card .temps { font-size: 0.78rem; color: #9aa; }
+  .setup-card .dates { font-size: 0.72rem; color: #667; }
+  .setup-card .notes {
+    font-size: 0.8rem; color: #ccc;
+    max-height: 2.6em; overflow: hidden; cursor: pointer;
+  }
+  .setup-card .notes.expanded { max-height: none; }
+  .setup-card .card-btns { display: flex; gap: 6px; margin-top: 4px; }
+  .setup-card .card-btns button { flex: 1; font-size: 0.78rem; padding: 6px 8px; }
+  .empty-note { color: #667; font-size: 0.85rem; padding: 10px 0; text-align: center; }
+
+  /* -- Generate panel -- */
+  #genBody { display: none; flex-direction: column; gap: 8px; }
+  #genBody.open { display: flex; }
+  .gen-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .gen-row > * { flex: 1; min-width: 140px; }
+  textarea#genNotes { min-height: 60px; resize: vertical; width: 100%; }
+  #genStatus { font-size: 0.85rem; color: var(--accent); min-height: 1.2em; }
+  .spinner {
+    display: inline-block; width: 12px; height: 12px;
+    border: 2px solid rgba(232,0,42,0.3); border-top-color: var(--accent);
+    border-radius: 50%; margin-right: 6px;
+    animation: spin 0.8s linear infinite; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #statusBar {
+    font-size: 0.78rem; color: #778; padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ACC SETUP MANAGER</div>
+  <div class="meta">
+    <span><span class="conn-dot" id="connDot"></span><span id="connText">OFFLINE</span></span>
+    <span id="countText">0 setups</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="panel">
+    <h2>Filters</h2>
+    <div class="filters-row">
+      <select id="filterCar"><option value="">All cars</option></select>
+      <select id="filterTrack"><option value="">All tracks</option></select>
+      <select id="filterSession">
+        <option value="">All sessions</option>
+        <option value="sprint">Sprint</option>
+        <option value="endurance">Endurance</option>
+        <option value="qualifying">Qualifying</option>
+      </select>
+      <button onclick="loadSetups()">FILTER</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Saved Setups</h2>
+    <div id="setupGrid"></div>
+  </div>
+
+  <div class="panel">
+    <button class="ghost" style="width:100%" onclick="toggleGenPanel()">+ GENERATE NEW SETUP</button>
+    <div id="genBody">
+      <div class="gen-row">
+        <input type="text" id="genCar" placeholder="Car, e.g. ferrari_296_gt3" list="carList">
+        <datalist id="carList"></datalist>
+        <input type="text" id="genTrack" placeholder="Track, e.g. spa">
+      </div>
+      <div class="gen-row">
+        <select id="genSession">
+          <option value="sprint">Sprint</option>
+          <option value="endurance">Endurance</option>
+          <option value="qualifying">Qualifying</option>
+        </select>
+        <select id="genWeather">
+          <option value="dry">Dry</option>
+          <option value="wet">Wet</option>
+          <option value="mixed">Mixed</option>
+        </select>
+        <input type="number" id="genAmbient" placeholder="Ambient C" value="22">
+        <input type="number" id="genTrackTemp" placeholder="Track C" value="28">
+      </div>
+      <textarea id="genNotes" placeholder="Special notes — any oversteer tendency, prefer stability..."></textarea>
+      <button onclick="generateSetup(event)" style="align-self:flex-start">GENERATE SETUP</button>
+      <div id="genStatus"></div>
+    </div>
+  </div>
+
+</main>
+
+<div id="statusBar">
+  <span id="folderText">ACC folder: —</span>
+  <span id="libraryText">0 setups in library</span>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let currentSetups = [];
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+function fmtDate(iso) {
+  if (!iso) return null;
+  try { return new Date(iso.replace(' ', 'T') + 'Z').toLocaleDateString(); } catch(e) { return iso; }
+}
+
+async function pollStatus() {
+  try {
+    const r = await fetch('/acc-setups/api/status');
+    const d = await r.json();
+    const active = !!(d && d.ok);
+    $('connDot').classList.toggle('on', active);
+    $('connText').textContent = active ? 'CONNECTED' : 'OFFLINE';
+    if (active) {
+      $('countText').textContent = `${d.setup_count} setup${d.setup_count === 1 ? '' : 's'}`;
+      $('folderText').textContent = `ACC folder: ${d.acc_setups_folder}${d.folder_exists ? '' : ' (not found)'}`;
+      $('libraryText').textContent = `${d.setup_count} setups in library`;
+      populateCarOptions(d.cars_detected || []);
+    } else {
+      $('connText').textContent = 'OFFLINE';
+    }
+  } catch (e) {
+    $('connDot').classList.remove('on');
+    $('connText').textContent = 'OFFLINE';
+  }
+}
+setInterval(pollStatus, 10000);
+pollStatus();
+
+function populateCarOptions(cars) {
+  const known = new Set(Array.from($('filterCar').options).map(o => o.value).filter(Boolean));
+  cars.forEach(c => {
+    if (!known.has(c)) {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      $('filterCar').appendChild(opt);
+      const dl = document.createElement('option');
+      dl.value = c;
+      $('carList').appendChild(dl);
+      known.add(c);
+    }
+  });
+}
+
+async function loadSetups() {
+  const car = $('filterCar').value, track = $('filterTrack').value, session = $('filterSession').value;
+  const params = new URLSearchParams();
+  if (car) params.set('car', car);
+  if (track) params.set('track', track);
+  if (session) params.set('session_type', session);
+  try {
+    const r = await fetch(`/acc-setups/api/setups?${params.toString()}`);
+    const d = await r.json();
+    currentSetups = (d && d.setups) || [];
+    renderSetups();
+  } catch (e) {
+    $('setupGrid').innerHTML = `<div class="empty-note">Could not load setups: ${escapeHtml(String(e))}</div>`;
+  }
+}
+loadSetups();
+
+function renderSetups() {
+  const grid = $('setupGrid');
+  if (!currentSetups.length) {
+    grid.innerHTML = '<div class="empty-note">No saved setups yet — generate one below.</div>';
+    return;
+  }
+  grid.innerHTML = currentSetups.map(s => {
+    const applied = fmtDate(s.applied_at);
+    const created = fmtDate(s.created_at);
+    return `
+      <div class="setup-card">
+        <div class="name">
+          <span>${escapeHtml(s.name)}</span>
+          <span class="fav ${s.is_favourite ? 'on' : ''}" onclick="toggleFavourite(${s.id}, ${!s.is_favourite})">★</span>
+        </div>
+        <div class="tags">${escapeHtml(s.car)} · ${escapeHtml(s.track)} · ${escapeHtml(s.session_type || '—')} · ${escapeHtml(s.weather || '—')}</div>
+        <div class="temps">Ambient: ${s.ambient_temp != null ? s.ambient_temp + 'C' : '—'} | Track: ${s.track_temp != null ? s.track_temp + 'C' : '—'}</div>
+        <div class="dates">Created: ${created || '—'} | ${applied ? 'Applied: ' + applied : 'Never applied'}</div>
+        ${s.notes ? `<div class="notes" onclick="this.classList.toggle('expanded')">${escapeHtml(s.notes)}</div>` : ''}
+        <div class="card-btns">
+          <button onclick="applySetup(${s.id})">APPLY TO ACC</button>
+          <button class="ghost" onclick="deleteSetup(${s.id})">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function applySetup(id) {
+  try {
+    const r = await fetch(`/acc-setups/api/apply/${id}`, {method: 'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      alert(`Applied. Open ACC's garage screen and load it.\n${d.path || ''}`);
+      loadSetups();
+    } else {
+      alert(`Apply failed: ${d.error || 'unknown error'}`);
+    }
+  } catch (e) {
+    alert(`Apply failed: ${e.message}`);
+  }
+}
+
+async function deleteSetup(id) {
+  if (!confirm('Delete this setup?')) return;
+  try {
+    const r = await fetch(`/acc-setups/api/setups/${id}`, {method: 'DELETE'});
+    const d = await r.json();
+    if (d.ok) loadSetups();
+    else alert(`Delete failed: ${d.error || 'unknown error'}`);
+  } catch (e) {
+    alert(`Delete failed: ${e.message}`);
+  }
+}
+
+async function toggleFavourite(id, value) {
+  try {
+    await fetch(`/acc-setups/api/setups/${id}`, {
+      method: 'PUT', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({is_favourite: value}),
+    });
+    loadSetups();
+  } catch (e) {}
+}
+
+let genOpen = false;
+function toggleGenPanel() {
+  genOpen = !genOpen;
+  $('genBody').classList.toggle('open', genOpen);
+}
+
+const GEN_STATUS_STEPS = ['Researching current meta...', 'Generating setup...', 'Applying to ACC...'];
+
+async function generateSetup(evt) {
+  const car = $('genCar').value.trim();
+  const track = $('genTrack').value.trim();
+  if (!car || !track) { alert('Car and track are required.'); return; }
+
+  const btn = evt.target;
+  btn.disabled = true;
+  let stepIdx = 0;
+  $('genStatus').innerHTML = `<span class="spinner"></span>${GEN_STATUS_STEPS[0]}`;
+  const stepTimer = setInterval(() => {
+    stepIdx = Math.min(stepIdx + 1, GEN_STATUS_STEPS.length - 1);
+    $('genStatus').innerHTML = `<span class="spinner"></span>${GEN_STATUS_STEPS[stepIdx]}`;
+  }, 4000);
+
+  try {
+    const r = await fetch('/acc-setups/api/generate', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        car, track,
+        session_type: $('genSession').value,
+        weather: $('genWeather').value,
+        ambient_temp: parseInt($('genAmbient').value) || 22,
+        track_temp: parseInt($('genTrackTemp').value) || 28,
+        notes: $('genNotes').value.trim(),
+      }),
+    });
+    const d = await r.json();
+    clearInterval(stepTimer);
+    if (d.ok) {
+      $('genStatus').textContent = d.message || 'Setup generated.';
+      loadSetups();
+    } else {
+      $('genStatus').textContent = `Failed: ${d.error || 'unknown error'}`;
+    }
+  } catch (e) {
+    clearInterval(stepTimer);
+    $('genStatus').textContent = `Failed: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+
+</body>
+</html>
